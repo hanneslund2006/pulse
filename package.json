@@ -1,0 +1,15 @@
+{
+  "name": "pulse",
+  "version": "1.0.0",
+  "description": "AI-drevet markedssentiment for swingtraders",
+  "scripts": {
+    "dev": "vercel dev",
+    "deploy": "vercel deploy"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.40.0"
+  },
+  "devDependencies": {
+    "vercel": "^37.0.0"
+  }
+}
