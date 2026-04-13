@@ -1,20 +1,65 @@
 const Anthropic = require('@anthropic-ai/sdk');
 
-const SYSTEM_PROMPT = `Du er en markedsanalytiker for swingtraders. \
-Søk etter ferske finansnyheter og returner ALLTID i dette eksakte formatet:
+const SYSTEM_PROMPT = `Du er en finansmarkedsanalytiker. Søk etter dagens ferske markedsnyheter og -data.
 
-DATO: [dato og tidspunkt]
+Returner KUN gyldig JSON. Ingen preamble. Ingen markdown. Ingen forklaringer. Kun JSON-objektet.
 
-MAKRO: [BULLISH/BEARISH/NØYTRAL] — [1 setning begrunnelse]
-TECH: [BULLISH/BEARISH/NØYTRAL] — [1 setning begrunnelse]
-ENERGI: [BULLISH/BEARISH/NØYTRAL] — [1 setning begrunnelse]
-FINANS: [BULLISH/BEARISH/NØYTRAL] — [1 setning begrunnelse]
+Eksakt struktur:
+{
+  "verdict": "string (maks 15 ord norsk, konkret markedsoppsummering)",
+  "score": number (0-100, helhetlig sentimentscore: 0=ekstremt bearish, 50=nøytral, 100=ekstremt bullish),
+  "keydata": [
+    {"label": "string", "value": "string"}
+  ],
+  "categories": [
+    {
+      "name": "MAKRO",
+      "sentiment": "Bullish",
+      "summary": "string (2-3 setninger ren tekst, ingen markdown, ingen asterisker)"
+    },
+    {
+      "name": "ENERGI",
+      "sentiment": "Bearish",
+      "summary": "string (2-3 setninger ren tekst)"
+    },
+    {
+      "name": "FINANS",
+      "sentiment": "Mixed",
+      "summary": "string (2-3 setninger ren tekst)"
+    },
+    {
+      "name": "TECH",
+      "sentiment": "Avvent",
+      "summary": "string (2-3 setninger ren tekst)"
+    }
+  ]
+}
 
-SAMLET: [BULLISH/BEARISH/BLANDET] — [1-2 setninger overordnet konklusjon]
+Regler:
+- keydata: 4-6 nøkkeltall fra dagens marked (S&P 500, Nasdaq, VIX, 10-årsrente, oljepris, relevant valuta)
+- sentiment-verdier er nøyaktig en av: "Bullish", "Bearish", "Mixed", "Avvent"
+- summary-tekst: ingen *, ingen #, ingen liste-symboler — kun rene setninger
+- score basert på helhetsvurdering av alle kategorier
+- Svar KUN med JSON-objektet, ingenting annet`;
 
-SWING OBS: [1-2 setninger om hva en swingtrader bør passe på i dag]
+function extractJSON(text) {
+  // Direct parse
+  try { return JSON.parse(text.trim()); } catch (_) {}
 
-Vær konkret og kortfattet. Ingen lange forklaringer.`;
+  // Strip markdown code fence
+  const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/);
+  if (fenced) {
+    try { return JSON.parse(fenced[1].trim()); } catch (_) {}
+  }
+
+  // Find first {...} block
+  const braceMatch = text.match(/\{[\s\S]*\}/);
+  if (braceMatch) {
+    try { return JSON.parse(braceMatch[0]); } catch (_) {}
+  }
+
+  return null;
+}
 
 module.exports = async (req, res) => {
   if (req.method !== 'POST') {
@@ -31,7 +76,7 @@ module.exports = async (req, res) => {
     const messages = [
       {
         role: 'user',
-        content: 'Søk etter dagens markedssentiment og gi meg en rapport for swingtraders.'
+        content: 'Søk etter dagens markedsnyheter og returner sentimentrapporten som JSON.'
       }
     ];
 
@@ -44,7 +89,7 @@ module.exports = async (req, res) => {
 
       const response = await anthropic.messages.create({
         model: 'claude-sonnet-4-6',
-        max_tokens: 1500,
+        max_tokens: 2000,
         system: SYSTEM_PROMPT,
         tools: [{ type: 'web_search_20250305', name: 'web_search' }],
         messages
@@ -64,17 +109,12 @@ module.exports = async (req, res) => {
 
         const toolResults = response.content
           .filter(b => b.type === 'tool_use')
-          .map(b => ({
-            type: 'tool_result',
-            tool_use_id: b.id,
-            content: []
-          }));
+          .map(b => ({ type: 'tool_result', tool_use_id: b.id, content: [] }));
 
         if (toolResults.length > 0) {
           messages.push({ role: 'user', content: toolResults });
         }
       } else {
-        // Uventet stop_reason — hent tekst uansett
         finalText = response.content
           .filter(b => b.type === 'text')
           .map(b => b.text)
@@ -88,7 +128,13 @@ module.exports = async (req, res) => {
       return res.status(500).json({ error: 'Fikk ikke svar fra AI. Prøv igjen.' });
     }
 
-    return res.status(200).json({ sentiment: finalText });
+    const parsed = extractJSON(finalText);
+    if (!parsed) {
+      console.error('JSON-parsing feilet. Råtekst:', finalText);
+      return res.status(500).json({ error: 'AI returnerte ugyldig format. Prøv igjen.' });
+    }
+
+    return res.status(200).json(parsed);
 
   } catch (error) {
     console.error('Anthropic API feil:', error);

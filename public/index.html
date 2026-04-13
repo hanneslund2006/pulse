@@ -4,366 +4,551 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>PULSE — Markedssentiment</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet" />
   <style>
-    /* ── Reset & Base ── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg:        #0a0a0a;
-      --surface:   #111111;
-      --border:    #1e1e1e;
-      --green:     #00ff88;
-      --red:       #ff3333;
-      --neutral:   #666666;
-      --dim:       #333333;
-      --text:      #cccccc;
-      --text-dim:  #555555;
-      --accent:    #00ff88;
-      --font:      'JetBrains Mono', 'Courier New', Courier, monospace;
+      --green:   #1D9E75;
+      --red:     #E24B4A;
+      --amber:   #BA7517;
+      --purple:  #7B3FF5;
+
+      --green-bg:  #E6F7F2;
+      --red-bg:    #FDECED;
+      --amber-bg:  #FEF3CD;
+      --purple-bg: #EDE9FE;
+
+      --header-bg: #0C0C0E;
+      --page-bg:   #F2F2F4;
+      --surface:   #FFFFFF;
+      --border:    rgba(0,0,0,0.07);
+
+      --text:      #111116;
+      --muted:     #8E8E98;
+
+      --mono: 'Space Mono', monospace;
+      --sans: 'DM Sans', sans-serif;
     }
 
     html, body {
-      background: var(--bg);
+      background: var(--page-bg);
       color: var(--text);
-      font-family: var(--font);
-      font-size: 14px;
-      line-height: 1.6;
+      font-family: var(--sans);
+      font-size: 15px;
+      line-height: 1.5;
       min-height: 100vh;
     }
 
-    /* ── Layout ── */
-    .container {
-      max-width: 680px;
-      margin: 0 auto;
-      padding: 48px 24px 80px;
+    /* ── Header ── */
+    .site-header {
+      background: var(--header-bg);
+      padding: 28px 0 24px;
     }
 
-    /* ── Header ── */
-    .header {
-      margin-bottom: 48px;
-      border-bottom: 1px solid var(--border);
-      padding-bottom: 24px;
+    .container {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 0 24px;
     }
 
     .logo {
-      font-size: 36px;
+      font-family: var(--mono);
       font-weight: 700;
-      letter-spacing: 0.15em;
-      color: var(--green);
-      text-shadow: 0 0 20px rgba(0, 255, 136, 0.3);
+      font-size: 26px;
+      letter-spacing: 0.04em;
+      color: #FFFFFF;
     }
 
-    .logo span {
-      color: var(--text-dim);
+    .header-meta {
+      font-family: var(--mono);
       font-weight: 400;
+      font-size: 11px;
+      letter-spacing: 0.06em;
+      color: #4A4A55;
+      margin-top: 5px;
+      text-transform: lowercase;
     }
 
-    .tagline {
-      margin-top: 6px;
-      font-size: 12px;
+    /* ── Main ── */
+    main {
+      padding: 32px 0 64px;
+    }
+
+    /* ── States ── */
+    .state { display: none; }
+    .state.active { display: block; }
+
+    /* Idle */
+    .idle-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 64px 0 48px;
+      gap: 12px;
+    }
+
+    .idle-label {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    /* Loading */
+    .loading-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 64px 0 48px;
+      gap: 20px;
+    }
+
+    .loading-ring {
+      width: 36px;
+      height: 36px;
+      border: 2px solid var(--border);
+      border-top-color: var(--text);
+      border-radius: 50%;
+      animation: spin 0.9s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .loading-text {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: 0.06em;
+    }
+
+    /* Error */
+    .error-wrap {
+      background: var(--surface);
+      border: 0.5px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      margin-top: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      align-items: flex-start;
+    }
+
+    .error-label {
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--red);
+    }
+
+    .error-msg {
+      font-size: 14px;
+      color: var(--text);
+    }
+
+    /* ── Report ── */
+    .report { display: flex; flex-direction: column; gap: 16px; }
+
+    /* Verdict card */
+    .verdict-card {
+      background: var(--surface);
+      border: 0.5px solid var(--border);
+      border-radius: 12px;
+      padding: 28px;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 24px;
+      align-items: center;
+    }
+
+    .verdict-col-left {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .verdict-section-label {
+      font-family: var(--mono);
+      font-size: 10px;
       letter-spacing: 0.12em;
-      color: var(--text-dim);
       text-transform: uppercase;
+      color: var(--muted);
     }
 
-    /* ── Button ── */
-    .btn-fetch {
-      display: block;
-      width: 100%;
-      padding: 18px 24px;
-      margin: 32px 0;
-      background: transparent;
-      border: 1px solid var(--green);
-      color: var(--green);
-      font-family: var(--font);
-      font-size: 13px;
+    .verdict-text {
+      font-family: var(--sans);
+      font-weight: 500;
+      font-size: 18px;
+      color: var(--text);
+      line-height: 1.35;
+    }
+
+    .verdict-col-right {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+
+    .score-number {
+      font-family: var(--mono);
       font-weight: 700;
-      letter-spacing: 0.15em;
+      font-size: 52px;
+      line-height: 1;
+      transition: color 0.3s;
+    }
+
+    .score-label {
+      font-family: var(--mono);
+      font-size: 9px;
+      letter-spacing: 0.1em;
       text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    /* Keydata */
+    .keydata-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .keydata-chip {
+      background: var(--surface);
+      border: 0.5px solid var(--border);
+      border-radius: 999px;
+      padding: 6px 14px;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .chip-label {
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+      text-transform: uppercase;
+    }
+
+    .chip-value {
+      font-family: var(--mono);
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    /* Category grid */
+    .category-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .category-card {
+      background: var(--surface);
+      border: 0.5px solid var(--border);
+      border-radius: 12px;
+      padding: 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .category-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .category-name {
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      color: var(--text);
+    }
+
+    .sentiment-badge {
+      font-family: var(--sans);
+      font-weight: 500;
+      font-size: 11px;
+      padding: 3px 10px;
+      border-radius: 999px;
+    }
+
+    .badge-bullish { background: var(--green-bg); color: var(--green); }
+    .badge-bearish { background: var(--red-bg);   color: var(--red); }
+    .badge-mixed   { background: var(--purple-bg); color: var(--purple); }
+    .badge-avvent  { background: var(--amber-bg);  color: var(--amber); }
+
+    .category-summary {
+      font-family: var(--sans);
+      font-size: 13px;
+      color: #3A3A44;
+      line-height: 1.6;
+    }
+
+    /* Refresh button */
+    .btn-refresh,
+    .btn-fetch {
+      font-family: var(--mono);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text);
+      background: var(--surface);
+      border: 0.5px solid rgba(0,0,0,0.18);
+      border-radius: 8px;
+      padding: 14px 28px;
       cursor: pointer;
-      transition: background 0.15s, box-shadow 0.15s;
+      transition: background 0.15s;
     }
 
+    .btn-refresh:hover:not(:disabled),
     .btn-fetch:hover:not(:disabled) {
-      background: rgba(0, 255, 136, 0.07);
-      box-shadow: 0 0 24px rgba(0, 255, 136, 0.15);
+      background: #EBEBED;
     }
 
+    .btn-refresh:disabled,
     .btn-fetch:disabled {
-      border-color: var(--dim);
-      color: var(--dim);
+      opacity: 0.4;
       cursor: not-allowed;
     }
 
-    /* ── Loading ── */
-    .loading {
-      display: none;
-      margin: 24px 0;
-      color: var(--text-dim);
-      font-size: 12px;
-      letter-spacing: 0.08em;
-    }
+    .btn-refresh { width: 100%; margin-top: 4px; }
 
-    .loading.visible { display: block; }
-
-    .loading-bar {
-      height: 2px;
-      background: var(--border);
-      margin-bottom: 12px;
-      overflow: hidden;
-    }
-
-    .loading-bar::after {
-      content: '';
-      display: block;
-      height: 100%;
-      width: 30%;
-      background: var(--green);
-      animation: scan 1.4s ease-in-out infinite;
-    }
-
-    @keyframes scan {
-      0%   { transform: translateX(-100%); }
-      100% { transform: translateX(400%); }
-    }
-
-    .loading-text::before { content: '> '; color: var(--green); }
-
-    /* ── Error ── */
-    .error-box {
-      display: none;
-      padding: 14px 16px;
-      border: 1px solid var(--red);
-      color: var(--red);
-      font-size: 12px;
-      margin: 16px 0;
-    }
-
-    .error-box.visible { display: block; }
-    .error-box::before { content: '[ERR] '; }
-
-    /* ── Result ── */
-    .result {
-      display: none;
-      margin-top: 16px;
-    }
-
-    .result.visible { display: block; }
-
-    .result-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-bottom: 1px solid var(--border);
-      padding-bottom: 10px;
-      margin-bottom: 20px;
-    }
-
-    .result-label {
-      font-size: 10px;
-      letter-spacing: 0.18em;
-      text-transform: uppercase;
-      color: var(--text-dim);
-    }
-
-    .result-timestamp {
-      font-size: 10px;
-      color: var(--text-dim);
-    }
-
-    /* ── Sentiment rows ── */
-    .sentiment-rows { margin-bottom: 24px; }
-
-    .row {
-      display: flex;
-      align-items: baseline;
-      gap: 12px;
-      padding: 10px 0;
-      border-bottom: 1px solid var(--border);
-      font-size: 13px;
-    }
-
-    .row:last-child { border-bottom: none; }
-
-    .row-label {
-      width: 72px;
-      flex-shrink: 0;
+    /* Disclaimer */
+    .disclaimer {
+      font-family: var(--sans);
       font-size: 11px;
-      letter-spacing: 0.12em;
-      color: var(--text-dim);
-      text-transform: uppercase;
-    }
-
-    .row-signal {
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: 0.1em;
-      padding: 2px 7px;
-      flex-shrink: 0;
-    }
-
-    .signal-bullish  { color: var(--bg); background: var(--green); }
-    .signal-bearish  { color: var(--bg); background: var(--red); }
-    .signal-neutral  { color: var(--neutral); border: 1px solid var(--dim); padding: 1px 6px; }
-    .signal-blandet  { color: #f0a500; border: 1px solid #f0a500; padding: 1px 6px; }
-
-    .row-text {
-      color: var(--text);
-      font-size: 12px;
+      color: var(--muted);
+      text-align: center;
       line-height: 1.5;
+      margin-top: 4px;
     }
 
-    /* ── Summary block ── */
-    .summary-block {
-      border: 1px solid var(--border);
-      padding: 16px;
-      margin-bottom: 16px;
-    }
-
-    .summary-title {
-      font-size: 10px;
-      letter-spacing: 0.18em;
-      text-transform: uppercase;
-      color: var(--text-dim);
-      margin-bottom: 10px;
-    }
-
-    .summary-signal {
-      font-size: 13px;
-      font-weight: 700;
-      letter-spacing: 0.1em;
-      margin-bottom: 8px;
-    }
-
-    .summary-text {
-      font-size: 12px;
-      color: var(--text);
-      line-height: 1.6;
-    }
-
-    /* ── Swing obs ── */
-    .swing-block {
-      border-left: 2px solid var(--accent);
-      padding: 12px 16px;
-      margin-bottom: 8px;
-    }
-
-    .swing-title {
-      font-size: 10px;
-      letter-spacing: 0.18em;
-      text-transform: uppercase;
-      color: var(--green);
-      margin-bottom: 6px;
-    }
-
-    .swing-text {
-      font-size: 12px;
-      color: var(--text);
-      line-height: 1.6;
-    }
-
-    /* ── Raw fallback ── */
-    .raw-output {
-      font-size: 12px;
-      color: var(--text);
-      white-space: pre-wrap;
-      line-height: 1.7;
-    }
-
-    /* ── Footer ── */
-    footer {
-      margin-top: 56px;
-      padding-top: 16px;
-      border-top: 1px solid var(--border);
-      font-size: 10px;
-      color: var(--text-dim);
-      letter-spacing: 0.08em;
-    }
-
-    /* ── Mobile ── */
-    @media (max-width: 480px) {
-      .container { padding: 32px 16px 64px; }
-      .logo { font-size: 28px; }
-      .row { flex-wrap: wrap; }
-      .row-label { width: 100%; margin-bottom: 2px; }
+    /* Mobile */
+    @media (max-width: 520px) {
+      .verdict-card {
+        grid-template-columns: 1fr;
+      }
+      .verdict-col-right {
+        flex-direction: row;
+        justify-content: flex-start;
+        align-items: baseline;
+        gap: 10px;
+      }
+      .score-number { font-size: 40px; }
+      .category-grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
 <body>
-  <div class="container">
 
-    <header class="header">
-      <div class="logo">PULSE<span>_</span></div>
-      <div class="tagline">Markedsstemning. Uten støy.</div>
-    </header>
+  <header class="site-header">
+    <div class="container">
+      <div class="logo">PULSE_</div>
+      <div class="header-meta" id="headerMeta">markedssentiment</div>
+    </div>
+  </header>
 
-    <main>
-      <button class="btn-fetch" id="fetchBtn" onclick="fetchSentiment()">
-        &gt; Hent dagens sentiment
-      </button>
+  <main>
+    <div class="container">
 
-      <div class="loading" id="loading">
-        <div class="loading-bar"></div>
-        <div class="loading-text" id="loadingText">Søker etter ferske markedsnyheter...</div>
-      </div>
-
-      <div class="error-box" id="errorBox"></div>
-
-      <div class="result" id="result">
-        <div class="result-header">
-          <span class="result-label">Markedsrapport</span>
-          <span class="result-timestamp" id="timestamp"></span>
+      <!-- Idle -->
+      <div id="stateIdle" class="state active">
+        <div class="idle-wrap">
+          <span class="idle-label">Klar til analyse</span>
+          <button class="btn-fetch" onclick="fetchSentiment()">Hent dagens rapport</button>
         </div>
-        <div id="resultContent"></div>
       </div>
-    </main>
 
-    <footer>
-      Powered by AI &mdash; Ikke finansiell rådgivning.
-    </footer>
-  </div>
+      <!-- Loading -->
+      <div id="stateLoading" class="state">
+        <div class="loading-wrap">
+          <div class="loading-ring"></div>
+          <div class="loading-text" id="loadingText">Søker etter markedsdata...</div>
+        </div>
+      </div>
+
+      <!-- Error -->
+      <div id="stateError" class="state">
+        <div class="error-wrap">
+          <span class="error-label">Feil</span>
+          <p class="error-msg" id="errorMsg"></p>
+          <button class="btn-fetch" onclick="fetchSentiment()">Prøv igjen</button>
+        </div>
+      </div>
+
+      <!-- Report -->
+      <div id="stateReport" class="state">
+        <div class="report">
+
+          <!-- 1. Verdict card -->
+          <div class="verdict-card">
+            <div class="verdict-col-left">
+              <span class="verdict-section-label">Dagens konklusjon</span>
+              <div class="verdict-text" id="verdictText"></div>
+            </div>
+            <div class="verdict-col-right">
+              <div class="score-number" id="scoreNumber"></div>
+              <div class="score-label">Sentiment</div>
+            </div>
+          </div>
+
+          <!-- 2. Keydata chips -->
+          <div class="keydata-row" id="keydataRow"></div>
+
+          <!-- 3. Category grid -->
+          <div class="category-grid" id="categoryGrid"></div>
+
+          <!-- 4. Refresh -->
+          <button class="btn-refresh" id="refreshBtn" onclick="fetchSentiment()">
+            Hent ny rapport
+          </button>
+
+          <!-- 5. Disclaimer -->
+          <p class="disclaimer">
+            Generert av AI basert på offentlig tilgjengelig informasjon.<br>
+            Ikke finansiell rådgivning. Gjør egne vurderinger før du handler.
+          </p>
+
+        </div>
+      </div>
+
+    </div>
+  </main>
 
   <script>
+    // ── State management ──
+    const STATES = ['stateIdle', 'stateLoading', 'stateError', 'stateReport'];
+
+    function showState(id) {
+      STATES.forEach(s => {
+        document.getElementById(s).classList.toggle('active', s === id);
+      });
+    }
+
     // ── Loading messages ──
-    const LOADING_MESSAGES = [
-      'Søker etter ferske markedsnyheter...',
-      'Analyserer S&P 500 og Nasdaq...',
-      'Sjekker Fed-nyheter og makrodata...',
-      'Leser Yahoo Finance og Finviz...',
-      'Kompilerer sentimentrapport...'
+    const LOADING_MSGS = [
+      'Søker etter markedsdata...',
+      'Leser S&P 500 og Nasdaq...',
+      'Sjekker makroøkonomiske indikatorer...',
+      'Analyserer sektorsentiment...',
+      'Kompilerer rapport...'
     ];
 
-    let loadingInterval;
+    let loadingTimer;
 
-    function startLoading() {
-      const btn  = document.getElementById('fetchBtn');
-      const load = document.getElementById('loading');
-      const txt  = document.getElementById('loadingText');
-      const err  = document.getElementById('errorBox');
-      const res  = document.getElementById('result');
-
-      btn.disabled = true;
-      err.classList.remove('visible');
-      res.classList.remove('visible');
-      load.classList.add('visible');
-
+    function startLoadingMessages() {
       let i = 0;
-      txt.textContent = LOADING_MESSAGES[0];
-      loadingInterval = setInterval(() => {
-        i = (i + 1) % LOADING_MESSAGES.length;
-        txt.textContent = LOADING_MESSAGES[i];
-      }, 2800);
+      const el = document.getElementById('loadingText');
+      el.textContent = LOADING_MSGS[0];
+      loadingTimer = setInterval(() => {
+        i = (i + 1) % LOADING_MSGS.length;
+        el.textContent = LOADING_MSGS[i];
+      }, 3000);
     }
 
-    function stopLoading() {
-      clearInterval(loadingInterval);
-      document.getElementById('loading').classList.remove('visible');
-      document.getElementById('fetchBtn').disabled = false;
+    function stopLoadingMessages() {
+      clearInterval(loadingTimer);
     }
 
-    // ── Main fetch ──
+    // ── Header timestamp ──
+    function updateHeaderMeta() {
+      const now = new Date();
+      const dato = now.toLocaleDateString('no-NO', { day: '2-digit', month: '2-digit', year: 'numeric' });
+      const tid  = now.toLocaleTimeString('no-NO', { hour: '2-digit', minute: '2-digit' });
+      document.getElementById('headerMeta').textContent =
+        `markedssentiment · ${dato} · ${tid}`;
+    }
+
+    // ── Score color ──
+    function scoreColor(score) {
+      if (score < 40) return getComputedStyle(document.documentElement).getPropertyValue('--red').trim();
+      if (score > 60) return getComputedStyle(document.documentElement).getPropertyValue('--green').trim();
+      return getComputedStyle(document.documentElement).getPropertyValue('--amber').trim();
+    }
+
+    // ── Badge class ──
+    function badgeClass(sentiment) {
+      switch (sentiment) {
+        case 'Bullish': return 'badge-bullish';
+        case 'Bearish': return 'badge-bearish';
+        case 'Mixed':   return 'badge-mixed';
+        case 'Avvent':  return 'badge-avvent';
+        default:        return 'badge-avvent';
+      }
+    }
+
+    // ── Escape HTML ──
+    function esc(str) {
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    // ── Render report ──
+    function renderReport(data) {
+      updateHeaderMeta();
+
+      // Verdict
+      document.getElementById('verdictText').textContent = data.verdict || '–';
+
+      // Score
+      const score = typeof data.score === 'number' ? Math.round(data.score) : 50;
+      const scoreEl = document.getElementById('scoreNumber');
+      scoreEl.textContent = score;
+      scoreEl.style.color = scoreColor(score);
+
+      // Keydata chips
+      const keydataRow = document.getElementById('keydataRow');
+      keydataRow.innerHTML = '';
+      (data.keydata || []).forEach(item => {
+        const chip = document.createElement('div');
+        chip.className = 'keydata-chip';
+        chip.innerHTML = `
+          <span class="chip-label">${esc(item.label)}</span>
+          <span class="chip-value">${esc(item.value)}</span>`;
+        keydataRow.appendChild(chip);
+      });
+
+      // Category grid
+      const grid = document.getElementById('categoryGrid');
+      grid.innerHTML = '';
+      (data.categories || []).forEach(cat => {
+        const card = document.createElement('div');
+        card.className = 'category-card';
+        card.innerHTML = `
+          <div class="category-header">
+            <span class="category-name">${esc(cat.name)}</span>
+            <span class="sentiment-badge ${badgeClass(cat.sentiment)}">${esc(cat.sentiment)}</span>
+          </div>
+          <p class="category-summary">${esc(cat.summary)}</p>`;
+        grid.appendChild(card);
+      });
+
+      showState('stateReport');
+    }
+
+    // ── Fetch ──
     async function fetchSentiment() {
-      startLoading();
+      // Disable any refresh button
+      const refreshBtn = document.getElementById('refreshBtn');
+      if (refreshBtn) refreshBtn.disabled = true;
+
+      showState('stateLoading');
+      startLoadingMessages();
 
       try {
         const resp = await fetch('/api/sentiment', {
@@ -378,148 +563,24 @@
           return;
         }
 
-        renderResult(data.sentiment);
+        renderReport(data);
 
       } catch (e) {
         showError('Nettverksfeil. Sjekk tilkoblingen og prøv igjen.');
       } finally {
-        stopLoading();
+        stopLoadingMessages();
+        if (refreshBtn) refreshBtn.disabled = false;
       }
     }
 
-    // ── Error display ──
     function showError(msg) {
-      const box = document.getElementById('errorBox');
-      box.textContent = msg;
-      box.classList.add('visible');
+      document.getElementById('errorMsg').textContent = msg;
+      showState('stateError');
     }
 
-    // ── Result rendering ──
-    function renderResult(text) {
-      const container = document.getElementById('resultContent');
-      const parsed    = parseReport(text);
-
-      document.getElementById('timestamp').textContent = new Date().toLocaleString('no-NO', {
-        day: '2-digit', month: '2-digit', year: 'numeric',
-        hour: '2-digit', minute: '2-digit'
-      });
-
-      if (!parsed) {
-        container.innerHTML = `<div class="raw-output">${escHtml(text)}</div>`;
-      } else {
-        container.innerHTML = buildHTML(parsed);
-      }
-
-      document.getElementById('result').classList.add('visible');
-    }
-
-    // ── Parser ──
-    const SECTOR_KEYS = ['MAKRO', 'TECH', 'ENERGI', 'FINANS'];
-
-    function parseReport(text) {
-      const lines   = text.split('\n').map(l => l.trim()).filter(Boolean);
-      const sectors = [];
-      let samlet    = null;
-      let swingObs  = null;
-
-      for (const line of lines) {
-        // Sector rows: MAKRO: BULLISH — ...
-        for (const key of SECTOR_KEYS) {
-          if (line.startsWith(key + ':')) {
-            const rest   = line.slice(key.length + 1).trim();
-            const signal = extractSignal(rest);
-            const desc   = rest.replace(/^(BULLISH|BEARISH|NØYTRAL)\s*[—\-–]\s*/i, '').trim();
-            sectors.push({ label: key, signal, desc });
-            break;
-          }
-        }
-
-        // SAMLET
-        if (line.startsWith('SAMLET:')) {
-          const rest   = line.slice('SAMLET:'.length).trim();
-          const signal = extractSignal(rest);
-          const desc   = rest.replace(/^(BULLISH|BEARISH|BLANDET)\s*[—\-–]\s*/i, '').trim();
-          samlet = { signal, desc };
-        }
-
-        // SWING OBS
-        if (line.startsWith('SWING OBS:')) {
-          swingObs = line.slice('SWING OBS:'.length).trim();
-        }
-      }
-
-      if (sectors.length === 0 && !samlet) return null;
-      return { sectors, samlet, swingObs };
-    }
-
-    function extractSignal(text) {
-      if (/BULLISH/i.test(text)) return 'BULLISH';
-      if (/BEARISH/i.test(text)) return 'BEARISH';
-      if (/BLANDET/i.test(text)) return 'BLANDET';
-      if (/NØ?YTRAL/i.test(text)) return 'NØYTRAL';
-      return 'NØYTRAL';
-    }
-
-    function signalClass(signal) {
-      switch (signal) {
-        case 'BULLISH': return 'signal-bullish';
-        case 'BEARISH': return 'signal-bearish';
-        case 'BLANDET': return 'signal-blandet';
-        default:        return 'signal-neutral';
-      }
-    }
-
-    function summaryColor(signal) {
-      if (signal === 'BULLISH') return 'var(--green)';
-      if (signal === 'BEARISH') return 'var(--red)';
-      if (signal === 'BLANDET') return '#f0a500';
-      return 'var(--neutral)';
-    }
-
-    // ── HTML builder ──
-    function buildHTML({ sectors, samlet, swingObs }) {
-      let html = '';
-
-      if (sectors.length > 0) {
-        html += '<div class="sentiment-rows">';
-        for (const { label, signal, desc } of sectors) {
-          html += `
-            <div class="row">
-              <span class="row-label">${escHtml(label)}</span>
-              <span class="row-signal ${signalClass(signal)}">${escHtml(signal)}</span>
-              <span class="row-text">${escHtml(desc)}</span>
-            </div>`;
-        }
-        html += '</div>';
-      }
-
-      if (samlet) {
-        html += `
-          <div class="summary-block">
-            <div class="summary-title">Samlet vurdering</div>
-            <div class="summary-signal" style="color:${summaryColor(samlet.signal)}">${escHtml(samlet.signal)}</div>
-            <div class="summary-text">${escHtml(samlet.desc)}</div>
-          </div>`;
-      }
-
-      if (swingObs) {
-        html += `
-          <div class="swing-block">
-            <div class="swing-title">Swing Obs</div>
-            <div class="swing-text">${escHtml(swingObs)}</div>
-          </div>`;
-      }
-
-      return html;
-    }
-
-    function escHtml(str) {
-      return str
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;');
-    }
+    // Init header
+    updateHeaderMeta();
   </script>
+
 </body>
 </html>
