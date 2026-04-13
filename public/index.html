@@ -11,27 +11,43 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --green:   #1D9E75;
-      --red:     #E24B4A;
-      --amber:   #BA7517;
-      --purple:  #7B3FF5;
+      --green:      #1D9E75;
+      --red:        #E24B4A;
+      --amber:      #BA7517;
+      --purple:     #7F77DD;
 
-      --green-bg:  #E6F7F2;
-      --red-bg:    #FDECED;
-      --amber-bg:  #FEF3CD;
-      --purple-bg: #EDE9FE;
+      --green-bg:   #0F2A1A;
+      --red-bg:     #2A0F0F;
+      --amber-bg:   #2A1F0F;
+      --purple-bg:  #1A0F2A;
 
-      --header-bg: #0C0C0E;
-      --page-bg:   #F2F2F4;
-      --surface:   #FFFFFF;
-      --border:    rgba(0,0,0,0.07);
+      --header-bg:  #0A0A0A;
+      --page-bg:    #0A0A0A;
+      --surface:    #111111;
+      --border:     #222222;
 
-      --text:      #111116;
-      --muted:     #8E8E98;
+      --text:       #F0F0F0;
+      --muted:      #888888;
 
       --mono: 'Space Mono', monospace;
       --sans: 'DM Sans', sans-serif;
     }
+
+    /* ── Animations ── */
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .site-header { animation: fadeInUp 350ms ease both; }
+
+    .report.animating .verdict-card  { animation: fadeInUp 350ms ease 100ms both; }
+    .report.animating .keydata-row   { animation: fadeInUp 350ms ease 200ms both; }
+    .report.animating .category-grid { animation: fadeInUp 350ms ease 300ms both; }
+    .report.animating .btn-refresh   { animation: fadeInUp 350ms ease 380ms both; }
+    .report.animating .disclaimer    { animation: fadeInUp 350ms ease 420ms both; }
 
     html, body {
       background: var(--page-bg);
@@ -67,7 +83,7 @@
       font-weight: 400;
       font-size: 11px;
       letter-spacing: 0.06em;
-      color: #4A4A55;
+      color: var(--muted);
       margin-top: 5px;
       text-transform: lowercase;
     }
@@ -110,13 +126,11 @@
     .loading-ring {
       width: 36px;
       height: 36px;
-      border: 2px solid var(--border);
+      border: 2px solid #333333;
       border-top-color: var(--text);
       border-radius: 50%;
       animation: spin 0.9s linear infinite;
     }
-
-    @keyframes spin { to { transform: rotate(360deg); } }
 
     .loading-text {
       font-family: var(--mono);
@@ -156,8 +170,9 @@
 
     /* Verdict card */
     .verdict-card {
-      background: var(--surface);
+      background: #0F1A14;
       border: 0.5px solid var(--border);
+      border-left: 4px solid var(--green);
       border-radius: 12px;
       padding: 28px;
       display: grid;
@@ -220,8 +235,8 @@
     }
 
     .keydata-chip {
-      background: var(--surface);
-      border: 0.5px solid var(--border);
+      background: #1A1A1A;
+      border: 0.5px solid #333333;
       border-radius: 999px;
       padding: 6px 14px;
       display: flex;
@@ -259,6 +274,12 @@
       display: flex;
       flex-direction: column;
       gap: 10px;
+      transition: transform 150ms ease, border-color 150ms ease;
+    }
+
+    .category-card:hover {
+      transform: scale(1.01);
+      border-color: #444444;
     }
 
     .category-header {
@@ -283,19 +304,19 @@
       border-radius: 999px;
     }
 
-    .badge-bullish { background: var(--green-bg); color: var(--green); }
-    .badge-bearish { background: var(--red-bg);   color: var(--red); }
+    .badge-bullish { background: var(--green-bg);  color: var(--green); }
+    .badge-bearish { background: var(--red-bg);    color: var(--red); }
     .badge-mixed   { background: var(--purple-bg); color: var(--purple); }
     .badge-avvent  { background: var(--amber-bg);  color: var(--amber); }
 
     .category-summary {
       font-family: var(--sans);
       font-size: 13px;
-      color: #3A3A44;
+      color: #AAAAAA;
       line-height: 1.6;
     }
 
-    /* Refresh button */
+    /* Buttons */
     .btn-refresh,
     .btn-fetch {
       font-family: var(--mono);
@@ -304,8 +325,8 @@
       letter-spacing: 0.1em;
       text-transform: uppercase;
       color: var(--text);
-      background: var(--surface);
-      border: 0.5px solid rgba(0,0,0,0.18);
+      background: #1A1A1A;
+      border: 0.5px solid #333333;
       border-radius: 8px;
       padding: 14px 28px;
       cursor: pointer;
@@ -314,7 +335,7 @@
 
     .btn-refresh:hover:not(:disabled),
     .btn-fetch:hover:not(:disabled) {
-      background: #EBEBED;
+      background: #222222;
     }
 
     .btn-refresh:disabled,
@@ -411,7 +432,7 @@
           <div class="category-grid" id="categoryGrid"></div>
 
           <!-- 4. Refresh -->
-          <button class="btn-refresh" id="refreshBtn" onclick="fetchSentiment()">
+          <button class="btn-refresh" id="refreshBtn" onclick="fetchSentiment(true)">
             Hent ny rapport
           </button>
 
@@ -508,8 +529,8 @@
       // Score
       const score = typeof data.score === 'number' ? Math.round(data.score) : 50;
       const scoreEl = document.getElementById('scoreNumber');
-      scoreEl.textContent = score;
       scoreEl.style.color = scoreColor(score);
+      animateScore(scoreEl, score);
 
       // Keydata chips
       const keydataRow = document.getElementById('keydataRow');
@@ -538,14 +559,65 @@
         grid.appendChild(card);
       });
 
+      // Trigger staggered fade-in
+      const reportEl = document.querySelector('.report');
+      reportEl.classList.remove('animating');
+      void reportEl.offsetHeight; // force reflow
+      reportEl.classList.add('animating');
+
       showState('stateReport');
     }
 
+    // ── Score counter animation ──
+    function animateScore(el, target) {
+      const duration = 800;
+      const start = performance.now();
+      function step(now) {
+        const progress = Math.min((now - start) / duration, 1);
+        const eased = 1 - (1 - progress) * (1 - progress); // ease-out quad
+        el.textContent = Math.round(eased * target);
+        if (progress < 1) requestAnimationFrame(step);
+      }
+      requestAnimationFrame(step);
+    }
+
+    // ── Cache ──
+    const CACHE_KEY = 'pulse_cache';
+    const todayStr = () => new Date().toISOString().split('T')[0];
+
+    function loadCache() {
+      try {
+        const raw = localStorage.getItem(CACHE_KEY);
+        if (!raw) return null;
+        const cached = JSON.parse(raw);
+        if (cached.date === todayStr()) return cached.data;
+      } catch (_) {}
+      return null;
+    }
+
+    function saveCache(data) {
+      try {
+        localStorage.setItem(CACHE_KEY, JSON.stringify({ date: todayStr(), data }));
+      } catch (_) {}
+    }
+
     // ── Fetch ──
-    async function fetchSentiment() {
-      // Disable any refresh button
+    async function fetchSentiment(forceRefresh = false) {
       const refreshBtn = document.getElementById('refreshBtn');
       if (refreshBtn) refreshBtn.disabled = true;
+
+      // Force refresh: clear cache
+      if (forceRefresh) {
+        localStorage.removeItem(CACHE_KEY);
+      } else {
+        // Check cache before hitting API
+        const cached = loadCache();
+        if (cached) {
+          renderReport(cached);
+          if (refreshBtn) refreshBtn.disabled = false;
+          return;
+        }
+      }
 
       showState('stateLoading');
       startLoadingMessages();
@@ -563,6 +635,7 @@
           return;
         }
 
+        saveCache(data);
         renderReport(data);
 
       } catch (e) {
@@ -578,8 +651,10 @@
       showState('stateError');
     }
 
-    // Init header
+    // Init: load from cache if available, else show idle
     updateHeaderMeta();
+    const initCache = loadCache();
+    if (initCache) renderReport(initCache);
   </script>
 
 </body>
