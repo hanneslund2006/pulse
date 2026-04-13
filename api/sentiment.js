@@ -39,7 +39,7 @@ Regler:
 - keydata: returner nøyaktig disse 4 nøkkeltallene i denne rekkefølgen: S&P 500, Nasdaq Futures, VIX, 10-årsrente US
 - sentiment-verdier er nøyaktig en av: "Bullish", "Bearish", "Mixed", "Avvent"
 - summary-tekst: ingen *, ingen #, ingen liste-symboler — kun rene setninger
-- Each category summary must be maximum 3 sentences and 60 words. Be concise.
+- Each category summary must be maximum 3 sentences and 50 words. Be extremely concise. No compound sentences.
 - score basert på helhetsvurdering av alle kategorier
 - Svar KUN med JSON-objektet, ingenting annet`;
 

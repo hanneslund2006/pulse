@@ -62,6 +62,7 @@
     .site-header {
       background: var(--header-bg);
       padding: 28px 0 24px;
+      border-bottom: 1px solid #1a1a1a;
     }
 
     .container {
@@ -73,19 +74,19 @@
     .logo {
       font-family: var(--mono);
       font-weight: 700;
-      font-size: 26px;
+      font-size: 32px;
       letter-spacing: 0.04em;
-      color: #FFFFFF;
+      color: var(--green);
     }
 
     .header-meta {
       font-family: var(--mono);
       font-weight: 400;
-      font-size: 11px;
-      letter-spacing: 0.06em;
-      color: var(--muted);
-      margin-top: 5px;
-      text-transform: lowercase;
+      font-size: 10px;
+      letter-spacing: 0.2em;
+      color: #555555;
+      margin-top: 6px;
+      text-transform: uppercase;
     }
 
     /* ── Main ── */
@@ -532,21 +533,17 @@
       scoreEl.style.color = scoreColor(score);
       animateScore(scoreEl, score);
 
-      // Keydata chips — maks 4, behold kun de 4 definerte nøkkeltallene
-      const ALLOWED_CHIPS = ['s&p 500', 'nasdaq futures', 'vix', '10-årsrente us'];
+      // Keydata chips — vis de 4 første fra API-responsen (prompt styrer innhold)
       const keydataRow = document.getElementById('keydataRow');
       keydataRow.innerHTML = '';
-      (data.keydata || [])
-        .filter(item => ALLOWED_CHIPS.includes(item.label.toLowerCase()))
-        .slice(0, 4)
-        .forEach(item => {
-          const chip = document.createElement('div');
-          chip.className = 'keydata-chip';
-          chip.innerHTML = `
-            <span class="chip-label">${esc(item.label)}</span>
-            <span class="chip-value">${esc(item.value)}</span>`;
-          keydataRow.appendChild(chip);
-        });
+      (data.keydata || []).slice(0, 4).forEach(item => {
+        const chip = document.createElement('div');
+        chip.className = 'keydata-chip';
+        chip.innerHTML = `
+          <span class="chip-label">${esc(item.label)}</span>
+          <span class="chip-value">${esc(item.value)}</span>`;
+        keydataRow.appendChild(chip);
+      });
 
       // Category grid
       const grid = document.getElementById('categoryGrid');
