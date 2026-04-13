@@ -371,6 +371,109 @@
       .score-number { font-size: 40px; }
       .category-grid { grid-template-columns: 1fr; }
     }
+
+    /* ── Ticker section ── */
+    .ticker-section {
+      margin-top: 8px;
+      padding-top: 28px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .ticker-section-label {
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      color: var(--muted);
+      text-transform: uppercase;
+    }
+
+    .ticker-input-row {
+      display: flex;
+      gap: 10px;
+    }
+
+    .ticker-input {
+      flex: 1;
+      background: #1A1A1A;
+      border: 0.5px solid #333333;
+      border-radius: 8px;
+      padding: 12px 16px;
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--text);
+      outline: none;
+      transition: border-color 150ms ease;
+    }
+
+    .ticker-input::placeholder { color: var(--muted); }
+    .ticker-input:focus { border-color: #555555; }
+
+    .btn-ticker {
+      font-family: var(--mono);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text);
+      background: #1A1A1A;
+      border: 0.5px solid #333333;
+      border-radius: 8px;
+      padding: 12px 20px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.15s;
+    }
+
+    .btn-ticker:hover:not(:disabled) { background: #222222; }
+    .btn-ticker:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .ticker-error-box {
+      background: var(--red-bg);
+      border: 0.5px solid var(--red);
+      border-radius: 8px;
+      padding: 12px 16px;
+      font-family: var(--sans);
+      font-size: 13px;
+      color: var(--red);
+    }
+
+    .ticker-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .ticker-card-full { grid-column: 1 / -1; }
+
+    /* Pulsing skeleton */
+    @keyframes tickerPulse {
+      0%, 100% { opacity: 0.25; }
+      50%       { opacity: 0.55; }
+    }
+
+    .ticker-skeleton { min-height: 88px; animation: tickerPulse 1.4s ease-in-out infinite; }
+    .ticker-skeleton:nth-child(2) { animation-delay: 0.12s; }
+    .ticker-skeleton:nth-child(3) { animation-delay: 0.24s; }
+    .ticker-skeleton:nth-child(4) { animation-delay: 0.36s; }
+    .ticker-skeleton:nth-child(5) { animation-delay: 0.48s; }
+
+    .badge-neutral-ticker { background: #1A1A1A; color: var(--muted); border: 0.5px solid #333333; }
+
+    .ticker-company {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--muted);
+      letter-spacing: 0.06em;
+    }
+
+    @media (max-width: 520px) {
+      .ticker-grid { grid-template-columns: 1fr; }
+      .ticker-card-full { grid-column: auto; }
+    }
   </style>
 </head>
 <body>
@@ -444,6 +547,26 @@
           </p>
 
         </div>
+      </div>
+
+      <!-- ── Ticker analyse ── -->
+      <div class="ticker-section">
+        <span class="ticker-section-label">Ticker-analyse</span>
+        <div class="ticker-input-row">
+          <input type="text" id="tickerInput" class="ticker-input"
+                 placeholder="Ticker (f.eks. AAPL)"
+                 onkeydown="if(event.key==='Enter')fetchTicker()" />
+          <button class="btn-ticker" id="tickerBtn" onclick="fetchTicker()">Analyser</button>
+        </div>
+        <div id="tickerError" class="ticker-error-box" style="display:none"></div>
+        <div id="tickerLoading" class="ticker-grid" style="display:none">
+          <div class="category-card ticker-skeleton"></div>
+          <div class="category-card ticker-skeleton"></div>
+          <div class="category-card ticker-skeleton"></div>
+          <div class="category-card ticker-skeleton"></div>
+          <div class="category-card ticker-skeleton ticker-card-full"></div>
+        </div>
+        <div id="tickerResult" class="ticker-grid" style="display:none"></div>
       </div>
 
     </div>
@@ -656,6 +779,97 @@
     updateHeaderMeta();
     const initCache = loadCache();
     if (initCache) renderReport(initCache);
+
+    // ── Ticker analysis ──
+    function tickerBadgeClass(sentiment) {
+      switch (sentiment) {
+        case 'Bullish': return 'badge-bullish';
+        case 'Bearish': return 'badge-bearish';
+        default:        return 'badge-neutral-ticker';
+      }
+    }
+
+    function showTickerError(msg) {
+      const box = document.getElementById('tickerError');
+      box.textContent = msg;
+      box.style.display = 'block';
+    }
+
+    function hideTickerError() {
+      document.getElementById('tickerError').style.display = 'none';
+    }
+
+    function renderTickerResult(data) {
+      const grid = document.getElementById('tickerResult');
+      grid.innerHTML = '';
+
+      if (data.company) {
+        const header = document.createElement('div');
+        header.className = 'ticker-company';
+        header.textContent = data.company + ' · ' + data.ticker;
+        grid.appendChild(header);
+        // Make company span full width
+        header.style.gridColumn = '1 / -1';
+      }
+
+      (data.layers || []).forEach((layer, i) => {
+        const card = document.createElement('div');
+        card.className = 'category-card' + (i === 4 ? ' ticker-card-full' : '');
+        card.innerHTML = `
+          <div class="category-header">
+            <span class="category-name">${esc(layer.name)}</span>
+            <span class="sentiment-badge ${tickerBadgeClass(layer.sentiment)}">${esc(layer.sentiment)}</span>
+          </div>
+          <p class="category-summary">${esc(layer.summary)}</p>`;
+        grid.appendChild(card);
+      });
+
+      grid.style.display = 'grid';
+    }
+
+    async function fetchTicker() {
+      const input  = document.getElementById('tickerInput');
+      const ticker = input.value.trim().toUpperCase();
+
+      if (!ticker) {
+        showTickerError('Skriv inn et ticker-symbol (f.eks. AAPL).');
+        return;
+      }
+
+      const btn = document.getElementById('tickerBtn');
+      btn.disabled = true;
+      hideTickerError();
+      document.getElementById('tickerResult').style.display = 'none';
+      document.getElementById('tickerLoading').style.display = 'grid';
+
+      try {
+        const resp = await fetch('/api/ticker', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ticker })
+        });
+
+        const data = await resp.json();
+
+        if (!resp.ok || data.error) {
+          showTickerError(data.error || 'Klarte ikke hente ticker-data. Prøv igjen.');
+          return;
+        }
+
+        if (data.found === false) {
+          showTickerError(`Ticker "${ticker}" ikke funnet.`);
+          return;
+        }
+
+        renderTickerResult(data);
+
+      } catch (e) {
+        showTickerError('Nettverksfeil. Sjekk tilkoblingen og prøv igjen.');
+      } finally {
+        document.getElementById('tickerLoading').style.display = 'none';
+        btn.disabled = false;
+      }
+    }
   </script>
 
 </body>
