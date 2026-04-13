@@ -36,9 +36,10 @@ Eksakt struktur:
 }
 
 Regler:
-- keydata: 4-6 nøkkeltall fra dagens marked (S&P 500, Nasdaq, VIX, 10-årsrente, oljepris, relevant valuta)
+- keydata: returner nøyaktig disse 4 nøkkeltallene i denne rekkefølgen: S&P 500, Nasdaq Futures, VIX, 10-årsrente US
 - sentiment-verdier er nøyaktig en av: "Bullish", "Bearish", "Mixed", "Avvent"
 - summary-tekst: ingen *, ingen #, ingen liste-symboler — kun rene setninger
+- Each category summary must be maximum 3 sentences and 60 words. Be concise.
 - score basert på helhetsvurdering av alle kategorier
 - Svar KUN med JSON-objektet, ingenting annet`;
 
@@ -89,7 +90,7 @@ module.exports = async (req, res) => {
 
       const response = await anthropic.messages.create({
         model: 'claude-sonnet-4-6',
-        max_tokens: 2000,
+        max_tokens: 800,
         system: SYSTEM_PROMPT,
         tools: [{ type: 'web_search_20250305', name: 'web_search' }],
         messages

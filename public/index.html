@@ -532,17 +532,21 @@
       scoreEl.style.color = scoreColor(score);
       animateScore(scoreEl, score);
 
-      // Keydata chips
+      // Keydata chips — maks 4, behold kun de 4 definerte nøkkeltallene
+      const ALLOWED_CHIPS = ['s&p 500', 'nasdaq futures', 'vix', '10-årsrente us'];
       const keydataRow = document.getElementById('keydataRow');
       keydataRow.innerHTML = '';
-      (data.keydata || []).forEach(item => {
-        const chip = document.createElement('div');
-        chip.className = 'keydata-chip';
-        chip.innerHTML = `
-          <span class="chip-label">${esc(item.label)}</span>
-          <span class="chip-value">${esc(item.value)}</span>`;
-        keydataRow.appendChild(chip);
-      });
+      (data.keydata || [])
+        .filter(item => ALLOWED_CHIPS.includes(item.label.toLowerCase()))
+        .slice(0, 4)
+        .forEach(item => {
+          const chip = document.createElement('div');
+          chip.className = 'keydata-chip';
+          chip.innerHTML = `
+            <span class="chip-label">${esc(item.label)}</span>
+            <span class="chip-value">${esc(item.value)}</span>`;
+          keydataRow.appendChild(chip);
+        });
 
       // Category grid
       const grid = document.getElementById('categoryGrid');
