@@ -76,7 +76,7 @@ module.exports = async (req, res) => {
 
       const response = await anthropic.messages.create({
         model: 'claude-sonnet-4-6',
-        max_tokens: 400,
+        max_tokens: 600,
         system: SYSTEM_PROMPT,
         tools: [{ type: 'web_search_20250305', name: 'web_search' }],
         messages
@@ -100,6 +100,10 @@ module.exports = async (req, res) => {
           messages.push({ role: 'user', content: toolResults });
         }
       } else {
+        // max_tokens eller annen uventet stop_reason
+        if (response.stop_reason === 'max_tokens') {
+          console.error('Ticker: max_tokens nådd — respons trunkert');
+        }
         finalText = response.content
           .filter(b => b.type === 'text')
           .map(b => b.text)
@@ -115,8 +119,13 @@ module.exports = async (req, res) => {
 
     const parsed = extractJSON(finalText);
     if (!parsed) {
-      console.error('Ticker JSON-parsing feilet:', finalText);
-      return res.status(500).json({ error: 'AI returnerte ugyldig format. Prøv igjen.' });
+      console.error('Ticker JSON-parsing feilet. Råtekst:', finalText);
+      return res.status(200).json({
+        ticker: raw,
+        company: '',
+        found: false,
+        error: 'AI returnerte ugyldig format. Prøv igjen.'
+      });
     }
 
     return res.status(200).json(parsed);
