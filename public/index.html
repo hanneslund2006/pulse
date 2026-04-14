@@ -1,887 +1,264 @@
 <!DOCTYPE html>
 <html lang="no">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>PULSE — Markedssentiment</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PULSE</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@700;800&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
     :root {
-      --green:      #1D9E75;
-      --red:        #E24B4A;
-      --amber:      #BA7517;
-      --purple:     #7F77DD;
-
-      --green-bg:   #0F2A1A;
-      --red-bg:     #2A0F0F;
-      --amber-bg:   #2A1F0F;
-      --purple-bg:  #1A0F2A;
-
-      --header-bg:  #0A0A0A;
-      --page-bg:    #0A0A0A;
-      --surface:    #111111;
-      --border:     #222222;
-
-      --text:       #F0F0F0;
-      --muted:      #888888;
-
-      --mono: 'Space Mono', monospace;
-      --sans: 'DM Sans', sans-serif;
+      --bg: #080808;
+      --surface: #111111;
+      --surface-2: #181818;
+      --border: #242424;
+      --border-accent: #2a2a2a;
+      --green: #1D9E75;
+      --red: #E24B4A;
+      --amber: #BA7517;
+      --purple: #7F77DD;
+      --text-primary: #F0F0F0;
+      --text-secondary: #888888;
+      --text-muted: #444444;
     }
 
-    /* ── Animations ── */
-    @keyframes fadeInUp {
-      from { opacity: 0; transform: translateY(12px); }
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg);
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+      color: var(--text-primary);
+      font-family: 'DM Sans', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 56px 20px 56px;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
       to   { opacity: 1; transform: translateY(0); }
     }
 
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    .site-header { animation: fadeInUp 350ms ease both; }
-
-    .report.animating .verdict-card  { animation: fadeInUp 350ms ease 100ms both; }
-    .report.animating .keydata-row   { animation: fadeInUp 350ms ease 200ms both; }
-    .report.animating .category-grid { animation: fadeInUp 350ms ease 300ms both; }
-    .report.animating .btn-refresh   { animation: fadeInUp 350ms ease 380ms both; }
-    .report.animating .disclaimer    { animation: fadeInUp 350ms ease 420ms both; }
-
-    html, body {
-      background: var(--page-bg);
-      color: var(--text);
-      font-family: var(--sans);
-      font-size: 15px;
-      line-height: 1.5;
-      min-height: 100vh;
+    .anim {
+      opacity: 0;
+      animation: fadeUp 0.45s ease forwards;
     }
 
-    /* ── Header ── */
-    .site-header {
-      background: var(--header-bg);
-      padding: 28px 0 24px;
-      border-bottom: 1px solid #1a1a1a;
-    }
-
-    .container {
-      max-width: 720px;
-      margin: 0 auto;
-      padding: 0 24px;
+    /* Header */
+    .header {
+      text-align: center;
+      margin-bottom: 4px;
     }
 
     .logo {
-      font-family: var(--mono);
+      font-family: 'Space Mono', monospace;
       font-weight: 700;
-      font-size: 32px;
-      letter-spacing: 0.04em;
+      font-size: 30px;
       color: var(--green);
+      letter-spacing: 0.14em;
     }
 
-    .header-meta {
-      font-family: var(--mono);
-      font-weight: 400;
-      font-size: 10px;
-      letter-spacing: 0.2em;
-      color: #555555;
-      margin-top: 6px;
-      text-transform: uppercase;
-    }
-
-    /* ── Main ── */
-    main {
-      padding: 32px 0 64px;
-    }
-
-    .product-desc {
-      font-family: var(--sans);
+    .tagline {
       font-size: 13px;
-      font-weight: 400;
-      color: #555555;
-      margin-bottom: 24px;
+      color: var(--text-secondary);
+      margin-top: 8px;
     }
 
-    /* ── States ── */
-    .state { display: none; }
-    .state.active { display: block; }
+    /* Gauge */
+    .gauge-wrapper {
+      margin: 32px 0 36px;
+    }
 
-    /* Idle */
-    .idle-wrap {
+    /* Cards */
+    .cards {
       display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 64px 0 48px;
       gap: 12px;
+      width: 100%;
+      max-width: 520px;
     }
 
-    .idle-label {
-      font-family: var(--mono);
-      font-size: 11px;
-      color: var(--muted);
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-    }
-
-    /* Loading */
-    .loading-wrap {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 64px 0 48px;
-      gap: 20px;
-    }
-
-    .loading-ring {
-      width: 36px;
-      height: 36px;
-      border: 2px solid #333333;
-      border-top-color: var(--text);
-      border-radius: 50%;
-      animation: spin 0.9s linear infinite;
-    }
-
-    .loading-text {
-      font-family: var(--mono);
-      font-size: 11px;
-      color: var(--muted);
-      letter-spacing: 0.06em;
-    }
-
-    /* Error */
-    .error-wrap {
-      background: var(--surface);
+    .card {
+      flex: 1;
+      height: 220px;
+      background: var(--surface-2);
       border: 0.5px solid var(--border);
-      border-radius: 12px;
-      padding: 24px;
-      margin-top: 24px;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-      align-items: flex-start;
-    }
-
-    .error-label {
-      font-family: var(--mono);
-      font-size: 10px;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      color: var(--red);
-    }
-
-    .error-msg {
-      font-size: 14px;
-      color: var(--text);
-    }
-
-    /* ── Report ── */
-    .report { display: flex; flex-direction: column; gap: 16px; }
-
-    /* Verdict card */
-    .verdict-card {
-      background: #0F1A14;
-      border: 0.5px solid var(--border);
-      border-left: 4px solid var(--green);
       border-radius: 12px;
       padding: 28px;
-      display: grid;
-      grid-template-columns: 1fr auto;
-      gap: 24px;
-      align-items: center;
-    }
-
-    .verdict-col-left {
+      cursor: pointer;
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      position: relative;
+      transition: transform 180ms ease, border-color 180ms ease;
+      user-select: none;
     }
 
-    .verdict-section-label {
-      font-family: var(--mono);
-      font-size: 10px;
-      font-weight: 700;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color: #FFFFFF;
+    .card:hover {
+      transform: translateY(-3px);
+      border-color: var(--border-accent);
     }
 
-    .verdict-text {
-      font-family: var(--sans);
-      font-weight: 500;
-      font-size: 18px;
-      color: var(--text);
-      line-height: 1.35;
+    .card:hover .arrow {
+      transform: translateX(4px);
     }
 
-    .verdict-col-right {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 4px;
+    .card-icon {
+      width: 48px;
+      height: 48px;
+      margin-bottom: 16px;
       flex-shrink: 0;
     }
 
-    .score-number {
-      font-family: var(--mono);
+    .card-title {
+      font-family: 'Syne', sans-serif;
       font-weight: 700;
-      font-size: 52px;
-      line-height: 1;
-      transition: color 0.3s;
+      font-size: 22px;
+      letter-spacing: 0.02em;
+      color: var(--text-primary);
     }
 
-    .score-label {
-      font-family: var(--mono);
-      font-size: 9px;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      color: var(--muted);
-    }
-
-    /* Keydata */
-    .keydata-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-    }
-
-    .keydata-chip {
-      background: #1A1A1A;
-      border: 0.5px solid #333333;
-      border-radius: 999px;
-      padding: 6px 14px;
-      display: flex;
-      align-items: center;
-      gap: 7px;
-    }
-
-    .chip-label {
-      font-family: var(--mono);
-      font-size: 10px;
-      letter-spacing: 0.06em;
-      color: var(--muted);
-      text-transform: uppercase;
-    }
-
-    .chip-value {
-      font-family: var(--mono);
-      font-size: 12px;
-      font-weight: 700;
-      color: var(--text);
-    }
-
-    /* Category grid */
-    .category-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-    }
-
-    .category-card {
-      background: var(--surface);
-      border: 0.5px solid var(--border);
-      border-radius: 12px;
-      padding: 22px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      transition: transform 150ms ease, border-color 150ms ease;
-    }
-
-    .category-card:hover {
-      transform: scale(1.01);
-      border-color: #444444;
-    }
-
-    .category-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    .category-name {
-      font-family: var(--mono);
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: 0.1em;
-      color: var(--text);
-    }
-
-    .sentiment-badge {
-      font-family: var(--sans);
-      font-weight: 500;
-      font-size: 11px;
-      padding: 3px 10px;
-      border-radius: 999px;
-    }
-
-    .badge-bullish { background: var(--green-bg);  color: var(--green); }
-    .badge-bearish { background: var(--red-bg);    color: var(--red); }
-    .badge-mixed   { background: var(--purple-bg); color: var(--purple); }
-    .badge-avvent  { background: var(--amber-bg);  color: var(--amber); }
-
-    .category-summary {
-      font-family: var(--sans);
+    .card-desc {
       font-size: 13px;
-      color: #AAAAAA;
-      line-height: 1.6;
+      color: var(--text-secondary);
+      margin-top: 6px;
+      line-height: 1.55;
     }
 
-    /* Buttons */
-    .btn-refresh,
-    .btn-fetch {
-      font-family: var(--mono);
-      font-size: 12px;
-      font-weight: 700;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      color: var(--text);
-      background: #1A1A1A;
-      border: 0.5px solid #333333;
-      border-radius: 8px;
-      padding: 14px 28px;
-      cursor: pointer;
-      transition: background 0.15s;
+    .arrow {
+      position: absolute;
+      bottom: 28px;
+      right: 28px;
+      font-size: 18px;
+      color: var(--text-muted);
+      transition: transform 180ms ease;
     }
 
-    .btn-refresh:hover:not(:disabled),
-    .btn-fetch:hover:not(:disabled) {
-      background: #222222;
-    }
-
-    .btn-refresh:disabled,
-    .btn-fetch:disabled {
-      opacity: 0.4;
-      cursor: not-allowed;
-    }
-
-    .btn-refresh { width: 100%; margin-top: 4px; }
-
-    /* Disclaimer */
-    .disclaimer {
-      font-family: var(--sans);
-      font-size: 11px;
-      color: var(--muted);
-      text-align: center;
-      line-height: 1.5;
-      margin-top: 4px;
-    }
-
-    /* Mobile */
-    @media (max-width: 520px) {
-      .verdict-card {
-        grid-template-columns: 1fr;
+    @media (max-width: 600px) {
+      .cards {
+        flex-direction: column;
       }
-      .verdict-col-right {
-        flex-direction: row;
-        justify-content: flex-start;
-        align-items: baseline;
-        gap: 10px;
-      }
-      .score-number { font-size: 40px; }
-      .category-grid { grid-template-columns: 1fr; }
-    }
-
-    /* ── Ticker section ── */
-    .ticker-section {
-      margin-top: 8px;
-      padding-top: 28px;
-      border-top: 1px solid var(--border);
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-    }
-
-    .ticker-section-label {
-      font-family: var(--mono);
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: 0.1em;
-      color: var(--muted);
-      text-transform: uppercase;
-    }
-
-    .ticker-input-row {
-      display: flex;
-      gap: 10px;
-    }
-
-    .ticker-input {
-      flex: 1;
-      background: #1A1A1A;
-      border: 0.5px solid #333333;
-      border-radius: 8px;
-      padding: 12px 16px;
-      font-family: var(--mono);
-      font-size: 12px;
-      color: var(--text);
-      outline: none;
-      transition: border-color 150ms ease;
-    }
-
-    .ticker-input::placeholder { color: var(--muted); }
-    .ticker-input:focus { border-color: #555555; }
-
-    .btn-ticker {
-      font-family: var(--mono);
-      font-size: 12px;
-      font-weight: 700;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      color: var(--text);
-      background: #1A1A1A;
-      border: 0.5px solid #333333;
-      border-radius: 8px;
-      padding: 12px 20px;
-      cursor: pointer;
-      white-space: nowrap;
-      transition: background 0.15s;
-    }
-
-    .btn-ticker:hover:not(:disabled) { background: #222222; }
-    .btn-ticker:disabled { opacity: 0.4; cursor: not-allowed; }
-
-    .ticker-error-box {
-      background: var(--red-bg);
-      border: 0.5px solid var(--red);
-      border-radius: 8px;
-      padding: 12px 16px;
-      font-family: var(--sans);
-      font-size: 13px;
-      color: var(--red);
-    }
-
-    .ticker-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-    }
-
-    .ticker-card-full { grid-column: 1 / -1; }
-
-    /* Pulsing skeleton */
-    @keyframes tickerPulse {
-      0%, 100% { opacity: 0.25; }
-      50%       { opacity: 0.55; }
-    }
-
-    .ticker-skeleton { min-height: 88px; animation: tickerPulse 1.4s ease-in-out infinite; }
-    .ticker-skeleton:nth-child(2) { animation-delay: 0.12s; }
-    .ticker-skeleton:nth-child(3) { animation-delay: 0.24s; }
-    .ticker-skeleton:nth-child(4) { animation-delay: 0.36s; }
-    .ticker-skeleton:nth-child(5) { animation-delay: 0.48s; }
-
-    .badge-neutral-ticker { background: #1A1A1A; color: var(--muted); border: 0.5px solid #333333; }
-
-    .ticker-company {
-      font-family: var(--mono);
-      font-size: 10px;
-      color: var(--muted);
-      letter-spacing: 0.06em;
-    }
-
-    @media (max-width: 520px) {
-      .ticker-grid { grid-template-columns: 1fr; }
-      .ticker-card-full { grid-column: auto; }
     }
   </style>
 </head>
 <body>
 
-  <header class="site-header">
-    <div class="container">
-      <div class="logo">PULSE_</div>
-      <div class="header-meta" id="headerMeta">markedssentiment</div>
+  <div class="header anim" style="animation-delay: 0ms;">
+    <div class="logo">PULSE</div>
+    <div class="tagline">Daglig markedsorientering for swingtraders.</div>
+  </div>
+
+  <div class="gauge-wrapper anim" style="animation-delay: 80ms;">
+    <svg width="200" height="200" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="100" cy="100" r="80"
+        fill="none" stroke="#242424" stroke-width="8"/>
+      <circle id="gauge-arc"
+        cx="100" cy="100" r="80"
+        fill="none"
+        stroke="#242424"
+        stroke-width="8"
+        stroke-linecap="round"
+        stroke-dasharray="502.65"
+        stroke-dashoffset="502.65"
+        transform="rotate(-90 100 100)"/>
+      <text id="gauge-score"
+        x="100" y="98"
+        font-family="'Space Mono', monospace"
+        font-weight="700"
+        font-size="48"
+        fill="#444444"
+        text-anchor="middle"
+        dominant-baseline="middle">--</text>
+      <text id="gauge-label"
+        x="100" y="124"
+        font-family="'Space Mono', monospace"
+        font-size="10"
+        fill="#444444"
+        text-anchor="middle"
+        letter-spacing="2">SENTIMENT</text>
+    </svg>
+  </div>
+
+  <div class="cards">
+    <div class="card anim" style="animation-delay: 160ms;" onclick="location.href='market.html'">
+      <svg class="card-icon" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="4" y="38" width="5" height="6" rx="1" fill="#1D9E75" opacity="0.3"/>
+        <rect x="13" y="28" width="5" height="16" rx="1" fill="#1D9E75" opacity="0.45"/>
+        <rect x="22" y="32" width="5" height="12" rx="1" fill="#1D9E75" opacity="0.35"/>
+        <rect x="31" y="18" width="5" height="26" rx="1" fill="#1D9E75" opacity="0.55"/>
+        <polyline points="6.5,33 15.5,22 24.5,26 40,10"
+          stroke="#1D9E75" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        <circle cx="40" cy="10" r="2.5" fill="#1D9E75"/>
+      </svg>
+      <div class="card-title">MARKED</div>
+      <div class="card-desc">Daglig markedsoversikt med sentiment per sektor.</div>
+      <div class="arrow">→</div>
     </div>
-  </header>
 
-  <main>
-    <div class="container">
-
-      <p class="product-desc">Daglig markedsorientering og ticker-analyse for swingtraders.</p>
-
-      <!-- Idle -->
-      <div id="stateIdle" class="state active">
-        <div class="idle-wrap">
-          <span class="idle-label">Klar til analyse</span>
-          <button class="btn-fetch" onclick="fetchSentiment()">Hent dagens rapport</button>
-        </div>
-      </div>
-
-      <!-- Loading -->
-      <div id="stateLoading" class="state">
-        <div class="loading-wrap">
-          <div class="loading-ring"></div>
-          <div class="loading-text" id="loadingText">Søker etter markedsdata...</div>
-        </div>
-      </div>
-
-      <!-- Error -->
-      <div id="stateError" class="state">
-        <div class="error-wrap">
-          <span class="error-label">Feil</span>
-          <p class="error-msg" id="errorMsg"></p>
-          <button class="btn-fetch" onclick="fetchSentiment()">Prøv igjen</button>
-        </div>
-      </div>
-
-      <!-- Report -->
-      <div id="stateReport" class="state">
-        <div class="report">
-
-          <!-- 1. Verdict card -->
-          <div class="verdict-card">
-            <div class="verdict-col-left">
-              <span class="verdict-section-label">Dagens konklusjon</span>
-              <div class="verdict-text" id="verdictText"></div>
-            </div>
-            <div class="verdict-col-right">
-              <div class="score-number" id="scoreNumber"></div>
-              <div class="score-label">Sentiment</div>
-            </div>
-          </div>
-
-          <!-- 2. Keydata chips -->
-          <div class="keydata-row" id="keydataRow"></div>
-
-          <!-- 3. Category grid -->
-          <div class="category-grid" id="categoryGrid"></div>
-
-          <!-- 4. Refresh -->
-          <button class="btn-refresh" id="refreshBtn" onclick="fetchSentiment(true)">
-            Hent ny rapport
-          </button>
-
-          <!-- 5. Disclaimer -->
-          <p class="disclaimer">
-            Generert av AI basert på offentlig tilgjengelig informasjon.<br>
-            Ikke finansiell rådgivning. Gjør egne vurderinger før du handler.
-          </p>
-
-        </div>
-      </div>
-
-      <!-- ── Ticker analyse ── -->
-      <div class="ticker-section">
-        <span class="ticker-section-label">Ticker-analyse</span>
-        <div class="ticker-input-row">
-          <input type="text" id="tickerInput" class="ticker-input"
-                 placeholder="Ticker (f.eks. AAPL)"
-                 onkeydown="if(event.key==='Enter')fetchTicker()" />
-          <button class="btn-ticker" id="tickerBtn" onclick="fetchTicker()">Analyser</button>
-        </div>
-        <div id="tickerError" class="ticker-error-box" style="display:none"></div>
-        <div id="tickerLoading" class="ticker-grid" style="display:none">
-          <div class="category-card ticker-skeleton"></div>
-          <div class="category-card ticker-skeleton"></div>
-          <div class="category-card ticker-skeleton"></div>
-          <div class="category-card ticker-skeleton"></div>
-          <div class="category-card ticker-skeleton ticker-card-full"></div>
-        </div>
-        <div id="tickerResult" class="ticker-grid" style="display:none"></div>
-      </div>
-
+    <div class="card anim" style="animation-delay: 240ms;" onclick="location.href='ticker.html'">
+      <svg class="card-icon" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="21" cy="21" r="13" stroke="#1D9E75" stroke-width="2.5" fill="none"/>
+        <path d="M31 31 L43 43" stroke="#1D9E75" stroke-width="2.5" stroke-linecap="round"/>
+        <path d="M15 21 H27" stroke="#1D9E75" stroke-width="2" stroke-linecap="round"/>
+        <path d="M21 15 V27" stroke="#1D9E75" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      <div class="card-title">TICKER</div>
+      <div class="card-desc">Dyp analyse av enkeltaksjer på fem lag.</div>
+      <div class="arrow">→</div>
     </div>
-  </main>
+  </div>
 
   <script>
-    // ── State management ──
-    const STATES = ['stateIdle', 'stateLoading', 'stateError', 'stateReport'];
+    const CIRC = 502.65;
 
-    function showState(id) {
-      STATES.forEach(s => {
-        document.getElementById(s).classList.toggle('active', s === id);
-      });
+    function scoreColor(s) {
+      if (s < 40) return '#E24B4A';
+      if (s <= 60) return '#BA7517';
+      return '#1D9E75';
     }
 
-    // ── Loading messages ──
-    const LOADING_MSGS = [
-      'Søker etter markedsdata...',
-      'Leser S&P 500 og Nasdaq...',
-      'Sjekker makroøkonomiske indikatorer...',
-      'Analyserer sektorsentiment...',
-      'Kompilerer rapport...'
-    ];
+    function animateGauge(target) {
+      const arc   = document.getElementById('gauge-arc');
+      const score = document.getElementById('gauge-score');
+      const col   = scoreColor(target);
 
-    let loadingTimer;
+      arc.setAttribute('stroke', col);
+      score.setAttribute('fill', col);
 
-    function startLoadingMessages() {
-      let i = 0;
-      const el = document.getElementById('loadingText');
-      el.textContent = LOADING_MSGS[0];
-      loadingTimer = setInterval(() => {
-        i = (i + 1) % LOADING_MSGS.length;
-        el.textContent = LOADING_MSGS[i];
-      }, 3000);
-    }
+      const targetOffset = CIRC * (1 - target / 100);
+      const dur = 1200;
+      const t0  = performance.now();
 
-    function stopLoadingMessages() {
-      clearInterval(loadingTimer);
-    }
-
-    // ── Header timestamp ──
-    function updateHeaderMeta() {
-      const now = new Date();
-      const dato = now.toLocaleDateString('no-NO', { day: '2-digit', month: '2-digit', year: 'numeric' });
-      const tid  = now.toLocaleTimeString('no-NO', { hour: '2-digit', minute: '2-digit' });
-      document.getElementById('headerMeta').textContent =
-        `markedssentiment · ${dato} · ${tid}`;
-    }
-
-    // ── Score color ──
-    function scoreColor(score) {
-      if (score < 40) return getComputedStyle(document.documentElement).getPropertyValue('--red').trim();
-      if (score > 60) return getComputedStyle(document.documentElement).getPropertyValue('--green').trim();
-      return getComputedStyle(document.documentElement).getPropertyValue('--amber').trim();
-    }
-
-    // ── Badge class ──
-    function badgeClass(sentiment) {
-      switch (sentiment) {
-        case 'Bullish': return 'badge-bullish';
-        case 'Bearish': return 'badge-bearish';
-        case 'Mixed':   return 'badge-mixed';
-        case 'Avvent':  return 'badge-avvent';
-        default:        return 'badge-avvent';
+      function ease(t) {
+        return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
       }
-    }
 
-    // ── Escape HTML ──
-    function esc(str) {
-      return String(str)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;');
-    }
-
-    // ── Render report ──
-    function renderReport(data) {
-      updateHeaderMeta();
-
-      // Verdict
-      document.getElementById('verdictText').textContent = data.verdict || '–';
-
-      // Score
-      const score = typeof data.score === 'number' ? Math.round(data.score) : 50;
-      const scoreEl = document.getElementById('scoreNumber');
-      scoreEl.style.color = scoreColor(score);
-      animateScore(scoreEl, score);
-
-      // Keydata chips — vis de 4 første fra API-responsen (prompt styrer innhold)
-      const keydataRow = document.getElementById('keydataRow');
-      keydataRow.innerHTML = '';
-      (data.keydata || []).slice(0, 4).forEach(item => {
-        const chip = document.createElement('div');
-        chip.className = 'keydata-chip';
-        chip.innerHTML = `
-          <span class="chip-label">${esc(item.label)}</span>
-          <span class="chip-value">${esc(item.value)}</span>`;
-        keydataRow.appendChild(chip);
-      });
-
-      // Category grid
-      const grid = document.getElementById('categoryGrid');
-      grid.innerHTML = '';
-      (data.categories || []).forEach(cat => {
-        const card = document.createElement('div');
-        card.className = 'category-card';
-        card.innerHTML = `
-          <div class="category-header">
-            <span class="category-name">${esc(cat.name)}</span>
-            <span class="sentiment-badge ${badgeClass(cat.sentiment)}">${esc(cat.sentiment)}</span>
-          </div>
-          <p class="category-summary">${esc(cat.summary)}</p>`;
-        grid.appendChild(card);
-      });
-
-      // Trigger staggered fade-in
-      const reportEl = document.querySelector('.report');
-      reportEl.classList.remove('animating');
-      void reportEl.offsetHeight; // force reflow
-      reportEl.classList.add('animating');
-
-      showState('stateReport');
-    }
-
-    // ── Score counter animation ──
-    function animateScore(el, target) {
-      const duration = 800;
-      const start = performance.now();
-      function step(now) {
-        const progress = Math.min((now - start) / duration, 1);
-        const eased = 1 - (1 - progress) * (1 - progress); // ease-out quad
-        el.textContent = Math.round(eased * target);
-        if (progress < 1) requestAnimationFrame(step);
-      }
-      requestAnimationFrame(step);
-    }
-
-    // ── Cache ──
-    const CACHE_KEY = 'pulse_cache';
-    const todayStr = () => new Date().toISOString().split('T')[0];
-
-    function loadCache() {
-      try {
-        const raw = localStorage.getItem(CACHE_KEY);
-        if (!raw) return null;
-        const cached = JSON.parse(raw);
-        if (cached.date === todayStr()) return cached.data;
-      } catch (_) {}
-      return null;
-    }
-
-    function saveCache(data) {
-      try {
-        localStorage.setItem(CACHE_KEY, JSON.stringify({ date: todayStr(), data }));
-      } catch (_) {}
-    }
-
-    // ── Fetch ──
-    async function fetchSentiment(forceRefresh = false) {
-      const refreshBtn = document.getElementById('refreshBtn');
-      if (refreshBtn) refreshBtn.disabled = true;
-
-      // Force refresh: clear cache
-      if (forceRefresh) {
-        localStorage.removeItem(CACHE_KEY);
-      } else {
-        // Check cache before hitting API
-        const cached = loadCache();
-        if (cached) {
-          renderReport(cached);
-          if (refreshBtn) refreshBtn.disabled = false;
-          return;
+      (function tick(now) {
+        const p = Math.min((now - t0) / dur, 1);
+        const e = ease(p);
+        arc.setAttribute('stroke-dashoffset', CIRC - e * (CIRC - targetOffset));
+        score.textContent = Math.round(e * target);
+        if (p < 1) {
+          requestAnimationFrame(tick);
+        } else {
+          score.textContent = target;
         }
+      })(t0);
+    }
+
+    // Read score from cache — same key as market.html
+    const cacheKey = 'pulse_market_' + new Date().toISOString().slice(0, 10);
+    try {
+      const cached = JSON.parse(localStorage.getItem(cacheKey) || 'null');
+      if (cached && typeof cached.score === 'number') {
+        setTimeout(() => animateGauge(cached.score), 400);
       }
-
-      showState('stateLoading');
-      startLoadingMessages();
-
-      try {
-        const resp = await fetch('/api/sentiment', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' }
-        });
-
-        const data = await resp.json();
-
-        if (!resp.ok || data.error) {
-          showError(data.error || 'Ukjent feil. Prøv igjen.');
-          return;
-        }
-
-        saveCache(data);
-        renderReport(data);
-
-      } catch (e) {
-        showError('Nettverksfeil. Sjekk tilkoblingen og prøv igjen.');
-      } finally {
-        stopLoadingMessages();
-        if (refreshBtn) refreshBtn.disabled = false;
-      }
-    }
-
-    function showError(msg) {
-      document.getElementById('errorMsg').textContent = msg;
-      showState('stateError');
-    }
-
-    // Init: load from cache if available, else show idle
-    updateHeaderMeta();
-    const initCache = loadCache();
-    if (initCache) renderReport(initCache);
-
-    // ── Ticker analysis ──
-    function tickerBadgeClass(sentiment) {
-      switch (sentiment) {
-        case 'Bullish': return 'badge-bullish';
-        case 'Bearish': return 'badge-bearish';
-        default:        return 'badge-neutral-ticker';
-      }
-    }
-
-    function showTickerError(msg) {
-      const box = document.getElementById('tickerError');
-      box.textContent = msg;
-      box.style.display = 'block';
-    }
-
-    function hideTickerError() {
-      document.getElementById('tickerError').style.display = 'none';
-    }
-
-    function renderTickerResult(data) {
-      const grid = document.getElementById('tickerResult');
-      grid.innerHTML = '';
-
-      if (data.company) {
-        const header = document.createElement('div');
-        header.className = 'ticker-company';
-        header.textContent = data.company + ' · ' + data.ticker;
-        grid.appendChild(header);
-        // Make company span full width
-        header.style.gridColumn = '1 / -1';
-      }
-
-      (data.layers || []).forEach((layer, i) => {
-        const card = document.createElement('div');
-        card.className = 'category-card' + (i === 4 ? ' ticker-card-full' : '');
-        card.innerHTML = `
-          <div class="category-header">
-            <span class="category-name">${esc(layer.name)}</span>
-            <span class="sentiment-badge ${tickerBadgeClass(layer.sentiment)}">${esc(layer.sentiment)}</span>
-          </div>
-          <p class="category-summary">${esc(layer.summary)}</p>`;
-        grid.appendChild(card);
-      });
-
-      grid.style.display = 'grid';
-    }
-
-    async function fetchTicker() {
-      const input  = document.getElementById('tickerInput');
-      const ticker = input.value.trim().toUpperCase();
-
-      if (!ticker) {
-        showTickerError('Skriv inn et ticker-symbol (f.eks. AAPL).');
-        return;
-      }
-
-      const btn = document.getElementById('tickerBtn');
-      btn.disabled = true;
-      hideTickerError();
-      document.getElementById('tickerResult').style.display = 'none';
-      document.getElementById('tickerLoading').style.display = 'grid';
-
-      try {
-        const resp = await fetch('/api/ticker', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ticker })
-        });
-
-        const data = await resp.json();
-
-        if (!resp.ok || data.error) {
-          showTickerError(data.error || 'Klarte ikke hente ticker-data. Prøv igjen.');
-          return;
-        }
-
-        if (data.found === false) {
-          showTickerError(`Ticker "${ticker}" ikke funnet.`);
-          return;
-        }
-
-        renderTickerResult(data);
-
-      } catch (e) {
-        showTickerError('Nettverksfeil. Sjekk tilkoblingen og prøv igjen.');
-      } finally {
-        document.getElementById('tickerLoading').style.display = 'none';
-        btn.disabled = false;
-      }
-    }
+    } catch (e) {}
   </script>
-
 </body>
 </html>

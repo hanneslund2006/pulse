@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PULSE — Ticker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@700;800&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #080808;
+      --surface: #111111;
+      --surface-2: #181818;
+      --border: #242424;
+      --border-accent: #2a2a2a;
+      --green: #1D9E75;
+      --red: #E24B4A;
+      --amber: #BA7517;
+      --purple: #7F77DD;
+      --text-primary: #F0F0F0;
+      --text-secondary: #888888;
+      --text-muted: #444444;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg);
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+      color: var(--text-primary);
+      font-family: 'DM Sans', sans-serif;
+      min-height: 100vh;
+      padding: 32px 20px 64px;
+    }
+
+    .container {
+      max-width: 560px;
+      margin: 0 auto;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .anim {
+      opacity: 0;
+      animation: fadeUp 0.45s ease forwards;
+    }
+
+    /* Back */
+    .back {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-family: 'Space Mono', monospace;
+      font-size: 11px;
+      color: var(--text-muted);
+      text-decoration: none;
+      letter-spacing: 0.06em;
+      margin-bottom: 36px;
+      transition: color 180ms;
+    }
+    .back:hover { color: var(--text-secondary); }
+
+    /* Page header */
+    .page-title {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 28px;
+      letter-spacing: 0.02em;
+      margin-bottom: 4px;
+    }
+
+    .page-subtitle {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-bottom: 32px;
+    }
+
+    /* Search */
+    .search-wrap {
+      margin-bottom: 14px;
+    }
+
+    .search-input {
+      width: 100%;
+      background: var(--surface);
+      border: 0.5px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 18px;
+      font-family: 'Space Mono', monospace;
+      font-size: 18px;
+      color: var(--text-primary);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      outline: none;
+      transition: border-color 200ms, box-shadow 200ms;
+    }
+
+    .search-input::placeholder {
+      color: var(--text-muted);
+      font-size: 13px;
+      text-transform: none;
+      letter-spacing: 0.04em;
+      font-family: 'DM Sans', sans-serif;
+    }
+
+    .search-input:focus {
+      border-color: rgba(29, 158, 117, 0.4);
+      box-shadow: 0 0 0 2px rgba(29, 158, 117, 0.3);
+    }
+
+    /* Pills */
+    .pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 40px;
+    }
+
+    .pill {
+      font-family: 'Space Mono', monospace;
+      font-size: 11px;
+      color: var(--text-muted);
+      border: 0.5px solid var(--border);
+      border-radius: 4px;
+      padding: 5px 10px;
+      cursor: pointer;
+      letter-spacing: 0.06em;
+      transition: color 150ms, border-color 150ms, background 150ms;
+      user-select: none;
+    }
+
+    .pill:hover {
+      color: var(--green);
+      border-color: rgba(29, 158, 117, 0.4);
+      background: rgba(29, 158, 117, 0.06);
+    }
+
+    /* Loading */
+    .loading-state {
+      display: none;
+      font-family: 'Space Mono', monospace;
+      font-size: 11px;
+      color: var(--text-muted);
+      letter-spacing: 0.1em;
+      padding: 32px 0;
+      text-align: center;
+    }
+
+    .loading-state.visible { display: block; }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0; }
+    }
+
+    .cursor {
+      display: inline-block;
+      animation: blink 1s step-end infinite;
+    }
+
+    /* Error */
+    .error-msg {
+      display: none;
+      font-family: 'Space Mono', monospace;
+      font-size: 12px;
+      color: var(--red);
+      padding: 16px 20px;
+      background: rgba(226, 75, 74, 0.06);
+      border: 0.5px solid rgba(226, 75, 74, 0.2);
+      border-radius: 8px;
+      letter-spacing: 0.04em;
+    }
+
+    .error-msg.visible { display: block; }
+
+    /* Result */
+    .result-section {
+      display: none;
+    }
+
+    .result-section.visible { display: block; }
+
+    .result-header {
+      margin-bottom: 20px;
+    }
+
+    .result-company {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 22px;
+    }
+
+    .result-ticker-badge {
+      font-family: 'Space Mono', monospace;
+      font-size: 11px;
+      color: var(--green);
+      letter-spacing: 0.1em;
+      margin-top: 5px;
+    }
+
+    /* Layer cards */
+    .layer-card {
+      background: var(--surface);
+      border: 0.5px solid var(--border);
+      border-left: 4px solid var(--border);
+      border-radius: 12px;
+      padding: 20px 24px;
+      margin-bottom: 10px;
+      transition: transform 180ms ease;
+    }
+
+    .layer-card:last-child { margin-bottom: 0; }
+
+    .layer-card:hover { transform: translateY(-2px); }
+
+    .layer-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .layer-name {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 13px;
+      letter-spacing: 0.06em;
+    }
+
+    .badge {
+      font-family: 'Space Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 0.1em;
+      padding: 3px 7px;
+      border-radius: 3px;
+    }
+
+    .layer-summary {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.55;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <a href="index.html" class="back anim" style="animation-delay: 0ms;">← TILBAKE</a>
+
+    <div class="page-title anim" style="animation-delay: 40ms;">TICKER</div>
+    <div class="page-subtitle anim" style="animation-delay: 80ms;">Analyser en aksje på fem lag.</div>
+
+    <div class="search-wrap anim" style="animation-delay: 120ms;">
+      <input
+        type="text"
+        id="search-input"
+        class="search-input"
+        placeholder="Skriv inn ticker — eks. AAPL, NVDA, TSLA"
+        maxlength="6"
+        autocomplete="off"
+        autocorrect="off"
+        autocapitalize="characters"
+        spellcheck="false"
+      >
+    </div>
+
+    <div class="pills anim" id="pills" style="animation-delay: 160ms;"></div>
+
+    <div class="loading-state" id="loading-state">
+      HENTER DATA <span class="cursor">_</span>
+    </div>
+
+    <div class="error-msg" id="error-msg"></div>
+
+    <div class="result-section" id="result-section">
+      <div class="result-header">
+        <div class="result-company" id="result-company"></div>
+        <div class="result-ticker-badge" id="result-ticker-badge"></div>
+      </div>
+      <div id="layers-container"></div>
+    </div>
+
+  </div>
+
+  <script>
+    const POPULAR = ['AAPL', 'NVDA', 'TSLA', 'MSFT', 'AMZN', 'META', 'CEG'];
+
+    const SENTIMENT_COLORS = {
+      'Bullish': '#1D9E75',
+      'Bearish': '#E24B4A',
+      'Nøytral': '#3A3A3A',
+    };
+
+    const BADGE_TEXT_COLORS = {
+      'Bullish': '#1D9E75',
+      'Bearish': '#E24B4A',
+      'Nøytral': '#555555',
+    };
+
+    const BADGE_BG = {
+      'Bullish': 'rgba(29,158,117,0.1)',
+      'Bearish': 'rgba(226,75,74,0.1)',
+      'Nøytral': '#1e1e1e',
+    };
+
+    function esc(str) {
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    // Render pills
+    const pillsEl = document.getElementById('pills');
+    pillsEl.innerHTML = POPULAR.map(t =>
+      `<div class="pill" onclick="runSearch('${t}')">${t}</div>`
+    ).join('');
+
+    // Search input
+    const input = document.getElementById('search-input');
+
+    input.addEventListener('input', () => {
+      input.value = input.value.toUpperCase().replace(/[^A-Z0-9.]/g, '');
+    });
+
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Enter') {
+        const val = input.value.trim();
+        if (val) runSearch(val);
+      }
+    });
+
+    function setLoading(show) {
+      document.getElementById('loading-state').classList.toggle('visible', show);
+    }
+
+    function setError(msg) {
+      const el = document.getElementById('error-msg');
+      if (msg) {
+        el.textContent = msg;
+        el.classList.add('visible');
+      } else {
+        el.classList.remove('visible');
+      }
+    }
+
+    function setResult(show) {
+      document.getElementById('result-section').classList.toggle('visible', show);
+    }
+
+    function animateLayers() {
+      const cards = document.querySelectorAll('.layer-card');
+      cards.forEach((card, i) => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(16px)';
+        card.style.transition = 'none';
+        requestAnimationFrame(() => {
+          setTimeout(() => {
+            card.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
+            card.style.opacity = '1';
+            card.style.transform = 'translateY(0)';
+          }, i * 80);
+        });
+      });
+    }
+
+    function renderTicker(data) {
+      document.getElementById('result-company').textContent = data.company || data.ticker;
+      document.getElementById('result-ticker-badge').textContent = '● ' + data.ticker;
+
+      const container = document.getElementById('layers-container');
+      container.innerHTML = (data.layers || []).map(layer => {
+        const borderColor = SENTIMENT_COLORS[layer.sentiment] || '#3A3A3A';
+        const badgeColor  = BADGE_TEXT_COLORS[layer.sentiment] || '#555';
+        const badgeBg     = BADGE_BG[layer.sentiment] || '#1e1e1e';
+        return `
+          <div class="layer-card" style="border-left-color: ${borderColor};">
+            <div class="layer-header">
+              <div class="layer-name">${esc(layer.name.toUpperCase())}</div>
+              <div class="badge" style="color: ${badgeColor}; background: ${badgeBg};">
+                ${esc(layer.sentiment.toUpperCase())}
+              </div>
+            </div>
+            <div class="layer-summary">${esc(layer.summary)}</div>
+          </div>
+        `;
+      }).join('');
+
+      // Show result header with animation
+      const header = document.getElementById('result-section').querySelector('.result-header');
+      header.style.opacity = '0';
+      header.style.transform = 'translateY(16px)';
+      header.style.transition = 'none';
+      requestAnimationFrame(() => {
+        setTimeout(() => {
+          header.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
+          header.style.opacity = '1';
+          header.style.transform = 'translateY(0)';
+        }, 0);
+      });
+
+      setResult(true);
+      animateLayers();
+    }
+
+    async function runSearch(ticker) {
+      ticker = ticker.trim().toUpperCase();
+      if (!ticker) return;
+
+      input.value = ticker;
+      setError(null);
+      setResult(false);
+      setLoading(true);
+
+      try {
+        const res = await fetch('/api/ticker', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ticker })
+        });
+
+        if (!res.ok) throw new Error('Serverfeil ' + res.status);
+        const data = await res.json();
+
+        setLoading(false);
+
+        if (data.error) { setError(data.error); return; }
+
+        if (!data.found) {
+          setError(`Fant ikke ticker "${ticker}". Sjekk symbolet og prøv igjen.`);
+          return;
+        }
+
+        renderTicker(data);
+      } catch (e) {
+        setLoading(false);
+        setError('Klarte ikke hente data. Sjekk tilkoblingen og prøv igjen.');
+      }
+    }
+  </script>
+</body>
+</html>

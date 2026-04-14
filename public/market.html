@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PULSE — Marked</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@700;800&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #080808;
+      --surface: #111111;
+      --surface-2: #181818;
+      --border: #242424;
+      --border-accent: #2a2a2a;
+      --green: #1D9E75;
+      --red: #E24B4A;
+      --amber: #BA7517;
+      --purple: #7F77DD;
+      --text-primary: #F0F0F0;
+      --text-secondary: #888888;
+      --text-muted: #444444;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg);
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+      color: var(--text-primary);
+      font-family: 'DM Sans', sans-serif;
+      min-height: 100vh;
+      padding: 32px 20px 64px;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .anim {
+      opacity: 0;
+      animation: fadeUp 0.45s ease forwards;
+    }
+
+    /* Back */
+    .back {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-family: 'Space Mono', monospace;
+      font-size: 11px;
+      color: var(--text-muted);
+      text-decoration: none;
+      letter-spacing: 0.06em;
+      margin-bottom: 36px;
+      transition: color 180ms;
+    }
+    .back:hover { color: var(--text-secondary); }
+
+    /* Page header */
+    .page-title {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 28px;
+      letter-spacing: 0.02em;
+      margin-bottom: 4px;
+    }
+
+    .page-date {
+      font-family: 'Space Mono', monospace;
+      font-size: 10px;
+      color: var(--text-muted);
+      letter-spacing: 0.1em;
+      margin-bottom: 36px;
+    }
+
+    /* Empty state */
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 64px 0 48px;
+      gap: 8px;
+    }
+
+    .empty-label {
+      font-family: 'Space Mono', monospace;
+      font-size: 11px;
+      color: var(--text-muted);
+      letter-spacing: 0.1em;
+      margin-bottom: 20px;
+    }
+
+    /* Data sections */
+    .data-sections { display: none; }
+    .data-sections.visible { display: flex; flex-direction: column; gap: 14px; }
+
+    /* Verdict card */
+    .verdict-card {
+      background: var(--surface);
+      border: 0.5px solid var(--border);
+      border-left: 4px solid var(--green);
+      border-radius: 12px;
+      padding: 20px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .verdict-left { flex: 1; min-width: 0; }
+
+    .verdict-label {
+      font-family: 'Space Mono', monospace;
+      font-size: 9px;
+      color: var(--text-muted);
+      letter-spacing: 0.15em;
+      margin-bottom: 8px;
+    }
+
+    .verdict-text {
+      font-size: 15px;
+      line-height: 1.45;
+      color: var(--text-primary);
+    }
+
+    .verdict-right {
+      flex-shrink: 0;
+      text-align: right;
+    }
+
+    .verdict-score {
+      font-family: 'Space Mono', monospace;
+      font-weight: 700;
+      font-size: 52px;
+      color: var(--green);
+      line-height: 1;
+    }
+
+    .verdict-score-sub {
+      font-family: 'Space Mono', monospace;
+      font-size: 9px;
+      color: var(--text-muted);
+      letter-spacing: 0.1em;
+      margin-top: 4px;
+    }
+
+    /* Keydata chips */
+    .keydata {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .chip {
+      background: var(--surface);
+      border: 0.5px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 14px;
+      flex: 1;
+      min-width: 120px;
+    }
+
+    .chip-label {
+      font-family: 'Space Mono', monospace;
+      font-size: 9px;
+      color: var(--text-muted);
+      letter-spacing: 0.12em;
+      margin-bottom: 5px;
+    }
+
+    .chip-value {
+      font-family: 'Space Mono', monospace;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    /* Category grid */
+    .cat-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .cat-card {
+      background: var(--surface);
+      border: 0.5px solid var(--border);
+      border-left: 4px solid var(--green);
+      border-radius: 12px;
+      padding: 20px 24px;
+      transition: transform 180ms ease;
+    }
+
+    .cat-card:hover {
+      transform: translateY(-2px);
+    }
+
+    .cat-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .cat-name {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 13px;
+      letter-spacing: 0.06em;
+    }
+
+    .badge {
+      font-family: 'Space Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 0.1em;
+      padding: 3px 7px;
+      border-radius: 3px;
+    }
+
+    .cat-summary {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.55;
+    }
+
+    /* Button */
+    .btn {
+      width: 100%;
+      padding: 14px;
+      background: transparent;
+      border: 0.5px solid var(--border);
+      border-radius: 10px;
+      color: var(--text-secondary);
+      font-family: 'Space Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      cursor: pointer;
+      transition: border-color 180ms, color 180ms;
+    }
+
+    .btn:hover:not(:disabled) {
+      border-color: var(--green);
+      color: var(--green);
+    }
+
+    .btn:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+    }
+
+    @media (max-width: 600px) {
+      .cat-grid { grid-template-columns: 1fr; }
+      .verdict-card { flex-direction: column; align-items: flex-start; }
+      .verdict-right { text-align: left; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <a href="index.html" class="back anim" style="animation-delay: 0ms;">← TILBAKE</a>
+
+    <div class="page-title anim" style="animation-delay: 40ms;">MARKED</div>
+    <div class="page-date anim" id="page-date" style="animation-delay: 80ms;">—</div>
+
+    <!-- Empty state -->
+    <div class="empty-state anim" id="empty-state" style="animation-delay: 120ms;">
+      <div class="empty-label">INGEN RAPPORT FOR I DAG</div>
+      <button class="btn" id="fetch-btn" onclick="fetchReport()" style="max-width: 240px;">HENT RAPPORT</button>
+    </div>
+
+    <!-- Data sections -->
+    <div class="data-sections" id="data-sections">
+
+      <div class="verdict-card" id="verdict-card">
+        <div class="verdict-left">
+          <div class="verdict-label">KONKLUSJON</div>
+          <div class="verdict-text" id="verdict-text">—</div>
+        </div>
+        <div class="verdict-right">
+          <div class="verdict-score" id="verdict-score">—</div>
+          <div class="verdict-score-sub">/ 100</div>
+        </div>
+      </div>
+
+      <div class="keydata" id="keydata"></div>
+
+      <div class="cat-grid" id="cat-grid"></div>
+
+      <button class="btn" id="refresh-btn" onclick="clearAndRefetch()">HENT NY RAPPORT</button>
+
+    </div>
+  </div>
+
+  <script>
+    const TODAY   = new Date().toISOString().slice(0, 10);
+    const CACHE_KEY = 'pulse_market_' + TODAY;
+
+    const SENTIMENT_COLORS = {
+      'Bullish': '#1D9E75',
+      'Bearish': '#E24B4A',
+      'Mixed':   '#7F77DD',
+      'Avvent':  '#BA7517',
+    };
+
+    function scoreColor(s) {
+      if (s < 40) return '#E24B4A';
+      if (s <= 60) return '#BA7517';
+      return '#1D9E75';
+    }
+
+    function esc(str) {
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    function animateItems() {
+      const items = document.querySelectorAll('#data-sections > *');
+      items.forEach((el, i) => {
+        el.style.opacity = '0';
+        el.style.transform = 'translateY(16px)';
+        el.style.transition = 'none';
+        requestAnimationFrame(() => {
+          setTimeout(() => {
+            el.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
+            el.style.opacity = '1';
+            el.style.transform = 'translateY(0)';
+          }, i * 80);
+        });
+      });
+    }
+
+    function renderData(data) {
+      // Verdict card
+      const col = scoreColor(data.score ?? 50);
+      const vc  = document.getElementById('verdict-card');
+      vc.style.borderLeftColor = col;
+
+      document.getElementById('verdict-text').textContent = data.verdict || '—';
+
+      const scoreEl = document.getElementById('verdict-score');
+      scoreEl.style.color = col;
+      scoreEl.textContent = data.score ?? '—';
+
+      // Keydata chips
+      const keydataEl = document.getElementById('keydata');
+      keydataEl.innerHTML = (data.keydata || []).map(kd => `
+        <div class="chip">
+          <div class="chip-label">${esc(kd.label)}</div>
+          <div class="chip-value">${esc(kd.value)}</div>
+        </div>
+      `).join('');
+
+      // Category cards
+      const grid = document.getElementById('cat-grid');
+      grid.innerHTML = (data.categories || []).map(cat => {
+        const color = SENTIMENT_COLORS[cat.sentiment] || '#444';
+        return `
+          <div class="cat-card" style="border-left-color: ${color}">
+            <div class="cat-header">
+              <div class="cat-name">${esc(cat.name)}</div>
+              <div class="badge" style="color: ${color}; background: ${color}18;">
+                ${esc(cat.sentiment.toUpperCase())}
+              </div>
+            </div>
+            <div class="cat-summary">${esc(cat.summary)}</div>
+          </div>
+        `;
+      }).join('');
+
+      // Show data, hide empty
+      document.getElementById('empty-state').style.display = 'none';
+      const ds = document.getElementById('data-sections');
+      ds.classList.add('visible');
+      animateItems();
+    }
+
+    let fetching = false;
+
+    async function fetchReport() {
+      if (fetching) return;
+      fetching = true;
+
+      const btn = document.getElementById('fetch-btn');
+      const rbtn = document.getElementById('refresh-btn');
+      if (btn)  { btn.disabled  = true; btn.textContent  = 'HENTER...'; }
+      if (rbtn) { rbtn.disabled = true; rbtn.textContent = 'HENTER...'; }
+
+      try {
+        const res = await fetch('/api/sentiment', { method: 'POST' });
+        if (!res.ok) throw new Error('Serverfeil ' + res.status);
+        const data = await res.json();
+        if (data.error) throw new Error(data.error);
+
+        localStorage.setItem(CACHE_KEY, JSON.stringify(data));
+        renderData(data);
+      } catch (e) {
+        alert('Feil: ' + e.message);
+      } finally {
+        fetching = false;
+        if (btn)  { btn.disabled  = false; btn.textContent  = 'HENT RAPPORT'; }
+        if (rbtn) { rbtn.disabled = false; rbtn.textContent = 'HENT NY RAPPORT'; }
+      }
+    }
+
+    function clearAndRefetch() {
+      localStorage.removeItem(CACHE_KEY);
+      fetchReport();
+    }
+
+    // Set date label
+    document.getElementById('page-date').textContent = new Date()
+      .toLocaleDateString('no-NO', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
+      .toUpperCase();
+
+    // Load from cache on init
+    try {
+      const cached = JSON.parse(localStorage.getItem(CACHE_KEY) || 'null');
+      if (cached) renderData(cached);
+    } catch (e) {}
+  </script>
+</body>
+</html>
