@@ -3,262 +3,566 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PULSE</title>
+  <title>PULSE — Markedssentiment for swingtraders</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@700;800&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Space+Mono:wght@400;700&family=Outfit:wght@300;400;500&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #080808;
-      --surface: #111111;
-      --surface-2: #181818;
-      --border: #242424;
-      --border-accent: #2a2a2a;
-      --green: #1D9E75;
-      --red: #E24B4A;
-      --amber: #BA7517;
-      --purple: #7F77DD;
-      --text-primary: #F0F0F0;
-      --text-secondary: #888888;
-      --text-muted: #444444;
+      --bg:           #070709;
+      --surface:      #0f0f12;
+      --surface-2:    #14141a;
+      --border:       #1e1e28;
+      --border-light: #2a2a38;
+      --green:        #1fa876;
+      --green-dim:    rgba(31,168,118,0.12);
+      --red:          #d94f4f;
+      --amber:        #c08b2a;
+      --text-primary: #eeeef2;
+      --text-secondary: #7e7e96;
+      --text-muted:   #3a3a52;
+      --accent-line:  rgba(31,168,118,0.35);
     }
 
-    *, *::before, *::after {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
 
     body {
-      background-color: var(--bg);
-      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+      background: var(--bg);
       color: var(--text-primary);
-      font-family: 'DM Sans', sans-serif;
+      font-family: 'Outfit', sans-serif;
+      font-weight: 400;
       min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ─── GRAIN OVERLAY ─── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ─── AMBIENT GLOW ─── */
+    .glow-top {
+      position: fixed;
+      top: -200px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 800px;
+      height: 400px;
+      background: radial-gradient(ellipse at center, rgba(31,168,118,0.07) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ─── WRAPPER ─── */
+    .page {
+      position: relative;
+      z-index: 1;
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 0 24px 100px;
+    }
+
+    /* ─── NAV ─── */
+    nav {
       display: flex;
-      flex-direction: column;
       align-items: center;
-      padding: 56px 20px 56px;
+      justify-content: space-between;
+      padding: 32px 0 0;
     }
 
-    @keyframes fadeUp {
-      from { opacity: 0; transform: translateY(16px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-
-    .anim {
-      opacity: 0;
-      animation: fadeUp 0.45s ease forwards;
-    }
-
-    /* Header */
-    .header {
-      text-align: center;
-      margin-bottom: 4px;
-    }
-
-    .logo {
+    .nav-logo {
       font-family: 'Space Mono', monospace;
       font-weight: 700;
-      font-size: 30px;
-      color: var(--green);
-      letter-spacing: 0.14em;
-    }
-
-    .tagline {
       font-size: 13px;
-      color: var(--text-secondary);
-      margin-top: 8px;
+      letter-spacing: 0.2em;
+      color: var(--green);
     }
 
-    /* Gauge */
-    .gauge-wrapper {
-      margin: 32px 0 36px;
+    .nav-badge {
+      font-family: 'Space Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 0.12em;
+      color: var(--text-muted);
+      border: 0.5px solid var(--border-light);
+      padding: 5px 10px;
+      border-radius: 3px;
     }
 
-    /* Cards */
-    .cards {
+    /* ─── HERO ─── */
+    .hero {
+      margin-top: 80px;
+    }
+
+    .hero-kicker {
+      font-family: 'Space Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.18em;
+      color: var(--green);
+      text-transform: uppercase;
+      margin-bottom: 20px;
       display: flex;
-      gap: 12px;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .hero-kicker::before {
+      content: '';
+      display: inline-block;
+      width: 24px;
+      height: 1px;
+      background: var(--green);
+      opacity: 0.6;
+    }
+
+    .hero-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-weight: 600;
+      font-size: clamp(52px, 9vw, 80px);
+      line-height: 0.96;
+      letter-spacing: -0.01em;
+      color: var(--text-primary);
+      margin-bottom: 28px;
+    }
+
+    .hero-title em {
+      font-style: italic;
+      color: var(--green);
+    }
+
+    .hero-desc {
+      font-size: 16px;
+      line-height: 1.7;
+      color: var(--text-secondary);
+      max-width: 480px;
+      font-weight: 300;
+      margin-bottom: 48px;
+    }
+
+    .hero-desc strong {
+      color: var(--text-primary);
+      font-weight: 500;
+    }
+
+    /* ─── DIVIDER ─── */
+    .divider {
       width: 100%;
-      max-width: 520px;
+      height: 0.5px;
+      background: linear-gradient(90deg, transparent, var(--border-light) 30%, var(--border-light) 70%, transparent);
+      margin: 56px 0;
+    }
+
+    /* ─── HOW IT WORKS ─── */
+    .section-label {
+      font-family: 'Space Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 0.18em;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      margin-bottom: 32px;
+    }
+
+    .steps {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 1px;
+      background: var(--border);
+      border: 0.5px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+      margin-bottom: 0;
+    }
+
+    .step {
+      background: var(--surface);
+      padding: 24px 22px 28px;
+    }
+
+    .step-num {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 40px;
+      font-weight: 400;
+      color: var(--text-muted);
+      line-height: 1;
+      margin-bottom: 12px;
+    }
+
+    .step-title {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-primary);
+      margin-bottom: 6px;
+      letter-spacing: 0.02em;
+    }
+
+    .step-desc {
+      font-size: 12px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
+    /* ─── CARDS ─── */
+    .cards {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
     }
 
     .card {
-      flex: 1;
-      height: 220px;
       background: var(--surface-2);
       border: 0.5px solid var(--border);
-      border-radius: 12px;
-      padding: 28px;
+      border-radius: 14px;
+      padding: 32px 28px 28px;
       cursor: pointer;
-      display: flex;
-      flex-direction: column;
       position: relative;
-      transition: transform 180ms ease, border-color 180ms ease;
-      user-select: none;
+      overflow: hidden;
+      transition: border-color 220ms ease, transform 220ms ease;
+      text-decoration: none;
+      display: block;
+    }
+
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--accent-line), transparent);
+      opacity: 0;
+      transition: opacity 220ms ease;
     }
 
     .card:hover {
-      transform: translateY(-3px);
-      border-color: var(--border-accent);
+      border-color: var(--border-light);
+      transform: translateY(-4px);
     }
 
-    .card:hover .arrow {
-      transform: translateX(4px);
+    .card:hover::before {
+      opacity: 1;
+    }
+
+    .card-tag {
+      font-family: 'Space Mono', monospace;
+      font-size: 8px;
+      letter-spacing: 0.18em;
+      color: var(--green);
+      margin-bottom: 20px;
     }
 
     .card-icon {
-      width: 48px;
-      height: 48px;
-      margin-bottom: 16px;
-      flex-shrink: 0;
+      width: 40px;
+      height: 40px;
+      margin-bottom: 20px;
     }
 
     .card-title {
-      font-family: 'Syne', sans-serif;
-      font-weight: 700;
-      font-size: 22px;
-      letter-spacing: 0.02em;
+      font-family: 'Cormorant Garamond', serif;
+      font-weight: 600;
+      font-size: 30px;
+      letter-spacing: 0.01em;
       color: var(--text-primary);
+      line-height: 1;
+      margin-bottom: 10px;
     }
 
     .card-desc {
       font-size: 13px;
       color: var(--text-secondary);
-      margin-top: 6px;
-      line-height: 1.55;
+      line-height: 1.6;
+      font-weight: 300;
+      margin-bottom: 28px;
     }
 
-    .arrow {
-      position: absolute;
-      bottom: 28px;
-      right: 28px;
-      font-size: 18px;
+    .card-cta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: 'Space Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      color: var(--green);
+      transition: gap 180ms ease;
+    }
+
+    .card:hover .card-cta {
+      gap: 14px;
+    }
+
+    /* ─── GAUGE STRIP ─── */
+    .gauge-strip {
+      background: var(--surface);
+      border: 0.5px solid var(--border);
+      border-radius: 10px;
+      padding: 20px 24px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .gauge-svg { flex-shrink: 0; }
+
+    .gauge-text { flex: 1; }
+
+    .gauge-headline {
+      font-family: 'Space Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 0.14em;
       color: var(--text-muted);
-      transition: transform 180ms ease;
+      margin-bottom: 4px;
     }
 
-    @media (max-width: 600px) {
-      .cards {
-        flex-direction: column;
-      }
+    .gauge-status {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 22px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .gauge-sub {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-top: 2px;
+    }
+
+    /* ─── FOOTER ─── */
+    footer {
+      margin-top: 80px;
+      padding-top: 24px;
+      border-top: 0.5px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .footer-brand {
+      font-family: 'Space Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.14em;
+      color: var(--text-muted);
+    }
+
+    .footer-note {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    /* ─── ANIMATIONS ─── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
+
+    .a0 { animation: fadeUp 0.55s cubic-bezier(0.16,1,0.3,1) forwards; opacity: 0; }
+    .a1 { animation: fadeUp 0.55s cubic-bezier(0.16,1,0.3,1) 0.08s forwards; opacity: 0; }
+    .a2 { animation: fadeUp 0.55s cubic-bezier(0.16,1,0.3,1) 0.16s forwards; opacity: 0; }
+    .a3 { animation: fadeUp 0.55s cubic-bezier(0.16,1,0.3,1) 0.24s forwards; opacity: 0; }
+    .a4 { animation: fadeUp 0.55s cubic-bezier(0.16,1,0.3,1) 0.36s forwards; opacity: 0; }
+    .a5 { animation: fadeUp 0.55s cubic-bezier(0.16,1,0.3,1) 0.48s forwards; opacity: 0; }
+    .a6 { animation: fadeUp 0.55s cubic-bezier(0.16,1,0.3,1) 0.60s forwards; opacity: 0; }
+
+    @media (max-width: 520px) {
+      .cards { grid-template-columns: 1fr; }
+      .steps { grid-template-columns: 1fr; }
+      .hero-title { font-size: 52px; }
     }
   </style>
 </head>
 <body>
 
-  <div class="header anim" style="animation-delay: 0ms;">
-    <div class="logo">PULSE</div>
-    <div class="tagline">Daglig markedsorientering for swingtraders.</div>
-  </div>
+<div class="glow-top"></div>
 
-  <div class="gauge-wrapper anim" style="animation-delay: 80ms;">
-    <svg width="200" height="200" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="100" cy="100" r="80"
-        fill="none" stroke="#242424" stroke-width="8"/>
-      <circle id="gauge-arc"
-        cx="100" cy="100" r="80"
-        fill="none"
-        stroke="#242424"
-        stroke-width="8"
-        stroke-linecap="round"
-        stroke-dasharray="502.65"
-        stroke-dashoffset="502.65"
-        transform="rotate(-90 100 100)"/>
-      <text id="gauge-score"
-        x="100" y="98"
-        font-family="'Space Mono', monospace"
-        font-weight="700"
-        font-size="48"
-        fill="#444444"
-        text-anchor="middle"
-        dominant-baseline="middle">--</text>
-      <text id="gauge-label"
-        x="100" y="124"
-        font-family="'Space Mono', monospace"
-        font-size="10"
-        fill="#444444"
-        text-anchor="middle"
-        letter-spacing="2">SENTIMENT</text>
-    </svg>
-  </div>
+<div class="page">
 
-  <div class="cards">
-    <div class="card anim" style="animation-delay: 160ms;" onclick="location.href='market.html'">
-      <svg class="card-icon" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <rect x="4" y="38" width="5" height="6" rx="1" fill="#1D9E75" opacity="0.3"/>
-        <rect x="13" y="28" width="5" height="16" rx="1" fill="#1D9E75" opacity="0.45"/>
-        <rect x="22" y="32" width="5" height="12" rx="1" fill="#1D9E75" opacity="0.35"/>
-        <rect x="31" y="18" width="5" height="26" rx="1" fill="#1D9E75" opacity="0.55"/>
-        <polyline points="6.5,33 15.5,22 24.5,26 40,10"
-          stroke="#1D9E75" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-        <circle cx="40" cy="10" r="2.5" fill="#1D9E75"/>
+  <!-- NAV -->
+  <nav class="a0">
+    <div class="nav-logo">PULSE</div>
+    <div class="nav-badge">AI-DREVET · DAGLIG</div>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-kicker a1">Markedssentiment for swingtraders</div>
+
+    <h1 class="hero-title a2">
+      Les markedet.<br>
+      <em>Raskere.</em>
+    </h1>
+
+    <p class="hero-desc a3">
+      PULSE bruker AI til å skanne nyheter, futures og sektordata i sanntid —
+      og leverer deg en <strong>strukturert markedsoversikt på sekunder</strong>.
+      Ingen støy. Kun det som faktisk betyr noe før du trykker på kjøp.
+    </p>
+
+    <!-- GAUGE STRIP -->
+    <div class="gauge-strip a3">
+      <svg class="gauge-svg" width="56" height="56" viewBox="0 0 56 56">
+        <circle cx="28" cy="28" r="22" fill="none" stroke="#1e1e28" stroke-width="4"/>
+        <circle id="gauge-arc"
+          cx="28" cy="28" r="22"
+          fill="none"
+          stroke="#1e1e28"
+          stroke-width="4"
+          stroke-linecap="round"
+          stroke-dasharray="138.23"
+          stroke-dashoffset="138.23"
+          transform="rotate(-90 28 28)"/>
+        <text id="gauge-num"
+          x="28" y="28"
+          font-family="'Space Mono', monospace"
+          font-weight="700"
+          font-size="13"
+          fill="#3a3a52"
+          text-anchor="middle"
+          dominant-baseline="middle">--</text>
       </svg>
-      <div class="card-title">MARKED</div>
-      <div class="card-desc">Daglig markedsoversikt med sentiment per sektor.</div>
-      <div class="arrow">→</div>
+      <div class="gauge-text">
+        <div class="gauge-headline">SENTIMENT SCORE I DAG</div>
+        <div class="gauge-status" id="gauge-status">Ingen rapport hentet</div>
+        <div class="gauge-sub" id="gauge-sub">Gå til Marked for å hente dagens analyse</div>
+      </div>
     </div>
+  </section>
 
-    <div class="card anim" style="animation-delay: 240ms;" onclick="location.href='ticker.html'">
-      <svg class="card-icon" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="21" cy="21" r="13" stroke="#1D9E75" stroke-width="2.5" fill="none"/>
-        <path d="M31 31 L43 43" stroke="#1D9E75" stroke-width="2.5" stroke-linecap="round"/>
-        <path d="M15 21 H27" stroke="#1D9E75" stroke-width="2" stroke-linecap="round"/>
-        <path d="M21 15 V27" stroke="#1D9E75" stroke-width="2" stroke-linecap="round"/>
-      </svg>
-      <div class="card-title">TICKER</div>
-      <div class="card-desc">Dyp analyse av enkeltaksjer på fem lag.</div>
-      <div class="arrow">→</div>
+  <div class="divider a4"></div>
+
+  <!-- HOW IT WORKS -->
+  <div class="a4">
+    <div class="section-label">Slik fungerer det</div>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">01</div>
+        <div class="step-title">AI scanner markedet</div>
+        <div class="step-desc">Claude søker gjennom nyheter, futures og sektordata i sanntid.</div>
+      </div>
+      <div class="step">
+        <div class="step-num">02</div>
+        <div class="step-title">Du får strukturert oversikt</div>
+        <div class="step-desc">Makro, tech, energi og finans — med BULLISH/BEARISH-badge per sektor.</div>
+      </div>
+      <div class="step">
+        <div class="step-num">03</div>
+        <div class="step-title">Ta beslutningen</div>
+        <div class="step-desc">Med konteksten klar kan du trade med skarpere timing og bedre odds.</div>
+      </div>
     </div>
   </div>
 
-  <script>
-    const CIRC = 502.65;
+  <div class="divider a5"></div>
 
-    function scoreColor(s) {
-      if (s < 40) return '#E24B4A';
-      if (s <= 60) return '#BA7517';
-      return '#1D9E75';
+  <!-- CARDS -->
+  <div class="a5">
+    <div class="section-label">Velg analyse</div>
+    <div class="cards">
+
+      <a class="card" href="market.html">
+        <div class="card-tag">DAGLIG RAPPORT</div>
+        <svg class="card-icon" viewBox="0 0 40 40" fill="none">
+          <rect x="3" y="32" width="4" height="5" rx="1" fill="#1fa876" opacity="0.25"/>
+          <rect x="11" y="24" width="4" height="13" rx="1" fill="#1fa876" opacity="0.4"/>
+          <rect x="19" y="27" width="4" height="10" rx="1" fill="#1fa876" opacity="0.3"/>
+          <rect x="27" y="16" width="4" height="21" rx="1" fill="#1fa876" opacity="0.5"/>
+          <polyline points="5,28 13,19 21,22 34,9"
+            stroke="#1fa876" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="34" cy="9" r="2" fill="#1fa876"/>
+        </svg>
+        <div class="card-title">Marked</div>
+        <div class="card-desc">Daglig markedssentiment med score, nøkkeltall og sektoranalyse. Cachet til neste dag.</div>
+        <div class="card-cta">HENT RAPPORT →</div>
+      </a>
+
+      <a class="card" href="ticker.html">
+        <div class="card-tag">ENKELTAKSJER</div>
+        <svg class="card-icon" viewBox="0 0 40 40" fill="none">
+          <circle cx="18" cy="18" r="11" stroke="#1fa876" stroke-width="2" fill="none"/>
+          <path d="M26 26 L37 37" stroke="#1fa876" stroke-width="2" stroke-linecap="round"/>
+          <path d="M13 18 H23" stroke="#1fa876" stroke-width="1.5" stroke-linecap="round"/>
+          <path d="M18 13 V23" stroke="#1fa876" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+        <div class="card-title">Ticker</div>
+        <div class="card-desc">Dyp aksjeanalyse på fem lag: nyheter, earnings, insider, short float og sentiment.</div>
+        <div class="card-cta">SØK TICKER →</div>
+      </a>
+
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer class="a6">
+    <div class="footer-brand">PULSE · 2025</div>
+    <div class="footer-note">Ikke finansiell rådgivning</div>
+  </footer>
+
+</div>
+
+<script>
+  const CIRC = 138.23;
+
+  function scoreColor(s) {
+    if (s < 40) return '#d94f4f';
+    if (s <= 60) return '#c08b2a';
+    return '#1fa876';
+  }
+
+  function scoreLabel(s) {
+    if (s < 30) return 'Ekstremt bearish';
+    if (s < 45) return 'Bearish';
+    if (s <= 55) return 'Nøytral';
+    if (s <= 70) return 'Bullish';
+    return 'Ekstremt bullish';
+  }
+
+  function animateGauge(target) {
+    const arc    = document.getElementById('gauge-arc');
+    const num    = document.getElementById('gauge-num');
+    const status = document.getElementById('gauge-status');
+    const sub    = document.getElementById('gauge-sub');
+    const col    = scoreColor(target);
+
+    arc.setAttribute('stroke', col);
+    num.setAttribute('fill', col);
+    status.textContent = scoreLabel(target);
+    status.style.color = col;
+    sub.textContent = 'Score oppdatert i dag';
+
+    const targetOffset = CIRC * (1 - target / 100);
+    const dur = 1400;
+    const t0  = performance.now();
+
+    function ease(t) {
+      return t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t+2,3)/2;
     }
 
-    function animateGauge(target) {
-      const arc   = document.getElementById('gauge-arc');
-      const score = document.getElementById('gauge-score');
-      const col   = scoreColor(target);
+    (function tick(now) {
+      const p = Math.min((now - t0) / dur, 1);
+      const e = ease(p);
+      arc.setAttribute('stroke-dashoffset', CIRC - e * (CIRC - targetOffset));
+      num.textContent = Math.round(e * target);
+      if (p < 1) requestAnimationFrame(tick);
+      else num.textContent = target;
+    })(t0);
+  }
 
-      arc.setAttribute('stroke', col);
-      score.setAttribute('fill', col);
-
-      const targetOffset = CIRC * (1 - target / 100);
-      const dur = 1200;
-      const t0  = performance.now();
-
-      function ease(t) {
-        return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
-      }
-
-      (function tick(now) {
-        const p = Math.min((now - t0) / dur, 1);
-        const e = ease(p);
-        arc.setAttribute('stroke-dashoffset', CIRC - e * (CIRC - targetOffset));
-        score.textContent = Math.round(e * target);
-        if (p < 1) {
-          requestAnimationFrame(tick);
-        } else {
-          score.textContent = target;
-        }
-      })(t0);
+  const cacheKey = 'pulse_market_' + new Date().toISOString().slice(0, 10);
+  try {
+    const cached = JSON.parse(localStorage.getItem(cacheKey) || 'null');
+    if (cached && typeof cached.score === 'number') {
+      setTimeout(() => animateGauge(cached.score), 600);
     }
+  } catch (e) {}
+</script>
 
-    // Read score from cache — same key as market.html
-    const cacheKey = 'pulse_market_' + new Date().toISOString().slice(0, 10);
-    try {
-      const cached = JSON.parse(localStorage.getItem(cacheKey) || 'null');
-      if (cached && typeof cached.score === 'number') {
-        setTimeout(() => animateGauge(cached.score), 400);
-      }
-    } catch (e) {}
-  </script>
 </body>
 </html>
