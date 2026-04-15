@@ -248,6 +248,97 @@
       color: var(--text-secondary);
       line-height: 1.55;
     }
+
+    /* ── Watchlist ── */
+    .watchlist-section {
+      margin-bottom: 28px;
+    }
+
+    .section-title {
+      font-family: 'Space Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 0.18em;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+
+    .watchlist-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      min-height: 26px;
+      align-items: center;
+    }
+
+    .watchlist-empty {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .wpill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-family: 'Space Mono', monospace;
+      font-size: 11px;
+      color: var(--green);
+      border: 0.5px solid rgba(29,158,117,0.35);
+      border-radius: 4px;
+      padding: 5px 8px 5px 10px;
+      cursor: pointer;
+      letter-spacing: 0.06em;
+      background: rgba(29,158,117,0.06);
+      transition: background 150ms;
+      user-select: none;
+    }
+
+    .wpill:hover { background: rgba(29,158,117,0.13); }
+
+    .wpill-del {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 14px;
+      height: 14px;
+      font-size: 10px;
+      color: var(--text-muted);
+      border-radius: 2px;
+      transition: color 150ms;
+      flex-shrink: 0;
+    }
+
+    .wpill-del:hover { color: var(--red); }
+
+    /* ── Search row with + button ── */
+    .search-row {
+      display: flex;
+      gap: 8px;
+      align-items: stretch;
+    }
+
+    .search-row .search-input { flex: 1; }
+
+    .add-btn {
+      background: transparent;
+      border: 0.5px solid var(--border);
+      border-radius: 10px;
+      color: var(--text-muted);
+      font-family: 'Space Mono', monospace;
+      font-size: 20px;
+      width: 50px;
+      flex-shrink: 0;
+      cursor: pointer;
+      transition: border-color 180ms, color 180ms;
+      line-height: 1;
+    }
+
+    .add-btn:hover:not(:disabled) {
+      border-color: rgba(29,158,117,0.4);
+      color: var(--green);
+    }
+
+    .add-btn:disabled { opacity: 0.25; cursor: not-allowed; }
   </style>
 </head>
 <body>
@@ -258,18 +349,27 @@
     <div class="page-title anim" style="animation-delay: 40ms;">TICKER</div>
     <div class="page-subtitle anim" style="animation-delay: 80ms;">Analyser en aksje på fem lag.</div>
 
+    <!-- Watchlist -->
+    <div class="watchlist-section anim" style="animation-delay: 110ms;">
+      <div class="section-title">WATCHLIST</div>
+      <div class="watchlist-pills" id="watchlist-pills"></div>
+    </div>
+
     <div class="search-wrap anim" style="animation-delay: 120ms;">
-      <input
-        type="text"
-        id="search-input"
-        class="search-input"
-        placeholder="Skriv inn ticker — eks. AAPL, NVDA, TSLA"
-        maxlength="6"
-        autocomplete="off"
-        autocorrect="off"
-        autocapitalize="characters"
-        spellcheck="false"
-      >
+      <div class="search-row">
+        <input
+          type="text"
+          id="search-input"
+          class="search-input"
+          placeholder="Skriv inn ticker — eks. AAPL, NVDA, TSLA"
+          maxlength="6"
+          autocomplete="off"
+          autocorrect="off"
+          autocapitalize="characters"
+          spellcheck="false"
+        >
+        <button id="add-btn" class="add-btn" onclick="addToWatchlist()" disabled title="Kjør analyse først">+</button>
+      </div>
     </div>
 
     <div class="pills anim" id="pills" style="animation-delay: 160ms;"></div>
@@ -291,6 +391,50 @@
   </div>
 
   <script>
+    // ── Watchlist ──
+    const WL_KEY = 'pulse_watchlist';
+    let lastFoundTicker = null;
+
+    function getWatchlist() {
+      try { return JSON.parse(localStorage.getItem(WL_KEY) || '[]'); } catch { return []; }
+    }
+    function saveWatchlist(list) { localStorage.setItem(WL_KEY, JSON.stringify(list)); }
+
+    function renderWatchlist() {
+      const list = getWatchlist();
+      const el = document.getElementById('watchlist-pills');
+      if (list.length === 0) {
+        el.innerHTML = '<span class="watchlist-empty">Ingen tickers lagt til ennå</span>';
+        return;
+      }
+      el.innerHTML = list.map(t => `
+        <div class="wpill" onclick="runSearch('${esc(t)}')">
+          ${esc(t)}
+          <span class="wpill-del" onclick="event.stopPropagation();removeFromWatchlist('${esc(t)}')">✕</span>
+        </div>
+      `).join('');
+    }
+
+    function addToWatchlist() {
+      if (!lastFoundTicker) return;
+      const list = getWatchlist();
+      if (list.includes(lastFoundTicker)) return;
+      if (list.length >= 10) { alert('Watchlist er full (maks 10 tickers).'); return; }
+      list.push(lastFoundTicker);
+      saveWatchlist(list);
+      renderWatchlist();
+      document.getElementById('add-btn').disabled = true;
+    }
+
+    function removeFromWatchlist(ticker) {
+      saveWatchlist(getWatchlist().filter(t => t !== ticker));
+      renderWatchlist();
+      // Re-enable add btn if current result matches removed ticker
+      if (lastFoundTicker === ticker) {
+        document.getElementById('add-btn').disabled = false;
+      }
+    }
+
     const POPULAR = ['AAPL', 'NVDA', 'TSLA', 'MSFT', 'AMZN', 'META', 'CEG'];
 
     const SENTIMENT_COLORS = {
@@ -318,6 +462,9 @@
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;');
     }
+
+    // Init watchlist
+    renderWatchlist();
 
     // Render pills
     const pillsEl = document.getElementById('pills');
@@ -410,6 +557,13 @@
 
       setResult(true);
       animateLayers();
+
+      // Update watchlist button
+      lastFoundTicker = data.ticker;
+      const addBtn = document.getElementById('add-btn');
+      const inList = getWatchlist().includes(data.ticker);
+      addBtn.disabled = inList;
+      addBtn.title = inList ? 'Allerede i watchlist' : 'Legg til i watchlist';
     }
 
     async function runSearch(ticker) {
@@ -420,6 +574,8 @@
       setError(null);
       setResult(false);
       setLoading(true);
+      lastFoundTicker = null;
+      document.getElementById('add-btn').disabled = true;
 
       try {
         const res = await fetch('/api/ticker', {

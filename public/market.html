@@ -265,6 +265,78 @@
       .verdict-card { flex-direction: column; align-items: flex-start; }
       .verdict-right { text-align: left; }
     }
+
+    /* ── Earnings calendar ── */
+    .earnings-section { display: flex; flex-direction: column; gap: 8px; }
+
+    .section-title {
+      font-family: 'Space Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 0.18em;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+
+    .earnings-row {
+      background: var(--surface);
+      border: 0.5px solid var(--border);
+      border-radius: 10px;
+      padding: 13px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .earnings-ticker {
+      font-family: 'Space Mono', monospace;
+      font-size: 10px;
+      color: var(--green);
+      border: 0.5px solid rgba(29,158,117,0.3);
+      background: rgba(29,158,117,0.06);
+      border-radius: 4px;
+      padding: 3px 8px;
+      letter-spacing: 0.08em;
+      flex-shrink: 0;
+      min-width: 54px;
+      text-align: center;
+    }
+
+    .earnings-company {
+      font-size: 13px;
+      color: var(--text-primary);
+      flex: 1;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .earnings-date {
+      font-family: 'Space Mono', monospace;
+      font-size: 10px;
+      color: var(--text-secondary);
+      flex-shrink: 0;
+    }
+
+    .earnings-badge {
+      font-family: 'Space Mono', monospace;
+      font-size: 8px;
+      letter-spacing: 0.08em;
+      padding: 3px 6px;
+      border-radius: 3px;
+      flex-shrink: 0;
+    }
+
+    .earnings-badge.pre  { color: var(--amber);      background: rgba(186,117,23,0.12); }
+    .earnings-badge.post { color: var(--purple);     background: rgba(127,119,221,0.12); }
+    .earnings-badge.past { color: var(--text-muted); background: rgba(68,68,68,0.10); }
+
+    .earnings-empty {
+      font-size: 12px;
+      color: var(--text-muted);
+      padding: 4px 0;
+    }
   </style>
 </head>
 <body>
@@ -298,6 +370,12 @@
       <div class="keydata" id="keydata"></div>
 
       <div class="cat-grid" id="cat-grid"></div>
+
+      <!-- Earnings calendar -->
+      <div class="earnings-section" id="earnings-section" style="display:none;">
+        <div class="section-title">EARNINGS DENNE UKEN</div>
+        <div id="earnings-list"></div>
+      </div>
 
       <button class="btn" id="refresh-btn" onclick="clearAndRefetch()">HENT NY RAPPORT</button>
 
@@ -388,6 +466,9 @@
       const ds = document.getElementById('data-sections');
       ds.classList.add('visible');
       animateItems();
+
+      // Trigger earnings after report is shown
+      fetchEarnings();
     }
 
     let fetching = false;
@@ -433,6 +514,74 @@
       const cached = JSON.parse(localStorage.getItem(CACHE_KEY) || 'null');
       if (cached) renderData(cached);
     } catch (e) {}
+
+    // ── Earnings calendar ──
+    const EARNINGS_KEY = 'pulse_earnings_' + TODAY;
+
+    function getWatchlist() {
+      try { return JSON.parse(localStorage.getItem('pulse_watchlist') || '[]'); } catch { return []; }
+    }
+
+    function fmtDate(iso) {
+      if (!iso) return '—';
+      const d = new Date(iso + 'T12:00:00');
+      return d.toLocaleDateString('no-NO', { weekday: 'short', day: 'numeric', month: 'short' }).toUpperCase();
+    }
+
+    function isPast(iso) {
+      if (!iso) return false;
+      return new Date(iso + 'T23:59:59') < new Date();
+    }
+
+    function renderEarnings(rows) {
+      const section = document.getElementById('earnings-section');
+      const list = document.getElementById('earnings-list');
+
+      if (!rows || rows.length === 0) {
+        list.innerHTML = '<div class="earnings-empty">Ingen relevante earnings denne uken</div>';
+        section.style.display = 'flex';
+        return;
+      }
+
+      list.innerHTML = rows.map(r => {
+        const past = isPast(r.date);
+        const timeKey = (r.time || '').toLowerCase();
+        let badgeClass = 'post', badgeText = 'ETTER BØRS';
+        if (past) { badgeClass = 'past'; badgeText = 'AVHOLDT'; }
+        else if (timeKey.includes('før') || timeKey.includes('pre') || timeKey.includes('before')) {
+          badgeClass = 'pre'; badgeText = 'FØR BØRS';
+        }
+        return `
+          <div class="earnings-row">
+            <div class="earnings-ticker">${esc(r.ticker)}</div>
+            <div class="earnings-company">${esc(r.company)}</div>
+            <div class="earnings-date">${fmtDate(r.date)}</div>
+            <div class="earnings-badge ${badgeClass}">${badgeText}</div>
+          </div>`;
+      }).join('');
+
+      section.style.display = 'flex';
+    }
+
+    async function fetchEarnings() {
+      // Check cache first
+      try {
+        const cached = JSON.parse(localStorage.getItem(EARNINGS_KEY) || 'null');
+        if (cached) { renderEarnings(cached); return; }
+      } catch (e) {}
+
+      const wl = getWatchlist();
+      const qs = wl.length ? '?watchlist=' + encodeURIComponent(wl.join(',')) : '';
+      try {
+        const res = await fetch('/api/earnings' + qs);
+        if (!res.ok) return;
+        const data = await res.json();
+        if (Array.isArray(data)) {
+          localStorage.setItem(EARNINGS_KEY, JSON.stringify(data));
+          renderEarnings(data);
+        }
+      } catch (e) {}
+    }
   </script>
 <script src="bg.js"></script>
 </body>
