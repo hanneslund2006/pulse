@@ -31,9 +31,8 @@
   };
   const rgba = (c, a) => `rgba(${c},${a})`;
 
-  // ─── PRECOMPUTED DATA (stable — no per-frame randomness) ──
+  // ─── PRECOMPUTED DATA ────────────────────────────────────
 
-  // Random-walk price curves
   function genWalk(n, start, vol) {
     const pts = [start];
     for (let i = 1; i < n; i++) {
@@ -45,11 +44,10 @@
 
   const WALK_LEN = 280;
   const walks = [
-    { pts: genWalk(WALK_LEN, 0.42, 0.018), baseY: 0.32, color: C.green, op: 0.08 },
-    { pts: genWalk(WALK_LEN, 0.58, 0.013), baseY: 0.68, color: C.red,   op: 0.06 },
+    { pts: genWalk(WALK_LEN, 0.42, 0.018), baseY: 0.32, color: C.green, op: 0.15 },
+    { pts: genWalk(WALK_LEN, 0.58, 0.013), baseY: 0.68, color: C.red,   op: 0.12 },
   ];
 
-  // Candlestick data
   function genCandles(n) {
     const out = [];
     let p = 0.5;
@@ -69,22 +67,19 @@
   const candles = genCandles(55);
   const CW = 9, CG = 4, CTOTAL = CW + CG;
 
-  // Volume bars
   const VOL_N = 90;
   const volBars = Array.from({ length: VOL_N }, () => ({
     h   : 0.15 + Math.random() * 0.85,
     bull: Math.random() > 0.44,
   }));
 
-  // Floating dots
   const dots = Array.from({ length: 35 }, () => ({
     x  : Math.random(),
     y  : Math.random(),
     r  : 0.5 + Math.random() * 1.5,
-    op : 0.04 + Math.random() * 0.05,
+    op : 0.08 + Math.random() * 0.07,
   }));
 
-  // Geo-style contour lines (bezier control points, fraction of viewport)
   const geoLines = [
     [[0.00,0.28],[0.07,0.24],[0.14,0.27],[0.21,0.21],[0.28,0.29],[0.33,0.25]],
     [[0.37,0.17],[0.44,0.22],[0.52,0.16],[0.60,0.20],[0.66,0.15]],
@@ -93,10 +88,8 @@
     [[0.70,0.36],[0.76,0.33],[0.82,0.39],[0.88,0.35],[0.95,0.41],[1.00,0.38]],
   ];
 
-  // Fibonacci dashed levels
   const FIBS = [0.236, 0.382, 0.500, 0.618, 0.786];
 
-  // Scattered text labels (tickers, macro, geo, numbers)
   const LABEL_DEFS = [
     { t: 'SPX',       col: C.green }, { t: 'NDX',       col: C.green },
     { t: 'XAUUSD',   col: C.green }, { t: 'BTC/USD',   col: C.green },
@@ -117,19 +110,18 @@
     x  : 0.03 + Math.random() * 0.93,
     y  : 0.05 + Math.random() * 0.90,
     sz : 7 + Math.floor(Math.random() * 4),
-    op : 0.04 + Math.random() * 0.055,
+    op : 0.08 + Math.random() * 0.07,
   }));
 
   // ─── DRAW LOOP ────────────────────────────────────────────
   function draw(ts) {
     ctx.clearRect(0, 0, W, H);
 
-    // Speed constants
-    const scroll = ts * 0.016;           // price-line drift
-    const cScroll = ts * 0.006;          // candle drift (slower)
+    const scroll  = ts * 0.016;
+    const cScroll = ts * 0.006;
 
     // ── 1. Grid ──
-    ctx.strokeStyle = rgba(C.grid, 0.55);
+    ctx.strokeStyle = rgba(C.grid, 0.8);
     ctx.lineWidth = 0.5;
     const GX = 72, GY = 56;
     for (let x = GX; x < W; x += GX) {
@@ -144,9 +136,9 @@
     ctx.lineWidth = 0.5;
     FIBS.forEach(fib => {
       const y = fib * H;
-      ctx.strokeStyle = rgba(C.muted, 0.07);
+      ctx.strokeStyle = rgba(C.muted, 0.14);
       ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
-      ctx.fillStyle = rgba(C.muted, 0.06);
+      ctx.fillStyle = rgba(C.muted, 0.13);
       ctx.font = "7px 'Space Mono', monospace";
       ctx.fillText(fib.toFixed(3), 6, y - 3);
     });
@@ -154,10 +146,10 @@
 
     // ── 3. Price curves (scrolling) ──
     walks.forEach(({ pts, baseY, color, op }) => {
-      const segW  = (W * 1.9) / pts.length;
-      const ampH  = H * 0.20;
-      const base  = baseY * H;
-      const span  = pts.length * segW;
+      const segW = (W * 1.9) / pts.length;
+      const ampH = H * 0.20;
+      const base = baseY * H;
+      const span = pts.length * segW;
 
       ctx.beginPath();
       pts.forEach((v, i) => {
@@ -183,9 +175,8 @@
       const cY = candleAreaY + c.close * candleAreaH;
       const hY = candleAreaY + c.high  * candleAreaH;
       const lY = candleAreaY + c.low   * candleAreaH;
-      const col = c.bull ? rgba(C.green, 0.08) : rgba(C.red, 0.08);
+      const col = c.bull ? rgba(C.green, 0.15) : rgba(C.red, 0.15);
 
-      // Wick
       ctx.strokeStyle = col;
       ctx.lineWidth = 0.5;
       ctx.beginPath();
@@ -193,22 +184,21 @@
       ctx.lineTo(x + CW / 2, lY);
       ctx.stroke();
 
-      // Body
       ctx.fillStyle = col;
       ctx.fillRect(x, Math.min(oY, cY), CW, Math.max(Math.abs(cY - oY), 0.8));
     });
 
     // ── 5. Volume histogram ──
-    const volBarW  = W / VOL_N;
-    const volMaxH  = H * 0.065;
+    const volBarW = W / VOL_N;
+    const volMaxH = H * 0.065;
     volBars.forEach((bar, i) => {
       const bh = bar.h * volMaxH;
-      ctx.fillStyle = bar.bull ? rgba(C.green, 0.05) : rgba(C.red, 0.05);
+      ctx.fillStyle = bar.bull ? rgba(C.green, 0.12) : rgba(C.red, 0.12);
       ctx.fillRect(i * volBarW, H - bh, volBarW - 1, bh);
     });
 
     // ── 6. Geo contour lines ──
-    ctx.strokeStyle = rgba(C.muted, 0.06);
+    ctx.strokeStyle = rgba(C.muted, 0.14);
     ctx.lineWidth = 0.8;
     geoLines.forEach(line => {
       ctx.beginPath();
