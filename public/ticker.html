@@ -395,6 +395,11 @@
     const WL_KEY = 'pulse_watchlist';
     let lastFoundTicker = null;
 
+    // Seed default watchlist on first visit
+    if (!localStorage.getItem(WL_KEY)) {
+      localStorage.setItem(WL_KEY, JSON.stringify(['BN', 'MSFT', 'NVDA', 'UBER']));
+    }
+
     function getWatchlist() {
       try { return JSON.parse(localStorage.getItem(WL_KEY) || '[]'); } catch { return []; }
     }
