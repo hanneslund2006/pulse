@@ -1,9 +1,10 @@
 {
   "version": 2,
   "functions": {
-    "api/sentiment.js": {
-      "maxDuration": 60
-    }
+    "api/sentiment.js": { "maxDuration": 60 },
+    "api/ticker.js":    { "maxDuration": 60 },
+    "api/earnings.js":  { "maxDuration": 60 },
+    "api/quotes.js":    { "maxDuration": 10 }
   },
   "routes": [
     { "src": "/api/(.*)", "dest": "/api/$1" },

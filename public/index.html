@@ -6,22 +6,22 @@
   <title>PULSE — Markedssentiment for swingtraders</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Space+Mono:wght@400;700&family=Outfit:wght@300;400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg:           #070709;
-      --surface:      #0f0f12;
-      --surface-2:    #14141a;
-      --border:       #1e1e28;
-      --border-light: #2a2a38;
-      --green:        #1fa876;
-      --green-dim:    rgba(31,168,118,0.12);
-      --red:          #d94f4f;
-      --amber:        #c08b2a;
-      --text-primary: #eeeef2;
-      --text-secondary: #7e7e96;
-      --text-muted:   #3a3a52;
-      --accent-line:  rgba(31,168,118,0.35);
+      --bg:           #080808;
+      --surface:      #111111;
+      --surface-2:    #181818;
+      --border:       #242424;
+      --border-light: #2a2a2a;
+      --green:        #1D9E75;
+      --green-dim:    rgba(29,158,117,0.12);
+      --red:          #E24B4A;
+      --amber:        #BA7517;
+      --text-primary: #F0F0F0;
+      --text-secondary: #888888;
+      --text-muted:   #444444;
+      --accent-line:  rgba(29,158,117,0.35);
     }
 
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -31,7 +31,7 @@
     body {
       background: var(--bg);
       color: var(--text-primary);
-      font-family: 'Outfit', sans-serif;
+      font-family: 'DM Sans', sans-serif;
       font-weight: 400;
       min-height: 100vh;
       overflow-x: hidden;
@@ -55,7 +55,7 @@
       transform: translateX(-50%);
       width: 800px;
       height: 400px;
-      background: radial-gradient(ellipse at center, rgba(31,168,118,0.07) 0%, transparent 70%);
+      background: radial-gradient(ellipse at center, rgba(29,158,117,0.07) 0%, transparent 70%);
       pointer-events: none;
       z-index: 0;
     }
@@ -470,13 +470,13 @@
       <a class="card" href="market.html">
         <div class="card-tag">DAGLIG RAPPORT</div>
         <svg class="card-icon" viewBox="0 0 40 40" fill="none">
-          <rect x="3" y="32" width="4" height="5" rx="1" fill="#1fa876" opacity="0.25"/>
-          <rect x="11" y="24" width="4" height="13" rx="1" fill="#1fa876" opacity="0.4"/>
-          <rect x="19" y="27" width="4" height="10" rx="1" fill="#1fa876" opacity="0.3"/>
-          <rect x="27" y="16" width="4" height="21" rx="1" fill="#1fa876" opacity="0.5"/>
+          <rect x="3" y="32" width="4" height="5" rx="1" fill="#1D9E75" opacity="0.25"/>
+          <rect x="11" y="24" width="4" height="13" rx="1" fill="#1D9E75" opacity="0.4"/>
+          <rect x="19" y="27" width="4" height="10" rx="1" fill="#1D9E75" opacity="0.3"/>
+          <rect x="27" y="16" width="4" height="21" rx="1" fill="#1D9E75" opacity="0.5"/>
           <polyline points="5,28 13,19 21,22 34,9"
-            stroke="#1fa876" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          <circle cx="34" cy="9" r="2" fill="#1fa876"/>
+            stroke="#1D9E75" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="34" cy="9" r="2" fill="#1D9E75"/>
         </svg>
         <div class="card-title">Marked</div>
         <div class="card-desc">Daglig markedssentiment med score, nøkkeltall og sektoranalyse. Cachet til neste dag.</div>
@@ -486,10 +486,10 @@
       <a class="card" href="ticker.html">
         <div class="card-tag">ENKELTAKSJER</div>
         <svg class="card-icon" viewBox="0 0 40 40" fill="none">
-          <circle cx="18" cy="18" r="11" stroke="#1fa876" stroke-width="2" fill="none"/>
-          <path d="M26 26 L37 37" stroke="#1fa876" stroke-width="2" stroke-linecap="round"/>
-          <path d="M13 18 H23" stroke="#1fa876" stroke-width="1.5" stroke-linecap="round"/>
-          <path d="M18 13 V23" stroke="#1fa876" stroke-width="1.5" stroke-linecap="round"/>
+          <circle cx="18" cy="18" r="11" stroke="#1D9E75" stroke-width="2" fill="none"/>
+          <path d="M26 26 L37 37" stroke="#1D9E75" stroke-width="2" stroke-linecap="round"/>
+          <path d="M13 18 H23" stroke="#1D9E75" stroke-width="1.5" stroke-linecap="round"/>
+          <path d="M18 13 V23" stroke="#1D9E75" stroke-width="1.5" stroke-linecap="round"/>
         </svg>
         <div class="card-title">Ticker</div>
         <div class="card-desc">Dyp aksjeanalyse på fem lag: nyheter, earnings, insider, short float og sentiment.</div>
@@ -511,9 +511,9 @@
   const CIRC = 138.23;
 
   function scoreColor(s) {
-    if (s < 40) return '#d94f4f';
-    if (s <= 60) return '#c08b2a';
-    return '#1fa876';
+    if (s < 40) return '#E24B4A';
+    if (s <= 60) return '#BA7517';
+    return '#1D9E75';
   }
 
   function scoreLabel(s) {
@@ -565,5 +565,6 @@
 </script>
 
 <script src="bg.js"></script>
+<script src="live.js"></script>
 </body>
 </html>

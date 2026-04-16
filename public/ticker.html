@@ -143,28 +143,42 @@
       background: rgba(29, 158, 117, 0.06);
     }
 
-    /* Loading */
-    .loading-state {
-      display: none;
+    /* Multi-step loading */
+    .load-wrap { display: none; padding: 40px 0 32px; }
+    .load-wrap.visible { display: block; }
+    .load-steps { display: flex; flex-direction: column; gap: 8px; margin-bottom: 24px; }
+    .load-step {
+      display: flex; align-items: center; gap: 10px;
       font-family: 'Space Mono', monospace;
-      font-size: 11px;
-      color: var(--text-muted);
-      letter-spacing: 0.1em;
-      padding: 32px 0;
-      text-align: center;
+      font-size: 10px; letter-spacing: 0.1em; color: var(--text-muted);
+      transition: color 300ms;
+    }
+    .load-step.active { color: var(--green); }
+    .load-step.done { opacity: 0.35; }
+    .ls-dot { width: 4px; height: 4px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+    .load-bar-wrap { height: 1px; background: var(--border); overflow: hidden; margin-bottom: 10px; }
+    .load-bar { height: 100%; background: var(--green); width: 0%; }
+    .load-elapsed { font-family: 'Space Mono', monospace; font-size: 9px; color: var(--text-muted); letter-spacing: 0.12em; }
+
+    /* Price bar */
+    .price-bar { display: none; align-items: baseline; gap: 10px; margin: 6px 0 14px; flex-wrap: wrap; }
+    .price-bar.visible { display: flex; }
+    .price-bar-val {
+      font-family: 'Space Mono', monospace;
+      font-size: 26px; font-weight: 700; color: var(--text-primary);
+    }
+    .price-bar-chg { font-family: 'Space Mono', monospace; font-size: 13px; }
+    .price-bar-chg.up { color: var(--green); }
+    .price-bar-chg.dn { color: var(--red); }
+    .price-bar-delay {
+      font-family: 'Space Mono', monospace;
+      font-size: 9px; color: var(--text-muted); letter-spacing: 0.08em;
     }
 
-    .loading-state.visible { display: block; }
-
-    @keyframes blink {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0; }
-    }
-
-    .cursor {
-      display: inline-block;
-      animation: blink 1s step-end infinite;
-    }
+    /* Watchlist pill price */
+    .wpill-price { font-family: 'Space Mono', monospace; font-size: 9px; color: var(--text-muted); letter-spacing: 0.04em; margin-left: 2px; }
+    .wpill-price.up { color: var(--green); opacity: 0.8; }
+    .wpill-price.dn { color: var(--red); opacity: 0.8; }
 
     /* Error */
     .error-msg {
@@ -374,8 +388,10 @@
 
     <div class="pills anim" id="pills" style="animation-delay: 160ms;"></div>
 
-    <div class="loading-state" id="loading-state">
-      HENTER DATA <span class="cursor">_</span>
+    <div class="load-wrap" id="load-wrap">
+      <div class="load-steps" id="load-steps"></div>
+      <div class="load-bar-wrap"><div class="load-bar" id="load-bar"></div></div>
+      <div class="load-elapsed" id="load-elapsed">0s</div>
     </div>
 
     <div class="error-msg" id="error-msg"></div>
@@ -383,6 +399,7 @@
     <div class="result-section" id="result-section">
       <div class="result-header">
         <div class="result-company" id="result-company"></div>
+        <div class="price-bar" id="price-bar"></div>
         <div class="result-ticker-badge" id="result-ticker-badge"></div>
       </div>
       <div id="layers-container"></div>
@@ -391,11 +408,11 @@
   </div>
 
   <script>
-    // ── Watchlist ──
+    // ── Watchlist ──────────────────────────────────────────────
     const WL_KEY = 'pulse_watchlist';
     let lastFoundTicker = null;
+    let quoteCache = {};
 
-    // Seed default watchlist on first visit
     if (!localStorage.getItem(WL_KEY)) {
       localStorage.setItem(WL_KEY, JSON.stringify(['BN', 'MSFT', 'NVDA', 'UBER', 'ASTS']));
     }
@@ -405,6 +422,11 @@
     }
     function saveWatchlist(list) { localStorage.setItem(WL_KEY, JSON.stringify(list)); }
 
+    function fmtPill(p) {
+      if (p >= 1000) return p.toLocaleString('en-US', { maximumFractionDigits: 0 });
+      return p.toFixed(2);
+    }
+
     function renderWatchlist() {
       const list = getWatchlist();
       const el = document.getElementById('watchlist-pills');
@@ -412,12 +434,31 @@
         el.innerHTML = '<span class="watchlist-empty">Ingen tickers lagt til ennå</span>';
         return;
       }
-      el.innerHTML = list.map(t => `
-        <div class="wpill" onclick="runSearch('${esc(t)}')">
-          ${esc(t)}
+      el.innerHTML = list.map(t => {
+        const q = quoteCache[t];
+        let priceHtml = '';
+        if (q) {
+          const up = q.changePercent > 0, dn = q.changePercent < 0;
+          const cls = up ? 'up' : dn ? 'dn' : '';
+          priceHtml = `<span class="wpill-price ${cls}">${fmtPill(q.price)}</span>`;
+        }
+        return `<div class="wpill" onclick="runSearch('${esc(t)}')">
+          ${esc(t)}${priceHtml}
           <span class="wpill-del" onclick="event.stopPropagation();removeFromWatchlist('${esc(t)}')">✕</span>
-        </div>
-      `).join('');
+        </div>`;
+      }).join('');
+    }
+
+    async function loadWatchlistQuotes() {
+      const wl = getWatchlist();
+      if (!wl.length) return;
+      try {
+        const res = await fetch('/api/quotes?symbols=' + encodeURIComponent(wl.join(',')));
+        if (!res.ok) return;
+        const data = await res.json();
+        (data || []).forEach(q => { quoteCache[q.symbol] = q; });
+        renderWatchlist();
+      } catch (_) {}
     }
 
     function addToWatchlist() {
@@ -434,84 +475,104 @@
     function removeFromWatchlist(ticker) {
       saveWatchlist(getWatchlist().filter(t => t !== ticker));
       renderWatchlist();
-      // Re-enable add btn if current result matches removed ticker
-      if (lastFoundTicker === ticker) {
-        document.getElementById('add-btn').disabled = false;
-      }
+      if (lastFoundTicker === ticker) document.getElementById('add-btn').disabled = false;
     }
 
+    // ── Constants ──────────────────────────────────────────────
     const POPULAR = ['AAPL', 'NVDA', 'TSLA', 'MSFT', 'AMZN', 'META', 'CEG'];
 
-    const SENTIMENT_COLORS = {
-      'Bullish': '#1D9E75',
-      'Bearish': '#E24B4A',
-      'Nøytral': '#3A3A3A',
-    };
-
-    const BADGE_TEXT_COLORS = {
-      'Bullish': '#1D9E75',
-      'Bearish': '#E24B4A',
-      'Nøytral': '#555555',
-    };
-
-    const BADGE_BG = {
-      'Bullish': 'rgba(29,158,117,0.1)',
-      'Bearish': 'rgba(226,75,74,0.1)',
-      'Nøytral': '#1e1e1e',
-    };
+    const SENTIMENT_COLORS  = { 'Bullish': '#1D9E75', 'Bearish': '#E24B4A', 'Nøytral': '#3A3A3A' };
+    const BADGE_TEXT_COLORS = { 'Bullish': '#1D9E75', 'Bearish': '#E24B4A', 'Nøytral': '#555555' };
+    const BADGE_BG          = { 'Bullish': 'rgba(29,158,117,0.1)', 'Bearish': 'rgba(226,75,74,0.1)', 'Nøytral': '#1e1e1e' };
 
     function esc(str) {
       return String(str)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;');
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
 
-    // Init watchlist
-    renderWatchlist();
+    // ── Multi-step loading ─────────────────────────────────────
+    const LOAD_STEPS = ['SØKER NYHETER', 'SJEKKER EARNINGS', 'SJEKKER INSIDER', 'BEREGNER SENTIMENT'];
+    const loadState  = { stepTimer: null, elapsedTimer: null, startTime: 0, stepIdx: 0 };
 
-    // Render pills
-    const pillsEl = document.getElementById('pills');
-    pillsEl.innerHTML = POPULAR.map(t =>
-      `<div class="pill" onclick="runSearch('${t}')">${t}</div>`
-    ).join('');
+    function startLoading() {
+      loadState.stepIdx   = 0;
+      loadState.startTime = Date.now();
 
-    // Search input
-    const input = document.getElementById('search-input');
+      const stepsEl   = document.getElementById('load-steps');
+      const barEl     = document.getElementById('load-bar');
+      const elapsedEl = document.getElementById('load-elapsed');
 
-    input.addEventListener('input', () => {
-      input.value = input.value.toUpperCase().replace(/[^A-Z0-9.]/g, '');
-    });
+      stepsEl.innerHTML = LOAD_STEPS.map((s, i) =>
+        `<div class="load-step${i === 0 ? ' active' : ''}" id="ls-${i}">
+          <div class="ls-dot"></div>${s}
+        </div>`
+      ).join('');
 
-    input.addEventListener('keydown', e => {
-      if (e.key === 'Enter') {
-        const val = input.value.trim();
-        if (val) runSearch(val);
-      }
-    });
+      barEl.style.transition = 'none';
+      barEl.style.width = '0%';
+      elapsedEl.textContent = '0s';
+      document.getElementById('load-wrap').classList.add('visible');
 
-    function setLoading(show) {
-      document.getElementById('loading-state').classList.toggle('visible', show);
+      requestAnimationFrame(() => {
+        barEl.style.transition = 'width 22s linear';
+        barEl.style.width = '88%';
+      });
+
+      loadState.stepTimer = setInterval(() => {
+        const prev = document.getElementById('ls-' + loadState.stepIdx);
+        if (prev) { prev.classList.remove('active'); prev.classList.add('done'); }
+        loadState.stepIdx = Math.min(loadState.stepIdx + 1, LOAD_STEPS.length - 1);
+        const cur = document.getElementById('ls-' + loadState.stepIdx);
+        if (cur) cur.classList.add('active');
+      }, 5000);
+
+      loadState.elapsedTimer = setInterval(() => {
+        elapsedEl.textContent = Math.floor((Date.now() - loadState.startTime) / 1000) + 's';
+      }, 1000);
     }
 
-    function setError(msg) {
-      const el = document.getElementById('error-msg');
-      if (msg) {
-        el.textContent = msg;
-        el.classList.add('visible');
-      } else {
-        el.classList.remove('visible');
-      }
+    function stopLoading() {
+      clearInterval(loadState.stepTimer);
+      clearInterval(loadState.elapsedTimer);
+      document.getElementById('load-wrap').classList.remove('visible');
     }
 
-    function setResult(show) {
-      document.getElementById('result-section').classList.toggle('visible', show);
+    // ── Price bar ──────────────────────────────────────────────
+    async function fetchRealPrice(ticker) {
+      const bar = document.getElementById('price-bar');
+      if (!bar) return;
+      bar.classList.remove('visible');
+      try {
+        let q = quoteCache[ticker];
+        if (!q && window.PULSE_QUOTES) {
+          q = (window.PULSE_QUOTES || []).find(x => x.symbol === ticker || x.displaySymbol === ticker);
+        }
+        if (!q) {
+          const res = await fetch('/api/quotes?symbols=' + encodeURIComponent(ticker));
+          if (!res.ok) throw new Error();
+          const data = await res.json();
+          q = (data || [])[0];
+        }
+        if (!q) return;
+
+        const up = q.changePercent > 0, dn = q.changePercent < 0;
+        const cls  = up ? 'up' : dn ? 'dn' : '';
+        const sign = up ? '+' : '';
+        const priceStr = q.price >= 1000
+          ? q.price.toLocaleString('en-US', { maximumFractionDigits: 2 })
+          : q.price.toFixed(2);
+
+        bar.innerHTML = `<span class="price-bar-val">$${priceStr}</span>
+          <span class="price-bar-chg ${cls}">${sign}${q.changePercent.toFixed(2)}%</span>
+          <span class="price-bar-delay">15-MIN FORSINKET</span>`;
+        bar.classList.add('visible');
+      } catch (_) {}
     }
 
+    // ── Render layers ──────────────────────────────────────────
     function animateLayers() {
-      const cards = document.querySelectorAll('.layer-card');
-      cards.forEach((card, i) => {
+      document.querySelectorAll('.layer-card').forEach((card, i) => {
         card.style.opacity = '0';
         card.style.transform = 'translateY(16px)';
         card.style.transition = 'none';
@@ -531,23 +592,20 @@
 
       const container = document.getElementById('layers-container');
       container.innerHTML = (data.layers || []).map(layer => {
-        const borderColor = SENTIMENT_COLORS[layer.sentiment] || '#3A3A3A';
+        const borderColor = SENTIMENT_COLORS[layer.sentiment]  || '#3A3A3A';
         const badgeColor  = BADGE_TEXT_COLORS[layer.sentiment] || '#555';
-        const badgeBg     = BADGE_BG[layer.sentiment] || '#1e1e1e';
-        return `
-          <div class="layer-card" style="border-left-color: ${borderColor};">
-            <div class="layer-header">
-              <div class="layer-name">${esc(layer.name.toUpperCase())}</div>
-              <div class="badge" style="color: ${badgeColor}; background: ${badgeBg};">
-                ${esc(layer.sentiment.toUpperCase())}
-              </div>
+        const badgeBg     = BADGE_BG[layer.sentiment]          || '#1e1e1e';
+        return `<div class="layer-card" style="border-left-color: ${borderColor};">
+          <div class="layer-header">
+            <div class="layer-name">${esc(layer.name.toUpperCase())}</div>
+            <div class="badge" style="color: ${badgeColor}; background: ${badgeBg};">
+              ${esc(layer.sentiment.toUpperCase())}
             </div>
-            <div class="layer-summary">${esc(layer.summary)}</div>
           </div>
-        `;
+          <div class="layer-summary">${esc(layer.summary)}</div>
+        </div>`;
       }).join('');
 
-      // Show result header with animation
       const header = document.getElementById('result-section').querySelector('.result-header');
       header.style.opacity = '0';
       header.style.transform = 'translateY(16px)';
@@ -563,14 +621,27 @@
       setResult(true);
       animateLayers();
 
-      // Update watchlist button
       lastFoundTicker = data.ticker;
       const addBtn = document.getElementById('add-btn');
       const inList = getWatchlist().includes(data.ticker);
       addBtn.disabled = inList;
       addBtn.title = inList ? 'Allerede i watchlist' : 'Legg til i watchlist';
+
+      fetchRealPrice(data.ticker);
     }
 
+    // ── State helpers ──────────────────────────────────────────
+    function setError(msg) {
+      const el = document.getElementById('error-msg');
+      if (msg) { el.textContent = msg; el.classList.add('visible'); }
+      else el.classList.remove('visible');
+    }
+
+    function setResult(show) {
+      document.getElementById('result-section').classList.toggle('visible', show);
+    }
+
+    // ── Search ─────────────────────────────────────────────────
     async function runSearch(ticker) {
       ticker = ticker.trim().toUpperCase();
       if (!ticker) return;
@@ -578,7 +649,8 @@
       input.value = ticker;
       setError(null);
       setResult(false);
-      setLoading(true);
+      document.getElementById('price-bar').classList.remove('visible');
+      startLoading();
       lastFoundTicker = null;
       document.getElementById('add-btn').disabled = true;
 
@@ -588,26 +660,38 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ ticker })
         });
-
         if (!res.ok) throw new Error('Serverfeil ' + res.status);
         const data = await res.json();
 
-        setLoading(false);
-
+        stopLoading();
         if (data.error) { setError(data.error); return; }
-
-        if (!data.found) {
-          setError(`Fant ikke ticker "${ticker}". Sjekk symbolet og prøv igjen.`);
-          return;
-        }
+        if (!data.found) { setError(`Fant ikke ticker "${ticker}". Sjekk symbolet og prøv igjen.`); return; }
 
         renderTicker(data);
       } catch (e) {
-        setLoading(false);
+        stopLoading();
         setError('Klarte ikke hente data. Sjekk tilkoblingen og prøv igjen.');
       }
     }
+
+    // ── Init ───────────────────────────────────────────────────
+    renderWatchlist();
+    loadWatchlistQuotes();
+
+    const pillsEl = document.getElementById('pills');
+    pillsEl.innerHTML = POPULAR.map(t =>
+      `<div class="pill" onclick="runSearch('${t}')">${t}</div>`
+    ).join('');
+
+    const input = document.getElementById('search-input');
+    input.addEventListener('input', () => {
+      input.value = input.value.toUpperCase().replace(/[^A-Z0-9.]/g, '');
+    });
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Enter') { const v = input.value.trim(); if (v) runSearch(v); }
+    });
   </script>
 <script src="bg.js"></script>
+<script src="live.js"></script>
 </body>
 </html>
