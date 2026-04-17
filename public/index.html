@@ -212,6 +212,7 @@
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 12px;
+      align-items: stretch;
     }
 
     .card {
@@ -224,7 +225,9 @@
       overflow: hidden;
       transition: border-color 220ms ease, transform 220ms ease;
       text-decoration: none;
-      display: block;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
     }
 
     .card::before {
@@ -278,6 +281,7 @@
       line-height: 1.6;
       font-weight: 300;
       margin-bottom: 28px;
+      flex: 1;
     }
 
     .card-cta {
@@ -538,6 +542,19 @@
         <div class="card-title">Earnings</div>
         <div class="card-desc">Komplett beslutningsgrunnlag for earnings-trades: EPS-historikk, implied move og analyst sentiment.</div>
         <div class="card-cta">ANALYSER →</div>
+      </a>
+
+      <a class="card" href="logg.html">
+        <div class="card-tag">HANDELSDAGBOK</div>
+        <svg class="card-icon" viewBox="0 0 40 40" fill="none">
+          <rect x="7" y="5" width="26" height="30" rx="3" stroke="#1D9E75" stroke-width="1.5" fill="none" opacity="0.4"/>
+          <line x1="13" y1="13" x2="27" y2="13" stroke="#1D9E75" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/>
+          <line x1="13" y1="19" x2="27" y2="19" stroke="#1D9E75" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/>
+          <line x1="13" y1="25" x2="21" y2="25" stroke="#1D9E75" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/>
+        </svg>
+        <div class="card-title">Logg</div>
+        <div class="card-desc">Logg trades, noter setup-kvalitet og følg P&L over tid. Bygg disiplin gjennom dokumentasjon.</div>
+        <div class="card-cta">ÅPNE LOGG →</div>
       </a>
 
     </div>
