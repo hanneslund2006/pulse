@@ -4,7 +4,10 @@
     "api/sentiment.js": { "maxDuration": 60 },
     "api/ticker.js":    { "maxDuration": 60 },
     "api/earnings.js":  { "maxDuration": 60 },
-    "api/quotes.js":    { "maxDuration": 10 }
+    "api/quotes.js":    { "maxDuration": 10 },
+    "api/sektor.js":    { "maxDuration": 20 },
+    "api/radar.js":     { "maxDuration": 60 },
+    "api/gappers.js":   { "maxDuration": 60 }
   },
   "routes": [
     { "src": "/api/(.*)", "dest": "/api/$1" },

@@ -324,6 +324,17 @@
 
     .wpill-del:hover { color: var(--red); }
 
+    /* ── Earnings warning on watchlist pill ── */
+    .wpill-warn {
+      font-family: 'Space Mono', monospace;
+      font-size: 8px;
+      color: var(--amber);
+      letter-spacing: 0.04em;
+      margin-left: 2px;
+      flex-shrink: 0;
+    }
+    .wpill-warn.urgent { color: var(--red); }
+
     /* ── Search row with + button ── */
     .search-row {
       display: flex;
@@ -427,6 +438,23 @@
       return p.toFixed(2);
     }
 
+    function getEarningsWarning(ticker) {
+      try {
+        const today = new Date().toISOString().slice(0, 10);
+        const cached = JSON.parse(localStorage.getItem('pulse_earnings_' + today) || 'null');
+        if (!cached || !Array.isArray(cached)) return null;
+        const entry = cached.find(e => e.ticker === ticker);
+        if (!entry || !entry.date) return null;
+        const daysUntil = Math.round(
+          (new Date(entry.date + 'T12:00:00') - new Date()) / 86400000
+        );
+        if (daysUntil < 0) return null;
+        if (daysUntil === 0) return { text: '⚠ ER I DAG', urgent: true };
+        if (daysUntil <= 3) return { text: `⚠ ER om ${daysUntil}d`, urgent: false };
+        return null;
+      } catch { return null; }
+    }
+
     function renderWatchlist() {
       const list = getWatchlist();
       const el = document.getElementById('watchlist-pills');
@@ -442,8 +470,12 @@
           const cls = up ? 'up' : dn ? 'dn' : '';
           priceHtml = `<span class="wpill-price ${cls}">${fmtPill(q.price)}</span>`;
         }
+        const warn = getEarningsWarning(t);
+        const warnHtml = warn
+          ? `<span class="wpill-warn${warn.urgent ? ' urgent' : ''}">${warn.text}</span>`
+          : '';
         return `<div class="wpill" onclick="runSearch('${esc(t)}')">
-          ${esc(t)}${priceHtml}
+          ${esc(t)}${priceHtml}${warnHtml}
           <span class="wpill-del" onclick="event.stopPropagation();removeFromWatchlist('${esc(t)}')">✕</span>
         </div>`;
       }).join('');

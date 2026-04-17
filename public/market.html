@@ -349,6 +349,140 @@
       margin-top: 3px;
     }
 
+    /* ── Regime banner ── */
+    .regime-banner {
+      background: var(--surface);
+      border: 0.5px solid var(--border);
+      border-left: 4px solid var(--green);
+      border-radius: 12px;
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .regime-left { display: flex; flex-direction: column; gap: 3px; }
+
+    .regime-label {
+      font-family: 'Space Mono', monospace;
+      font-size: 9px;
+      color: var(--text-muted);
+      letter-spacing: 0.15em;
+    }
+
+    .regime-value {
+      font-family: 'Space Mono', monospace;
+      font-weight: 700;
+      font-size: 14px;
+      letter-spacing: 0.12em;
+    }
+
+    .regime-vix {
+      font-family: 'Space Mono', monospace;
+      font-size: 9px;
+      color: var(--text-muted);
+      letter-spacing: 0.08em;
+    }
+
+    /* ── Gappers ── */
+    .gappers-section { display: flex; flex-direction: column; gap: 8px; }
+
+    .gapper-row {
+      background: var(--surface);
+      border: 0.5px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .gapper-ticker {
+      font-family: 'Space Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      min-width: 54px;
+      border-radius: 4px;
+      padding: 3px 8px;
+      text-align: center;
+      flex-shrink: 0;
+    }
+
+    .gapper-ticker.up { color: var(--green); border: 0.5px solid rgba(29,158,117,0.3); background: rgba(29,158,117,0.06); }
+    .gapper-ticker.dn { color: var(--red);   border: 0.5px solid rgba(226,75,74,0.3);  background: rgba(226,75,74,0.06); }
+
+    .gapper-company {
+      font-size: 13px;
+      color: var(--text-primary);
+      flex: 1;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .gapper-gap {
+      font-family: 'Space Mono', monospace;
+      font-size: 12px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .gapper-gap.up { color: var(--green); }
+    .gapper-gap.dn { color: var(--red); }
+
+    .gapper-vol {
+      font-family: 'Space Mono', monospace;
+      font-size: 9px;
+      color: var(--text-muted);
+      letter-spacing: 0.06em;
+      flex-shrink: 0;
+    }
+
+    .gappers-closed {
+      font-family: 'Space Mono', monospace;
+      font-size: 9px;
+      color: var(--text-muted);
+      letter-spacing: 0.08em;
+      padding: 4px 0;
+    }
+
+    /* ── Macro calendar ── */
+    .macro-section { display: flex; flex-direction: column; gap: 8px; }
+
+    .macro-row {
+      background: var(--surface);
+      border: 0.5px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .macro-name { font-size: 13px; color: var(--text-primary); flex: 1; }
+
+    .macro-date {
+      font-family: 'Space Mono', monospace;
+      font-size: 10px;
+      color: var(--text-secondary);
+      flex-shrink: 0;
+    }
+
+    .macro-badge {
+      font-family: 'Space Mono', monospace;
+      font-size: 8px;
+      letter-spacing: 0.08em;
+      padding: 3px 7px;
+      border-radius: 3px;
+      flex-shrink: 0;
+    }
+
+    .macro-badge.today  { color: var(--red);          background: rgba(226,75,74,0.12); }
+    .macro-badge.soon   { color: var(--amber);         background: rgba(186,117,23,0.12); }
+    .macro-badge.future { color: var(--text-muted);    background: transparent; }
+
     /* CTA empty-state card */
     .cta-card {
       background: var(--surface);
@@ -441,6 +575,20 @@
     <!-- Data sections -->
     <div class="data-sections" id="data-sections">
 
+      <!-- Feature 1: Regime banner -->
+      <div class="regime-banner" id="regime-banner" style="display:none;">
+        <div class="regime-left">
+          <div class="regime-label">MARKEDSREGIME</div>
+          <div class="regime-value" id="regime-value">—</div>
+        </div>
+        <div class="regime-vix" id="regime-vix"></div>
+      </div>
+
+      <!-- Feature 6: Pre-market gappers -->
+      <div id="gappers-wrap" style="display:none;">
+        <div class="gappers-section" id="gappers-section"></div>
+      </div>
+
       <div class="verdict-card" id="verdict-card">
         <div class="verdict-left">
           <div class="verdict-label">KONKLUSJON</div>
@@ -459,6 +607,9 @@
         <div class="section-title">EARNINGS DENNE UKEN</div>
         <div id="earnings-list"></div>
       </div>
+
+      <!-- Feature 2: Macro calendar -->
+      <div class="macro-section" id="macro-section" style="display:none;"></div>
 
       <button class="btn" id="refresh-btn" onclick="clearAndRefetch()">HENT NY RAPPORT</button>
 
@@ -542,6 +693,17 @@
         }).filter(Boolean).join('');
 
         if (html) el.innerHTML = html;
+
+        // Update regime banner from live VIX
+        const vixQ = map['^VIX'];
+        if (vixQ) {
+          updateRegime(vixQ.price);
+          // Persist VIX into today's cache so regime survives page reload
+          try {
+            const cached = JSON.parse(localStorage.getItem(CACHE_KEY) || 'null');
+            if (cached) { cached.vix = vixQ.price; localStorage.setItem(CACHE_KEY, JSON.stringify(cached)); }
+          } catch (_) {}
+        }
       } catch (_) {
         // Fallback: show Claude's keydata if available
         if (lastClaudeKeydata && lastClaudeKeydata.length) {
@@ -645,12 +807,17 @@
           </div>`;
       }).join('');
 
+      // Show regime from cached VIX if available
+      if (typeof data.vix === 'number') updateRegime(data.vix);
+
       document.getElementById('empty-state').style.display = 'none';
       const ds = document.getElementById('data-sections');
       ds.classList.add('visible');
       animateItems();
 
       fetchEarnings();
+      renderMacroCalendar();
+      fetchGappers();
     }
 
     let fetching = false;
@@ -706,7 +873,159 @@
       fetchAndInjectRealPrices();
     }
 
-    // ── Earnings calendar ────────────────────────────────────
+    // ── Regime indicator ─────────────────────────────────────
+    function updateRegime(vix) {
+      const banner = document.getElementById('regime-banner');
+      const valEl  = document.getElementById('regime-value');
+      const vixEl  = document.getElementById('regime-vix');
+      if (!banner) return;
+
+      let label, color;
+      if (vix < 15)       { label = 'BULL';  color = '#1D9E75'; }
+      else if (vix <= 25) { label = 'RANGE'; color = '#BA7517'; }
+      else                { label = 'BEAR';  color = '#E24B4A'; }
+
+      banner.style.borderLeftColor = color;
+      valEl.style.color = color;
+      valEl.textContent = label;
+      vixEl.textContent = 'VIX ' + vix.toFixed(2);
+      banner.style.display = 'flex';
+    }
+
+    // ── Macro calendar ────────────────────────────────────────
+    const MACRO_EVENTS = [
+      { name: 'FOMC-møte',           date: '2026-04-29', type: 'FOMC' },
+      { name: 'PCE (kjerneinflasjon)', date: '2026-04-30', type: 'PCE' },
+      { name: 'NFP (sysselsetting)',  date: '2026-05-01', type: 'NFP' },
+      { name: 'CPI (inflasjon)',      date: '2026-05-12', type: 'CPI' },
+      { name: 'PCE (kjerneinflasjon)', date: '2026-05-29', type: 'PCE' },
+      { name: 'NFP (sysselsetting)',  date: '2026-06-05', type: 'NFP' },
+      { name: 'CPI (inflasjon)',      date: '2026-06-10', type: 'CPI' },
+      { name: 'FOMC-møte',           date: '2026-06-17', type: 'FOMC' },
+      { name: 'PCE (kjerneinflasjon)', date: '2026-06-26', type: 'PCE' },
+      { name: 'NFP (sysselsetting)',  date: '2026-07-10', type: 'NFP' },
+      { name: 'CPI (inflasjon)',      date: '2026-07-14', type: 'CPI' },
+      { name: 'FOMC-møte',           date: '2026-07-29', type: 'FOMC' },
+      { name: 'PCE (kjerneinflasjon)', date: '2026-07-31', type: 'PCE' },
+      { name: 'NFP (sysselsetting)',  date: '2026-08-07', type: 'NFP' },
+      { name: 'CPI (inflasjon)',      date: '2026-08-12', type: 'CPI' },
+      { name: 'PCE (kjerneinflasjon)', date: '2026-08-28', type: 'PCE' },
+      { name: 'NFP (sysselsetting)',  date: '2026-09-04', type: 'NFP' },
+      { name: 'CPI (inflasjon)',      date: '2026-09-09', type: 'CPI' },
+      { name: 'FOMC-møte',           date: '2026-09-16', type: 'FOMC' },
+      { name: 'PCE (kjerneinflasjon)', date: '2026-09-25', type: 'PCE' },
+      { name: 'NFP (sysselsetting)',  date: '2026-10-02', type: 'NFP' },
+      { name: 'CPI (inflasjon)',      date: '2026-10-13', type: 'CPI' },
+      { name: 'PCE (kjerneinflasjon)', date: '2026-10-30', type: 'PCE' },
+      { name: 'FOMC-møte',           date: '2026-11-04', type: 'FOMC' },
+      { name: 'NFP (sysselsetting)',  date: '2026-11-06', type: 'NFP' },
+      { name: 'CPI (inflasjon)',      date: '2026-11-10', type: 'CPI' },
+      { name: 'PCE (kjerneinflasjon)', date: '2026-11-25', type: 'PCE' },
+      { name: 'NFP (sysselsetting)',  date: '2026-12-04', type: 'NFP' },
+      { name: 'CPI (inflasjon)',      date: '2026-12-09', type: 'CPI' },
+      { name: 'FOMC-møte',           date: '2026-12-16', type: 'FOMC' },
+      { name: 'PCE (kjerneinflasjon)', date: '2026-12-23', type: 'PCE' },
+    ];
+
+    function renderMacroCalendar() {
+      const section = document.getElementById('macro-section');
+      if (!section) return;
+      const todayDate = new Date(TODAY + 'T00:00:00');
+
+      const upcoming = MACRO_EVENTS
+        .map(e => {
+          const d = Math.round((new Date(e.date + 'T00:00:00') - todayDate) / 86400000);
+          return { ...e, daysUntil: d };
+        })
+        .filter(e => e.daysUntil >= 0)
+        .sort((a, b) => a.daysUntil - b.daysUntil)
+        .slice(0, 4);
+
+      if (!upcoming.length) return;
+
+      const rows = upcoming.map(e => {
+        const dateStr = new Date(e.date + 'T12:00:00')
+          .toLocaleDateString('no-NO', { day: 'numeric', month: 'short' }).toUpperCase();
+        let badgeHtml;
+        if (e.daysUntil === 0)      badgeHtml = `<div class="macro-badge today">I DAG</div>`;
+        else if (e.daysUntil <= 3)  badgeHtml = `<div class="macro-badge soon">OM ${e.daysUntil}D</div>`;
+        else                        badgeHtml = `<div class="macro-badge future">OM ${e.daysUntil}D</div>`;
+
+        return `<div class="macro-row">
+          <div class="macro-name">${esc(e.name)}</div>
+          <div class="macro-date">${dateStr}</div>
+          ${badgeHtml}
+        </div>`;
+      }).join('');
+
+      section.innerHTML = `<div class="section-title">MAKROKALENDER</div>${rows}`;
+      section.style.display = 'flex';
+    }
+
+    // ── Gappers ───────────────────────────────────────────────
+    const GAPPERS_KEY = () => 'pulse_gappers_' + Math.floor(Date.now() / (15 * 60 * 1000));
+
+    function isGappersWindow() {
+      const etStr = new Date().toLocaleString('en-US', { timeZone: 'America/New_York' });
+      const et = new Date(etStr);
+      const mins = et.getHours() * 60 + et.getMinutes();
+      const day  = et.getDay();
+      if (day === 0 || day === 6) return false;
+      return mins < 630; // before 10:30 ET
+    }
+
+    function renderGappers(rows) {
+      const wrap = document.getElementById('gappers-wrap');
+      const section = document.getElementById('gappers-section');
+      if (!wrap || !section) return;
+
+      if (!isGappersWindow()) {
+        section.innerHTML = '<div class="gappers-closed">Markedet er åpent — gap-data ikke relevant</div>';
+        wrap.style.display = 'block';
+        return;
+      }
+
+      if (!rows || rows.length === 0) return;
+
+      const titleHtml = '<div class="section-title">PRE-MARKET GAPPERS</div>';
+      const rowsHtml = rows.map(r => {
+        const up   = r.gap >= 0;
+        const sign = up ? '+' : '';
+        const cls  = up ? 'up' : 'dn';
+        return `<div class="gapper-row">
+          <div class="gapper-ticker ${cls}">${esc(r.ticker)}</div>
+          <div class="gapper-company">${esc(r.company)}</div>
+          <div class="gapper-gap ${cls}">${sign}${parseFloat(r.gap).toFixed(1)}%</div>
+          <div class="gapper-vol">${esc(r.volume || '')}</div>
+        </div>`;
+      }).join('');
+
+      section.innerHTML = titleHtml + rowsHtml;
+      wrap.style.display = 'block';
+    }
+
+    async function fetchGappers() {
+      if (!isGappersWindow()) {
+        renderGappers(null);
+        return;
+      }
+      const key = GAPPERS_KEY();
+      try {
+        const cached = JSON.parse(localStorage.getItem(key) || 'null');
+        if (cached) { renderGappers(cached); return; }
+      } catch (_) {}
+      try {
+        const res = await fetch('/api/gappers');
+        if (!res.ok) return;
+        const data = await res.json();
+        if (Array.isArray(data)) {
+          localStorage.setItem(key, JSON.stringify(data));
+          renderGappers(data);
+        }
+      } catch (_) {}
+    }
+
+    // ── Earnings calendar ─────────────────────────────────────
     const EARNINGS_KEY = 'pulse_earnings_' + TODAY;
 
     function getWatchlist() {
