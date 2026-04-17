@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PULSE — Logg</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@700;800&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #080808;
+      --surface: #111111;
+      --surface-2: #181818;
+      --border: #242424;
+      --border-accent: #2a2a2a;
+      --green: #1D9E75;
+      --red: #E24B4A;
+      --amber: #BA7517;
+      --purple: #7F77DD;
+      --text-primary: #F0F0F0;
+      --text-secondary: #888888;
+      --text-muted: #444444;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background-color: var(--bg);
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+      color: var(--text-primary);
+      font-family: 'DM Sans', sans-serif;
+      min-height: 100vh;
+      padding: 32px 20px 80px;
+    }
+
+    .container { max-width: 640px; margin: 0 auto; }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(14px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .anim { opacity: 0; animation: fadeUp 0.45s ease forwards; }
+
+    .back {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-family: 'Space Mono', monospace; font-size: 11px;
+      color: var(--text-muted); text-decoration: none;
+      letter-spacing: 0.06em; margin-bottom: 36px;
+      transition: color 180ms;
+    }
+    .back:hover { color: var(--text-secondary); }
+
+    .page-title {
+      font-family: 'Syne', sans-serif; font-weight: 800;
+      font-size: 28px; letter-spacing: 0.02em; margin-bottom: 4px;
+    }
+    .page-subtitle {
+      font-size: 13px; color: var(--text-secondary); margin-bottom: 32px;
+    }
+
+    .section-label {
+      font-family: 'Space Mono', monospace; font-size: 9px;
+      letter-spacing: 0.18em; color: var(--text-muted);
+      text-transform: uppercase; margin-bottom: 12px;
+    }
+
+    /* Stats strip */
+    .stats-strip {
+      display: grid; grid-template-columns: repeat(4, 1fr);
+      gap: 1px; background: var(--border);
+      border: 0.5px solid var(--border); border-radius: 10px;
+      overflow: hidden; margin-bottom: 28px;
+    }
+    .stat-cell {
+      background: var(--surface); padding: 16px 14px; text-align: center;
+    }
+    .stat-cell-val {
+      font-family: 'Syne', sans-serif; font-weight: 800; font-size: 20px;
+      line-height: 1;
+    }
+    .stat-cell-lbl {
+      font-family: 'Space Mono', monospace; font-size: 8px;
+      letter-spacing: 0.12em; color: var(--text-muted); margin-top: 5px;
+    }
+
+    /* Add trade form */
+    .form-card {
+      background: var(--surface); border: 0.5px solid var(--border);
+      border-radius: 12px; padding: 22px 24px; margin-bottom: 24px;
+    }
+    .form-toggle {
+      display: flex; align-items: center; justify-content: space-between;
+      cursor: pointer;
+    }
+    .form-toggle-title {
+      font-family: 'Space Mono', monospace; font-size: 11px;
+      letter-spacing: 0.14em; color: var(--green);
+    }
+    .form-toggle-icon {
+      font-family: 'Space Mono', monospace; font-size: 16px;
+      color: var(--text-muted); transition: transform 200ms;
+    }
+    .form-toggle-icon.open { transform: rotate(45deg); }
+
+    .form-body { display: none; margin-top: 20px; }
+    .form-body.open { display: block; }
+
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+    .form-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+    .form-row-1 { margin-bottom: 10px; }
+
+    label {
+      display: block;
+      font-family: 'Space Mono', monospace; font-size: 9px;
+      letter-spacing: 0.14em; color: var(--text-muted);
+      margin-bottom: 5px;
+    }
+
+    input[type="text"], input[type="number"], input[type="date"], select, textarea {
+      width: 100%; background: var(--surface-2);
+      border: 0.5px solid var(--border-accent); border-radius: 7px;
+      padding: 10px 12px; color: var(--text-primary);
+      font-family: 'DM Sans', sans-serif; font-size: 13px;
+      outline: none; transition: border-color 180ms;
+      -webkit-appearance: none;
+    }
+    input:focus, select:focus, textarea:focus { border-color: var(--green); }
+    input::placeholder, textarea::placeholder { color: var(--text-muted); }
+    select option { background: var(--surface-2); }
+
+    textarea { resize: vertical; min-height: 64px; font-size: 12px; line-height: 1.5; }
+
+    /* Direction toggle */
+    .dir-toggle { display: flex; gap: 8px; }
+    .dir-btn {
+      flex: 1; padding: 10px; background: var(--surface-2);
+      border: 0.5px solid var(--border-accent); border-radius: 7px;
+      color: var(--text-muted); font-family: 'Space Mono', monospace;
+      font-size: 10px; letter-spacing: 0.12em; cursor: pointer;
+      transition: all 180ms;
+    }
+    .dir-btn.active-long  { background: rgba(29,158,117,0.12); border-color: var(--green); color: var(--green); }
+    .dir-btn.active-short { background: rgba(226,75,74,0.10);  border-color: var(--red);   color: var(--red); }
+
+    /* Quality stars */
+    .quality-row { display: flex; gap: 6px; }
+    .q-btn {
+      flex: 1; padding: 9px 4px;
+      background: var(--surface-2); border: 0.5px solid var(--border-accent);
+      border-radius: 6px; color: var(--text-muted);
+      font-family: 'Space Mono', monospace; font-size: 9px;
+      letter-spacing: 0.06em; cursor: pointer; text-align: center;
+      transition: all 160ms;
+    }
+    .q-btn.active { background: rgba(186,117,23,0.12); border-color: var(--amber); color: var(--amber); }
+
+    .btn-submit {
+      width: 100%; padding: 13px; background: var(--green);
+      border: none; border-radius: 8px; color: #050e0a;
+      font-family: 'Space Mono', monospace; font-size: 11px;
+      font-weight: 700; letter-spacing: 0.14em;
+      cursor: pointer; transition: opacity 160ms; margin-top: 14px;
+    }
+    .btn-submit:hover { opacity: 0.82; }
+
+    /* Trade list */
+    .trade-list { display: flex; flex-direction: column; gap: 8px; }
+
+    .trade-card {
+      background: var(--surface); border: 0.5px solid var(--border);
+      border-left: 3px solid var(--border); border-radius: 10px;
+      padding: 14px 18px;
+      animation: fadeUp 0.35s ease forwards; opacity: 0;
+    }
+    .trade-card.win  { border-left-color: var(--green); }
+    .trade-card.loss { border-left-color: var(--red); }
+    .trade-card.open { border-left-color: var(--amber); }
+
+    .trade-top {
+      display: flex; align-items: center; gap: 10px; margin-bottom: 8px;
+    }
+    .trade-ticker {
+      font-family: 'Space Mono', monospace; font-weight: 700;
+      font-size: 14px; letter-spacing: 0.08em;
+    }
+    .trade-dir {
+      font-family: 'Space Mono', monospace; font-size: 8px;
+      letter-spacing: 0.1em; padding: 2px 6px; border-radius: 2px;
+    }
+    .trade-dir.long  { background: rgba(29,158,117,0.12); color: var(--green); }
+    .trade-dir.short { background: rgba(226,75,74,0.10);  color: var(--red); }
+    .trade-status {
+      font-family: 'Space Mono', monospace; font-size: 8px;
+      letter-spacing: 0.1em; padding: 2px 6px; border-radius: 2px;
+      background: rgba(186,117,23,0.10); color: var(--amber);
+    }
+    .trade-status.closed {
+      background: rgba(136,136,136,0.08); color: var(--text-muted);
+    }
+    .trade-pnl {
+      margin-left: auto;
+      font-family: 'Space Mono', monospace; font-weight: 700; font-size: 13px;
+    }
+    .trade-pnl.pos { color: var(--green); }
+    .trade-pnl.neg { color: var(--red); }
+
+    .trade-meta {
+      display: flex; gap: 16px; flex-wrap: wrap;
+    }
+    .trade-meta-item {
+      font-size: 11px; color: var(--text-muted);
+    }
+    .trade-meta-item span {
+      font-family: 'Space Mono', monospace; font-size: 10px;
+      color: var(--text-secondary);
+    }
+
+    .trade-notes {
+      margin-top: 8px; padding-top: 8px;
+      border-top: 0.5px solid var(--border);
+      font-size: 12px; color: var(--text-secondary); line-height: 1.5;
+    }
+
+    .trade-actions {
+      display: flex; gap: 8px; margin-top: 10px; padding-top: 10px;
+      border-top: 0.5px solid var(--border);
+    }
+    .btn-close-trade, .btn-delete-trade {
+      font-family: 'Space Mono', monospace; font-size: 9px;
+      letter-spacing: 0.1em; padding: 6px 12px; border-radius: 5px;
+      cursor: pointer; transition: all 160ms;
+    }
+    .btn-close-trade {
+      background: rgba(29,158,117,0.1); border: 0.5px solid var(--green);
+      color: var(--green);
+    }
+    .btn-close-trade:hover { background: rgba(29,158,117,0.2); }
+    .btn-delete-trade {
+      background: transparent; border: 0.5px solid var(--border);
+      color: var(--text-muted);
+    }
+    .btn-delete-trade:hover { border-color: var(--red); color: var(--red); }
+
+    /* Close modal */
+    .modal-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.7); z-index: 100;
+      align-items: center; justify-content: center; padding: 20px;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: var(--surface); border: 0.5px solid var(--border-accent);
+      border-radius: 14px; padding: 28px 24px; width: 100%; max-width: 360px;
+    }
+    .modal-title {
+      font-family: 'Syne', sans-serif; font-weight: 800;
+      font-size: 18px; margin-bottom: 18px;
+    }
+    .modal-actions { display: flex; gap: 10px; margin-top: 18px; }
+    .btn-modal-confirm {
+      flex: 1; padding: 12px; background: var(--green);
+      border: none; border-radius: 8px; color: #050e0a;
+      font-family: 'Space Mono', monospace; font-size: 10px;
+      font-weight: 700; letter-spacing: 0.12em; cursor: pointer;
+    }
+    .btn-modal-cancel {
+      flex: 1; padding: 12px; background: transparent;
+      border: 0.5px solid var(--border); border-radius: 8px;
+      color: var(--text-secondary); font-family: 'Space Mono', monospace;
+      font-size: 10px; letter-spacing: 0.12em; cursor: pointer;
+    }
+
+    .empty-state {
+      text-align: center; padding: 48px 0;
+      font-family: 'Space Mono', monospace; font-size: 10px;
+      letter-spacing: 0.1em; color: var(--text-muted);
+    }
+
+    @media (max-width: 480px) {
+      .stats-strip { grid-template-columns: 1fr 1fr; }
+      .form-row, .form-row-3 { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <a href="index.html" class="back anim" style="animation-delay:0ms;">← TILBAKE</a>
+
+    <div class="page-title anim" style="animation-delay:40ms;">LOGG</div>
+    <div class="page-subtitle anim" style="animation-delay:80ms;">Logg trades, mål setup-kvalitet og følg P&L over tid.</div>
+
+    <!-- Stats -->
+    <div class="anim" style="animation-delay:100ms;">
+      <div class="stats-strip" id="stats-strip">
+        <div class="stat-cell">
+          <div class="stat-cell-val" id="stat-trades">0</div>
+          <div class="stat-cell-lbl">TRADES</div>
+        </div>
+        <div class="stat-cell">
+          <div class="stat-cell-val" id="stat-winrate">—</div>
+          <div class="stat-cell-lbl">WIN RATE</div>
+        </div>
+        <div class="stat-cell">
+          <div class="stat-cell-val" id="stat-rr">—</div>
+          <div class="stat-cell-lbl">AVG R:R</div>
+        </div>
+        <div class="stat-cell">
+          <div class="stat-cell-val" id="stat-pnl">$0</div>
+          <div class="stat-cell-lbl">TOTAL P&L</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Add trade form -->
+    <div class="form-card anim" style="animation-delay:140ms;">
+      <div class="form-toggle" id="form-toggle" onclick="toggleForm()">
+        <div class="form-toggle-title">+ LEGG TIL TRADE</div>
+        <div class="form-toggle-icon" id="form-icon">+</div>
+      </div>
+      <div class="form-body" id="form-body">
+
+        <div class="form-row">
+          <div>
+            <label>TICKER</label>
+            <input type="text" id="f-ticker" placeholder="AAPL" maxlength="10" autocapitalize="characters" spellcheck="false"/>
+          </div>
+          <div>
+            <label>DATO</label>
+            <input type="date" id="f-date"/>
+          </div>
+        </div>
+
+        <div class="form-row-1">
+          <label>RETNING</label>
+          <div class="dir-toggle">
+            <button class="dir-btn active-long" id="dir-long"  onclick="setDir('long')">LONG</button>
+            <button class="dir-btn"             id="dir-short" onclick="setDir('short')">SHORT</button>
+          </div>
+        </div>
+
+        <div class="form-row-3">
+          <div>
+            <label>ENTRY PRIS</label>
+            <input type="number" id="f-entry" placeholder="0.00" step="0.01" min="0"/>
+          </div>
+          <div>
+            <label>STOP LOSS</label>
+            <input type="number" id="f-stop" placeholder="0.00" step="0.01" min="0"/>
+          </div>
+          <div>
+            <label>STØRRELSE</label>
+            <input type="number" id="f-size" placeholder="100" min="1"/>
+          </div>
+        </div>
+
+        <div class="form-row-1">
+          <label>SETUP-KVALITET</label>
+          <div class="quality-row" id="quality-row">
+            <button class="q-btn" onclick="setQuality(1)">A+</button>
+            <button class="q-btn" onclick="setQuality(2)">A</button>
+            <button class="q-btn" onclick="setQuality(3)">B</button>
+            <button class="q-btn" onclick="setQuality(4)">C</button>
+            <button class="q-btn" onclick="setQuality(5)">D</button>
+          </div>
+        </div>
+
+        <div class="form-row-1">
+          <label>NOTATER (valgfritt)</label>
+          <textarea id="f-notes" placeholder="Setup-beskrivelse, catalyst, triggers..."></textarea>
+        </div>
+
+        <button class="btn-submit" onclick="addTrade()">LOGG TRADE →</button>
+      </div>
+    </div>
+
+    <!-- Trade list -->
+    <div class="anim" style="animation-delay:180ms;">
+      <div class="section-label" id="list-label">ALLE TRADES</div>
+      <div class="trade-list" id="trade-list"></div>
+    </div>
+
+  </div>
+
+  <!-- Close modal -->
+  <div class="modal-overlay" id="close-modal">
+    <div class="modal">
+      <div class="modal-title">Lukk trade</div>
+      <div class="form-row-1">
+        <label>EXIT PRIS</label>
+        <input type="number" id="m-exit" placeholder="0.00" step="0.01" min="0"/>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-modal-confirm" onclick="confirmClose()">LUKK TRADE</button>
+        <button class="btn-modal-cancel"  onclick="closeModal()">AVBRYT</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const STORAGE_KEY = 'pulse_trades';
+    let trades = [];
+    let selectedDir     = 'long';
+    let selectedQuality = null;
+    let closingId       = null;
+    let formOpen        = false;
+
+    // ── Persistence ──────────────────────────────────────────
+    function load() {
+      try { trades = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); }
+      catch (_) { trades = []; }
+    }
+    function save() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(trades));
+    }
+
+    // ── Helpers ───────────────────────────────────────────────
+    function esc(s) {
+      if (s == null) return '';
+      return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+    function uid() {
+      return Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+    }
+    function calcPnl(t) {
+      if (t.exit == null || t.entry == null || t.size == null) return null;
+      const dir = t.direction === 'short' ? -1 : 1;
+      return (t.exit - t.entry) * t.size * dir;
+    }
+    function calcR(t) {
+      if (t.stop == null || t.entry == null || t.size == null) return null;
+      const dir = t.direction === 'short' ? -1 : 1;
+      return (t.entry - t.stop) * t.size * dir;
+    }
+    function calcRR(t) {
+      const pnl = calcPnl(t);
+      const r   = calcR(t);
+      if (pnl == null || r == null || r === 0) return null;
+      return pnl / Math.abs(r);
+    }
+    function fmtPrice(n) {
+      if (n == null) return '—';
+      return '$' + parseFloat(n).toFixed(2);
+    }
+    function fmtPnl(n) {
+      if (n == null) return null;
+      const sign = n >= 0 ? '+' : '';
+      return sign + '$' + Math.abs(n).toFixed(2);
+    }
+
+    // ── Stats ─────────────────────────────────────────────────
+    function updateStats() {
+      const closed = trades.filter(t => t.status === 'closed');
+      const wins   = closed.filter(t => (calcPnl(t) || 0) > 0);
+      const total  = closed.reduce((sum, t) => sum + (calcPnl(t) || 0), 0);
+
+      const rrs = closed.map(calcRR).filter(v => v != null);
+      const avgRR = rrs.length ? rrs.reduce((a, b) => a + b, 0) / rrs.length : null;
+
+      document.getElementById('stat-trades').textContent = trades.length;
+
+      const wr = closed.length ? Math.round(wins.length / closed.length * 100) + '%' : '—';
+      document.getElementById('stat-winrate').textContent = wr;
+      document.getElementById('stat-winrate').style.color =
+        closed.length ? (wins.length / closed.length >= 0.5 ? 'var(--green)' : 'var(--red)') : '';
+
+      document.getElementById('stat-rr').textContent = avgRR != null ? avgRR.toFixed(2) + 'R' : '—';
+      document.getElementById('stat-rr').style.color =
+        avgRR != null ? (avgRR >= 2 ? 'var(--green)' : avgRR >= 1 ? 'var(--amber)' : 'var(--red)') : '';
+
+      const pnlText = total >= 0 ? '+$' + total.toFixed(2) : '-$' + Math.abs(total).toFixed(2);
+      document.getElementById('stat-pnl').textContent = total !== 0 ? pnlText : '$0';
+      document.getElementById('stat-pnl').style.color =
+        total > 0 ? 'var(--green)' : total < 0 ? 'var(--red)' : '';
+    }
+
+    // ── Render trades ─────────────────────────────────────────
+    function renderTrades() {
+      const list = document.getElementById('trade-list');
+      const sorted = [...trades].sort((a, b) => new Date(b.date) - new Date(a.date));
+
+      if (!sorted.length) {
+        list.innerHTML = '<div class="empty-state">INGEN TRADES LOGGET ENNÅ</div>';
+        return;
+      }
+
+      list.innerHTML = sorted.map((t, renderIdx) => {
+        const pnl   = calcPnl(t);
+        const rr    = calcRR(t);
+        const isWin = pnl != null && pnl > 0;
+        const cardCls = t.status === 'open' ? 'open' : isWin ? 'win' : 'loss';
+        const pnlText = fmtPnl(pnl);
+        const rrText  = rr != null ? (rr >= 0 ? '+' : '') + rr.toFixed(2) + 'R' : null;
+        const qualityLabels = ['A+', 'A', 'B', 'C', 'D'];
+        const qualLabel = t.quality ? qualityLabels[t.quality - 1] : null;
+
+        return `<div class="trade-card ${cardCls}" style="animation-delay:${renderIdx * 40}ms;" data-id="${esc(t.id)}">
+          <div class="trade-top">
+            <div class="trade-ticker">${esc(t.ticker)}</div>
+            <div class="trade-dir ${t.direction}">${t.direction === 'long' ? 'LONG' : 'SHORT'}</div>
+            <div class="trade-status ${t.status}">${t.status === 'open' ? 'ÅPEN' : 'LUKKET'}</div>
+            ${pnlText ? `<div class="trade-pnl ${pnl >= 0 ? 'pos' : 'neg'}">${esc(pnlText)}</div>` : ''}
+          </div>
+          <div class="trade-meta">
+            <div class="trade-meta-item">Entry <span>${esc(fmtPrice(t.entry))}</span></div>
+            ${t.exit != null ? `<div class="trade-meta-item">Exit <span>${esc(fmtPrice(t.exit))}</span></div>` : ''}
+            <div class="trade-meta-item">Stop <span>${esc(fmtPrice(t.stop))}</span></div>
+            <div class="trade-meta-item">Størrelse <span>${esc(t.size)}</span></div>
+            ${rrText ? `<div class="trade-meta-item">R:R <span>${esc(rrText)}</span></div>` : ''}
+            ${qualLabel ? `<div class="trade-meta-item">Setup <span>${esc(qualLabel)}</span></div>` : ''}
+            <div class="trade-meta-item">Dato <span>${esc(t.date || '—')}</span></div>
+          </div>
+          ${t.notes ? `<div class="trade-notes">${esc(t.notes)}</div>` : ''}
+          <div class="trade-actions">
+            ${t.status === 'open'
+              ? `<button class="btn-close-trade" onclick="openCloseModal('${esc(t.id)}')">LUKK TRADE</button>`
+              : ''}
+            <button class="btn-delete-trade" onclick="deleteTrade('${esc(t.id)}')">SLETT</button>
+          </div>
+        </div>`;
+      }).join('');
+    }
+
+    function refresh() {
+      updateStats();
+      renderTrades();
+    }
+
+    // ── Form ──────────────────────────────────────────────────
+    function toggleForm() {
+      formOpen = !formOpen;
+      document.getElementById('form-body').classList.toggle('open', formOpen);
+      const icon = document.getElementById('form-icon');
+      icon.textContent = formOpen ? '×' : '+';
+      icon.classList.toggle('open', formOpen);
+    }
+
+    function setDir(dir) {
+      selectedDir = dir;
+      document.getElementById('dir-long').className  = 'dir-btn' + (dir === 'long'  ? ' active-long'  : '');
+      document.getElementById('dir-short').className = 'dir-btn' + (dir === 'short' ? ' active-short' : '');
+    }
+
+    function setQuality(q) {
+      selectedQuality = q;
+      document.querySelectorAll('.q-btn').forEach((btn, i) => {
+        btn.classList.toggle('active', i + 1 === q);
+      });
+    }
+
+    function addTrade() {
+      const ticker = document.getElementById('f-ticker').value.trim().toUpperCase();
+      const entry  = parseFloat(document.getElementById('f-entry').value);
+      const stop   = parseFloat(document.getElementById('f-stop').value);
+      const size   = parseInt(document.getElementById('f-size').value);
+      const date   = document.getElementById('f-date').value;
+      const notes  = document.getElementById('f-notes').value.trim();
+
+      if (!ticker)      { alert('Ticker mangler'); return; }
+      if (isNaN(entry)) { alert('Entry pris mangler'); return; }
+      if (isNaN(stop))  { alert('Stop loss mangler'); return; }
+      if (isNaN(size) || size <= 0) { alert('Størrelse mangler'); return; }
+
+      const trade = {
+        id:        uid(),
+        ticker,
+        direction: selectedDir,
+        entry,
+        stop,
+        size,
+        exit:     null,
+        quality:  selectedQuality,
+        notes:    notes || null,
+        date:     date || new Date().toISOString().slice(0, 10),
+        status:   'open',
+      };
+
+      trades.unshift(trade);
+      save();
+      refresh();
+
+      // Reset form
+      document.getElementById('f-ticker').value = '';
+      document.getElementById('f-entry').value  = '';
+      document.getElementById('f-stop').value   = '';
+      document.getElementById('f-size').value   = '';
+      document.getElementById('f-notes').value  = '';
+      selectedQuality = null;
+      document.querySelectorAll('.q-btn').forEach(b => b.classList.remove('active'));
+      setDir('long');
+      toggleForm();
+    }
+
+    // ── Close trade modal ─────────────────────────────────────
+    function openCloseModal(id) {
+      closingId = id;
+      document.getElementById('m-exit').value = '';
+      document.getElementById('close-modal').classList.add('open');
+      setTimeout(() => document.getElementById('m-exit').focus(), 50);
+    }
+
+    function closeModal() {
+      closingId = null;
+      document.getElementById('close-modal').classList.remove('open');
+    }
+
+    function confirmClose() {
+      const exit = parseFloat(document.getElementById('m-exit').value);
+      if (isNaN(exit) || exit <= 0) { alert('Skriv inn exit-pris'); return; }
+      const t = trades.find(t => t.id === closingId);
+      if (t) { t.exit = exit; t.status = 'closed'; }
+      save();
+      refresh();
+      closeModal();
+    }
+
+    // ── Delete ────────────────────────────────────────────────
+    function deleteTrade(id) {
+      if (!confirm('Slett denne traden?')) return;
+      trades = trades.filter(t => t.id !== id);
+      save();
+      refresh();
+    }
+
+    // ── Init ──────────────────────────────────────────────────
+    document.getElementById('f-date').value = new Date().toISOString().slice(0, 10);
+
+    document.getElementById('close-modal').addEventListener('click', e => {
+      if (e.target === e.currentTarget) closeModal();
+    });
+
+    document.getElementById('m-exit').addEventListener('keydown', e => {
+      if (e.key === 'Enter') confirmClose();
+    });
+
+    load();
+    refresh();
+  </script>
+  <script src="bg.js"></script>
+  <script src="live.js"></script>
+</body>
+</html>
