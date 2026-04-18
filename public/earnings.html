@@ -6,83 +6,22 @@
   <title>PULSE — Earnings Play</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@700;800&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
   <style>
-    :root {
-      --bg: #080808;
-      --surface: #111111;
-      --surface-2: #181818;
-      --border: #242424;
-      --border-accent: #2a2a2a;
-      --green: #1D9E75;
-      --red: #E24B4A;
-      --amber: #BA7517;
-      --purple: #7F77DD;
-      --text-primary: #F0F0F0;
-      --text-secondary: #888888;
-      --text-muted: #444444;
-    }
-
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-    body {
-      background-color: var(--bg);
-      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
-      color: var(--text-primary);
-      font-family: 'DM Sans', sans-serif;
-      min-height: 100vh;
-      padding: 32px 20px 80px;
-    }
-
+    body { padding: 32px 20px 80px; }
     .container { max-width: 620px; margin: 0 auto; }
 
-    @keyframes fadeUp {
-      from { opacity: 0; transform: translateY(14px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-    @keyframes pulse-dot { 0%,100%{opacity:1;} 50%{opacity:0.15;} }
-
-    .anim { opacity: 0; animation: fadeUp 0.45s ease forwards; }
-
-    .back {
-      display: inline-flex; align-items: center; gap: 8px;
-      font-family: 'Space Mono', monospace; font-size: 11px;
-      color: var(--text-muted); text-decoration: none;
-      letter-spacing: 0.06em; margin-bottom: 36px;
-      transition: color 180ms;
-    }
-    .back:hover { color: var(--text-secondary); }
-
-    .page-title {
-      font-family: 'Syne', sans-serif; font-weight: 800;
-      font-size: 28px; letter-spacing: 0.02em; margin-bottom: 4px;
-    }
-    .page-subtitle {
-      font-size: 13px; color: var(--text-secondary); margin-bottom: 32px;
-    }
-
-    /* Search */
-    .search-row {
-      display: flex; gap: 10px; margin-bottom: 10px;
-    }
+    .search-row { display: flex; gap: 10px; margin-bottom: 10px; }
     .ticker-input {
-      flex: 1; background: var(--surface); border: 0.5px solid var(--border);
+      flex: 1; background: var(--surface); border: 1px solid var(--border);
       border-radius: 9px; padding: 13px 16px;
       color: var(--text-primary); font-family: 'Space Mono', monospace;
       font-size: 13px; letter-spacing: 0.1em; outline: none;
       transition: border-color 180ms;
     }
     .ticker-input::placeholder { color: var(--text-muted); }
-    .ticker-input:focus { border-color: var(--green); }
-    .btn-primary {
-      padding: 13px 22px; background: var(--green);
-      border: none; border-radius: 9px; color: #050e0a;
-      font-family: 'Space Mono', monospace; font-size: 11px;
-      font-weight: 700; letter-spacing: 0.14em;
-      cursor: pointer; transition: opacity 160ms; white-space: nowrap;
-    }
-    .btn-primary:hover:not(:disabled) { opacity: 0.82; }
-    .btn-primary:disabled { opacity: 0.35; cursor: not-allowed; }
+    .ticker-input:focus { border-color: var(--blue); }
 
     .earnings-date-hint {
       font-family: 'Space Mono', monospace; font-size: 10px;
@@ -90,30 +29,21 @@
       min-height: 18px; margin-bottom: 24px;
     }
 
-    /* Section label */
-    .section-label {
-      font-family: 'Space Mono', monospace; font-size: 9px;
-      letter-spacing: 0.18em; color: var(--text-muted);
-      text-transform: uppercase; margin-bottom: 10px;
-    }
-
-    /* Cards */
     .ep-card {
-      background: var(--surface); border: 0.5px solid var(--border);
+      background: var(--surface); border: 1px solid var(--border);
       border-radius: 12px; padding: 22px 24px; margin-bottom: 12px;
       animation: fadeUp 0.4s ease forwards; opacity: 0;
     }
 
-    /* Skeleton / loading */
     .skeleton {
-      background: var(--surface); border: 0.5px solid var(--border);
+      background: var(--surface); border: 1px solid var(--border);
       border-radius: 12px; padding: 22px 24px; margin-bottom: 12px;
       display: none;
     }
     .skeleton.visible { display: block; }
     .skel-line {
       height: 12px; border-radius: 4px;
-      background: linear-gradient(90deg, var(--surface-2) 25%, var(--border-accent) 50%, var(--surface-2) 75%);
+      background: linear-gradient(90deg, var(--surface-2) 25%, var(--border-light) 50%, var(--surface-2) 75%);
       background-size: 200% 100%;
       animation: shimmer 1.4s infinite;
       margin-bottom: 10px;
@@ -121,13 +51,10 @@
     @keyframes shimmer { 0%{background-position:200% 0;} 100%{background-position:-200% 0;} }
     .skel-line:last-child { margin-bottom: 0; width: 60%; }
 
-    /* Key stats */
-    .stats-row {
-      display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px;
-    }
+    .stats-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
     .stat-box { text-align: center; }
     .stat-val {
-      font-family: 'Syne', sans-serif; font-weight: 800;
+      font-family: 'Cormorant Garamond', serif; font-weight: 600;
       font-size: 26px; line-height: 1;
     }
     .stat-lbl {
@@ -138,7 +65,6 @@
     .stat-val.green { color: var(--green); }
     .stat-val.amber { color: var(--amber); }
 
-    /* EPS table */
     .ep-table { width: 100%; border-collapse: collapse; }
     .ep-table th {
       font-family: 'Space Mono', monospace; font-size: 9px;
@@ -149,7 +75,7 @@
     .ep-table td {
       font-size: 13px; color: var(--text-secondary);
       text-align: right; padding: 8px 0;
-      border-top: 0.5px solid var(--border);
+      border-top: 1px solid var(--border);
     }
     .ep-table td:first-child {
       font-family: 'Space Mono', monospace; font-size: 10px;
@@ -163,21 +89,16 @@
     }
     .beat-ratio span { color: var(--green); }
 
-    /* Estimate momentum */
     .est-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-    .est-box {
-      background: var(--surface-2); border-radius: 8px; padding: 14px 16px;
-    }
+    .est-box { background: var(--surface-2); border-radius: 8px; padding: 14px 16px; }
     .est-box-lbl {
       font-family: 'Space Mono', monospace; font-size: 9px;
       letter-spacing: 0.12em; color: var(--text-muted); margin-bottom: 6px;
     }
-    .est-box-val {
-      font-family: 'Syne', sans-serif; font-weight: 800; font-size: 20px;
-    }
+    .est-box-val { font-family: 'Cormorant Garamond', serif; font-weight: 600; font-size: 20px; }
     .rev-row {
       display: flex; justify-content: space-between; align-items: center;
-      margin-top: 14px; padding-top: 14px; border-top: 0.5px solid var(--border);
+      margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border);
     }
     .rev-lbl { font-size: 12px; color: var(--text-muted); }
     .rev-val {
@@ -192,13 +113,11 @@
       color: var(--text-muted); letter-spacing: 0.12em; margin-top: 14px;
     }
 
-    /* Revenue bars */
     .rev-bars { display: flex; align-items: flex-end; gap: 6px; height: 70px; }
     .rev-bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; }
     .rev-bar {
       width: 100%; border-radius: 3px 3px 0 0;
-      background: var(--green); opacity: 0.5;
-      transition: opacity 180ms;
+      background: var(--green); opacity: 0.5; transition: opacity 180ms;
     }
     .rev-bar:hover { opacity: 0.8; }
     .rev-bar.loss { background: var(--red); }
@@ -207,84 +126,46 @@
       color: var(--text-muted); letter-spacing: 0.04em;
       white-space: nowrap; text-align: center;
     }
-    .rev-qoq {
-      font-family: 'Space Mono', monospace; font-size: 8px;
-      text-align: center; margin-top: 4px;
-    }
+    .rev-qoq { font-family: 'Space Mono', monospace; font-size: 8px; text-align: center; margin-top: 4px; }
     .rev-qoq.pos { color: var(--green); }
     .rev-qoq.neg { color: var(--red); }
 
-    /* Analyst sentiment */
-    .consensus-row {
-      display: flex; align-items: center; gap: 14px; margin-bottom: 16px;
-    }
+    .consensus-row { display: flex; align-items: center; gap: 14px; margin-bottom: 16px; }
     .consensus-badge {
       font-family: 'Space Mono', monospace; font-size: 10px;
-      letter-spacing: 0.1em; padding: 5px 10px; border-radius: 4px;
-      flex-shrink: 0;
+      letter-spacing: 0.1em; padding: 5px 10px; border-radius: 4px; flex-shrink: 0;
     }
-    .upside-val {
-      font-family: 'Syne', sans-serif; font-weight: 800; font-size: 22px;
-    }
+    .upside-val { font-family: 'Cormorant Garamond', serif; font-weight: 600; font-size: 22px; }
     .upside-lbl {
       font-family: 'Space Mono', monospace; font-size: 9px;
       color: var(--text-muted); letter-spacing: 0.12em; margin-top: 2px;
     }
     .upgrade-row {
       display: flex; align-items: center; gap: 10px;
-      padding: 8px 0; border-top: 0.5px solid var(--border);
-      font-size: 12px;
+      padding: 8px 0; border-top: 1px solid var(--border); font-size: 12px;
     }
     .upgrade-firm { color: var(--text-secondary); flex: 1; }
-    .upgrade-arrow {
-      font-family: 'Space Mono', monospace; font-size: 11px;
-      color: var(--text-muted); flex-shrink: 0;
-    }
-    .upgrade-date {
-      font-family: 'Space Mono', monospace; font-size: 9px;
-      color: var(--text-muted); flex-shrink: 0; letter-spacing: 0.06em;
-    }
+    .upgrade-arrow { font-family: 'Space Mono', monospace; font-size: 11px; color: var(--text-muted); flex-shrink: 0; }
+    .upgrade-date { font-family: 'Space Mono', monospace; font-size: 9px; color: var(--text-muted); flex-shrink: 0; letter-spacing: 0.06em; }
 
-    /* Implied move */
     .implied-center { text-align: center; padding: 10px 0 16px; }
-    .implied-pct {
-      font-family: 'Syne', sans-serif; font-weight: 800;
-      font-size: 52px; line-height: 1; color: var(--purple);
-    }
-    .implied-sub {
-      font-size: 13px; color: var(--text-secondary); margin-top: 8px;
-    }
+    .implied-pct { font-family: 'Cormorant Garamond', serif; font-weight: 600; font-size: 52px; line-height: 1; color: var(--purple); }
+    .implied-sub { font-size: 13px; color: var(--text-secondary); margin-top: 8px; }
     .implied-compare {
       display: flex; justify-content: center; gap: 32px;
-      padding-top: 16px; border-top: 0.5px solid var(--border);
-      margin-top: 16px;
+      padding-top: 16px; border-top: 1px solid var(--border); margin-top: 16px;
     }
     .ic-item { text-align: center; }
-    .ic-val {
-      font-family: 'Space Mono', monospace; font-size: 14px;
-      font-weight: 700;
-    }
-    .ic-lbl {
-      font-family: 'Space Mono', monospace; font-size: 8px;
-      color: var(--text-muted); letter-spacing: 0.12em; margin-top: 4px;
-    }
+    .ic-val { font-family: 'Space Mono', monospace; font-size: 14px; font-weight: 700; }
+    .ic-lbl { font-family: 'Space Mono', monospace; font-size: 8px; color: var(--text-muted); letter-spacing: 0.12em; margin-top: 4px; }
     .implied-badge {
       display: inline-block; margin-top: 16px;
       font-family: 'Space Mono', monospace; font-size: 9px;
       letter-spacing: 0.14em; padding: 4px 10px; border-radius: 3px;
     }
-    .implied-badge.low  { background: rgba(29,158,117,0.12); color: var(--green); }
-    .implied-badge.norm { background: rgba(186,117,23,0.12);  color: var(--amber); }
-    .implied-badge.high { background: rgba(226,75,74,0.12);   color: var(--red);   }
-
-    /* Error */
-    .error-msg {
-      background: rgba(226,75,74,0.07); border: 0.5px solid rgba(226,75,74,0.25);
-      border-radius: 10px; padding: 16px 20px;
-      font-family: 'Space Mono', monospace; font-size: 11px;
-      color: var(--red); letter-spacing: 0.06em; display: none;
-    }
-    .error-msg.visible { display: block; }
+    .implied-badge.low  { background: rgba(29,184,126,0.12); color: var(--green); }
+    .implied-badge.norm { background: rgba(196,130,26,0.12);  color: var(--amber); }
+    .implied-badge.high { background: rgba(229,75,74,0.12);   color: var(--red); }
 
     @media (max-width: 480px) {
       .stats-row { grid-template-columns: 1fr 1fr; }
@@ -368,13 +249,13 @@
 
     function consensusStyle(key) {
       const map = {
-        'strongBuy':  { bg: 'rgba(29,158,117,0.15)', color: '#1D9E75', label: 'STRONG BUY' },
-        'buy':        { bg: 'rgba(29,158,117,0.10)', color: '#1D9E75', label: 'BUY' },
-        'hold':       { bg: 'rgba(186,117,23,0.12)', color: '#BA7517', label: 'HOLD' },
-        'underperform':{ bg: 'rgba(226,75,74,0.10)', color: '#E24B4A', label: 'UNDERPERFORM' },
-        'sell':       { bg: 'rgba(226,75,74,0.12)', color: '#E24B4A', label: 'SELL' },
+        'strongBuy':  { bg: 'rgba(29,184,126,0.15)', color: '#1DB87E', label: 'STRONG BUY' },
+        'buy':        { bg: 'rgba(29,184,126,0.10)', color: '#1DB87E', label: 'BUY' },
+        'hold':       { bg: 'rgba(196,130,26,0.12)', color: '#C4821A', label: 'HOLD' },
+        'underperform':{ bg: 'rgba(229,75,74,0.10)', color: '#E54B4A', label: 'UNDERPERFORM' },
+        'sell':       { bg: 'rgba(229,75,74,0.12)', color: '#E54B4A', label: 'SELL' },
       };
-      return map[key] || { bg: 'rgba(136,136,136,0.1)', color: '#888', label: (key || 'N/A').toUpperCase() };
+      return map[key] || { bg: 'rgba(74,81,102,0.12)', color: '#4A5166', label: (key || 'N/A').toUpperCase() };
     }
 
     function revDir(current, old) {

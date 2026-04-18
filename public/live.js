@@ -14,8 +14,8 @@
     /* Ticker rail */
     .t-rail {
       position: fixed; top: 0; left: 0; right: 0; z-index: 200;
-      height: 32px; background: #090909;
-      border-bottom: 0.5px solid #1e1e28;
+      height: 32px; background: #0A0C12;
+      border-bottom: 1px solid #1E2130;
       display: flex; align-items: center; overflow: hidden;
     }
     .t-scroll { flex: 1; overflow: hidden; min-width: 0; }
@@ -30,31 +30,31 @@
     }
     .t-item {
       display: inline-flex; align-items: center; gap: 6px;
-      padding: 0 16px; border-right: 0.5px solid #1a1a22;
+      padding: 0 16px; border-right: 1px solid #1A1D2A;
       font-family: 'Space Mono', monospace;
-      font-size: 10px; letter-spacing: 0.05em; height: 32px;
+      font-size: 10px; letter-spacing: 0.06em; height: 32px;
     }
-    .ti-sym  { color: #555; }
-    .ti-val  { color: #e0e0e0; }
-    .ti-up   { color: #1D9E75; }
-    .ti-dn   { color: #E24B4A; }
-    .ti-vix  { color: #BA7517; }
+    .ti-sym  { color: #4A5166; }
+    .ti-val  { color: #C8D0E0; }
+    .ti-up   { color: #1DB87E; }
+    .ti-dn   { color: #E54B4A; }
+    .ti-vix  { color: #C4821A; }
 
     /* Market status (right side of rail) */
     .t-status {
       flex-shrink: 0; display: flex; align-items: center; gap: 7px;
-      padding: 0 14px; border-left: 0.5px solid #1e1e28;
+      padding: 0 14px; border-left: 1px solid #1E2130;
       font-family: 'Space Mono', monospace;
-      font-size: 9px; letter-spacing: 0.12em; white-space: nowrap;
+      font-size: 9px; letter-spacing: 0.14em; white-space: nowrap;
     }
     .ts-dot {
       width: 5px; height: 5px; border-radius: 50%;
       background: currentColor; flex-shrink: 0;
     }
     .ts-time { opacity: 0.45; margin-left: 2px; }
-    .ts-open  { color: #1D9E75; }
-    .ts-amber { color: #BA7517; }
-    .ts-muted { color: #444; }
+    .ts-open  { color: #1DB87E; }
+    .ts-amber { color: #C4821A; }
+    .ts-muted { color: #3A3F55; }
     .ts-open .ts-dot { animation: ts-pulse 2s ease-in-out infinite; }
     @keyframes ts-pulse { 0%,100%{opacity:1;} 50%{opacity:0.15;} }
   `;

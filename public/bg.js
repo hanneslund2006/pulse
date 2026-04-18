@@ -26,8 +26,8 @@
   const C = {
     green : hexRgb('#1D9E75'),
     red   : hexRgb('#E24B4A'),
-    grid  : hexRgb('#242424'),
-    muted : '136,136,136',
+    grid  : hexRgb('#1C1F2A'),
+    muted : '72,80,100',
   };
   const rgba = (c, a) => `rgba(${c},${a})`;
 
@@ -44,8 +44,8 @@
 
   const WALK_LEN = 280;
   const walks = [
-    { pts: genWalk(WALK_LEN, 0.42, 0.018), baseY: 0.32, color: C.green, op: 0.15 },
-    { pts: genWalk(WALK_LEN, 0.58, 0.013), baseY: 0.68, color: C.red,   op: 0.12 },
+    { pts: genWalk(WALK_LEN, 0.42, 0.018), baseY: 0.32, color: C.green, op: 0.07 },
+    { pts: genWalk(WALK_LEN, 0.58, 0.013), baseY: 0.68, color: C.red,   op: 0.05 },
   ];
 
   function genCandles(n) {
@@ -77,7 +77,7 @@
     x  : Math.random(),
     y  : Math.random(),
     r  : 0.5 + Math.random() * 1.5,
-    op : 0.08 + Math.random() * 0.07,
+    op : 0.04 + Math.random() * 0.04,
   }));
 
   const geoLines = [
@@ -91,26 +91,26 @@
   const FIBS = [0.236, 0.382, 0.500, 0.618, 0.786];
 
   const LABEL_DEFS = [
-    { t: 'SPX',       col: C.green }, { t: 'NDX',       col: C.green },
-    { t: 'XAUUSD',   col: C.green }, { t: 'BTC/USD',   col: C.green },
-    { t: 'VIX',      col: C.red   }, { t: 'NVDA',      col: C.green },
+    { t: 'SPX',       col: C.muted }, { t: 'NDX',       col: C.muted },
+    { t: 'XAUUSD',   col: C.muted }, { t: 'BTC/USD',   col: C.muted },
+    { t: 'VIX',      col: C.muted }, { t: 'NVDA',      col: C.muted },
     { t: 'DXY',      col: C.muted }, { t: 'WTI',       col: C.muted },
-    { t: 'EUR/USD',  col: C.muted }, { t: 'TNX',       col: C.red   },
+    { t: 'EUR/USD',  col: C.muted }, { t: 'TNX',       col: C.muted },
     { t: 'FED RATE', col: C.muted }, { t: 'CHINA PMI', col: C.muted },
     { t: 'OPEC+',    col: C.muted }, { t: 'CPI YOY',   col: C.muted },
-    { t: '+2.34%',   col: C.green }, { t: '-0.87%',    col: C.red   },
-    { t: '+1.12%',   col: C.green }, { t: '4.23%',     col: C.muted },
-    { t: '-1.56%',   col: C.red   }, { t: 'PAYROLLS',  col: C.muted },
+    { t: '+2.34%',   col: C.muted }, { t: '-0.87%',    col: C.muted },
+    { t: '+1.12%',   col: C.muted }, { t: '4.23%',     col: C.muted },
+    { t: '-1.56%',   col: C.muted }, { t: 'PAYROLLS',  col: C.muted },
     { t: 'ECB',      col: C.muted }, { t: 'NATO',      col: C.muted },
     { t: '26.4B',    col: C.muted }, { t: 'TAIWAN STR',col: C.muted },
-    { t: 'MSFT',     col: C.green }, { t: 'TSLA',      col: C.red   },
+    { t: 'MSFT',     col: C.muted }, { t: 'TSLA',      col: C.muted },
   ];
   const labels = LABEL_DEFS.map(d => ({
     ...d,
     x  : 0.03 + Math.random() * 0.93,
     y  : 0.05 + Math.random() * 0.90,
     sz : 7 + Math.floor(Math.random() * 4),
-    op : 0.08 + Math.random() * 0.07,
+    op : 0.03 + Math.random() * 0.03,
   }));
 
   // ─── DRAW LOOP ────────────────────────────────────────────
@@ -121,9 +121,9 @@
     const cScroll = ts * 0.006;
 
     // ── 1. Grid ──
-    ctx.strokeStyle = rgba(C.grid, 0.8);
+    ctx.strokeStyle = rgba(C.grid, 0.28);
     ctx.lineWidth = 0.5;
-    const GX = 72, GY = 56;
+    const GX = 96, GY = 72;
     for (let x = GX; x < W; x += GX) {
       ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
     }
@@ -136,9 +136,9 @@
     ctx.lineWidth = 0.5;
     FIBS.forEach(fib => {
       const y = fib * H;
-      ctx.strokeStyle = rgba(C.muted, 0.14);
+      ctx.strokeStyle = rgba(C.muted, 0.08);
       ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
-      ctx.fillStyle = rgba(C.muted, 0.13);
+      ctx.fillStyle = rgba(C.muted, 0.04);
       ctx.font = "7px 'Space Mono', monospace";
       ctx.fillText(fib.toFixed(3), 6, y - 3);
     });
@@ -175,7 +175,7 @@
       const cY = candleAreaY + c.close * candleAreaH;
       const hY = candleAreaY + c.high  * candleAreaH;
       const lY = candleAreaY + c.low   * candleAreaH;
-      const col = c.bull ? rgba(C.green, 0.15) : rgba(C.red, 0.15);
+      const col = c.bull ? rgba(C.green, 0.06) : rgba(C.red, 0.06);
 
       ctx.strokeStyle = col;
       ctx.lineWidth = 0.5;
@@ -193,7 +193,7 @@
     const volMaxH = H * 0.065;
     volBars.forEach((bar, i) => {
       const bh = bar.h * volMaxH;
-      ctx.fillStyle = bar.bull ? rgba(C.green, 0.12) : rgba(C.red, 0.12);
+      ctx.fillStyle = bar.bull ? rgba(C.green, 0.04) : rgba(C.red, 0.04);
       ctx.fillRect(i * volBarW, H - bh, volBarW - 1, bh);
     });
 
@@ -217,7 +217,7 @@
     dots.forEach(d => {
       ctx.beginPath();
       ctx.arc(d.x * W, d.y * H, d.r, 0, Math.PI * 2);
-      ctx.fillStyle = rgba(C.green, d.op);
+      ctx.fillStyle = rgba(C.muted, d.op);
       ctx.fill();
     });
 

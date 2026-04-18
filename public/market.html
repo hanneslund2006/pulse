@@ -6,101 +6,12 @@
   <title>PULSE — Marked</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@700;800&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
   <style>
-    :root {
-      --bg: #080808;
-      --surface: #111111;
-      --surface-2: #181818;
-      --border: #242424;
-      --border-accent: #2a2a2a;
-      --green: #1D9E75;
-      --red: #E24B4A;
-      --amber: #BA7517;
-      --purple: #7F77DD;
-      --text-primary: #F0F0F0;
-      --text-secondary: #888888;
-      --text-muted: #444444;
-    }
+    body { padding: 32px 20px 64px; }
 
-    *, *::before, *::after {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
-    body {
-      background-color: var(--bg);
-      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
-      color: var(--text-primary);
-      font-family: 'DM Sans', sans-serif;
-      min-height: 100vh;
-      padding: 32px 20px 64px;
-    }
-
-    .container {
-      max-width: 600px;
-      margin: 0 auto;
-    }
-
-    @keyframes fadeUp {
-      from { opacity: 0; transform: translateY(16px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-
-    .anim {
-      opacity: 0;
-      animation: fadeUp 0.45s ease forwards;
-    }
-
-    /* Back */
-    .back {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      font-family: 'Space Mono', monospace;
-      font-size: 11px;
-      color: var(--text-muted);
-      text-decoration: none;
-      letter-spacing: 0.06em;
-      margin-bottom: 36px;
-      transition: color 180ms;
-    }
-    .back:hover { color: var(--text-secondary); }
-
-    /* Page header */
-    .page-title {
-      font-family: 'Syne', sans-serif;
-      font-weight: 800;
-      font-size: 28px;
-      letter-spacing: 0.02em;
-      margin-bottom: 4px;
-    }
-
-    .page-date {
-      font-family: 'Space Mono', monospace;
-      font-size: 10px;
-      color: var(--text-muted);
-      letter-spacing: 0.1em;
-      margin-bottom: 36px;
-    }
-
-    /* Empty state */
-    .empty-state {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 64px 0 48px;
-      gap: 8px;
-    }
-
-    .empty-label {
-      font-family: 'Space Mono', monospace;
-      font-size: 11px;
-      color: var(--text-muted);
-      letter-spacing: 0.1em;
-      margin-bottom: 20px;
-    }
+    .container { max-width: 600px; margin: 0 auto; }
 
     /* Data sections */
     .data-sections { display: none; }
@@ -109,8 +20,8 @@
     /* Verdict card */
     .verdict-card {
       background: var(--surface);
-      border: 0.5px solid var(--border);
-      border-left: 4px solid var(--green);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--green);
       border-radius: 12px;
       padding: 20px 24px;
       display: flex;
@@ -118,430 +29,188 @@
       align-items: center;
       gap: 20px;
     }
-
     .verdict-left { flex: 1; min-width: 0; }
-
     .verdict-label {
       font-family: 'Space Mono', monospace;
-      font-size: 9px;
-      color: var(--text-muted);
-      letter-spacing: 0.15em;
-      margin-bottom: 8px;
+      font-size: 9px; color: var(--text-muted);
+      letter-spacing: 0.15em; margin-bottom: 8px;
     }
-
-    .verdict-text {
-      font-size: 15px;
-      line-height: 1.45;
-      color: var(--text-primary);
-    }
-
-    .verdict-right {
-      flex-shrink: 0;
-      text-align: right;
-    }
-
+    .verdict-text { font-size: 15px; line-height: 1.45; color: var(--text-primary); }
+    .verdict-right { flex-shrink: 0; text-align: right; }
     .verdict-score {
       font-family: 'Space Mono', monospace;
-      font-weight: 700;
-      font-size: 52px;
-      color: var(--green);
-      line-height: 1;
+      font-weight: 700; font-size: 52px;
+      color: var(--green); line-height: 1;
     }
-
     .verdict-score-sub {
       font-family: 'Space Mono', monospace;
-      font-size: 9px;
-      color: var(--text-muted);
-      letter-spacing: 0.1em;
-      margin-top: 4px;
+      font-size: 9px; color: var(--text-muted);
+      letter-spacing: 0.1em; margin-top: 4px;
     }
 
     /* Keydata chips */
-    .keydata {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-
+    .keydata { display: flex; gap: 8px; flex-wrap: wrap; }
     .chip {
       background: var(--surface);
-      border: 0.5px solid var(--border);
-      border-radius: 8px;
-      padding: 10px 14px;
-      flex: 1;
-      min-width: 120px;
+      border: 1px solid var(--border);
+      border-radius: 8px; padding: 10px 14px;
+      flex: 1; min-width: 120px;
     }
-
     .chip-label {
       font-family: 'Space Mono', monospace;
-      font-size: 9px;
-      color: var(--text-muted);
-      letter-spacing: 0.12em;
-      margin-bottom: 5px;
+      font-size: 9px; color: var(--text-muted);
+      letter-spacing: 0.12em; margin-bottom: 5px;
     }
-
     .chip-value {
       font-family: 'Space Mono', monospace;
-      font-size: 14px;
-      font-weight: 700;
-      color: var(--text-primary);
+      font-size: 14px; font-weight: 700;
+      color: var(--text-data);
+    }
+    .chip-value.up { color: var(--green); }
+    .chip-value.dn { color: var(--red); }
+    .chip-sub {
+      font-family: 'Space Mono', monospace;
+      font-size: 8px; color: var(--text-muted);
+      letter-spacing: 0.08em; margin-top: 3px;
     }
 
     /* Category grid */
-    .cat-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-    }
-
+    .cat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
     .cat-card {
       background: var(--surface);
-      border: 0.5px solid var(--border);
-      border-left: 4px solid var(--green);
-      border-radius: 12px;
-      padding: 20px 24px;
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--green);
+      border-radius: 12px; padding: 20px 24px;
       transition: transform 180ms ease;
     }
-
-    .cat-card:hover {
-      transform: translateY(-2px);
-    }
-
+    .cat-card:hover { transform: translateY(-2px); }
     .cat-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 10px;
+      display: flex; justify-content: space-between;
+      align-items: center; margin-bottom: 10px;
     }
-
     .cat-name {
-      font-family: 'Syne', sans-serif;
-      font-weight: 700;
-      font-size: 13px;
-      letter-spacing: 0.06em;
-    }
-
-    .badge {
       font-family: 'Space Mono', monospace;
-      font-size: 9px;
-      letter-spacing: 0.1em;
-      padding: 3px 7px;
-      border-radius: 3px;
+      font-weight: 700; font-size: 11px; letter-spacing: 0.08em;
     }
+    .cat-summary { font-size: 13px; color: var(--text-secondary); line-height: 1.55; }
 
-    .cat-summary {
-      font-size: 13px;
-      color: var(--text-secondary);
-      line-height: 1.55;
+    /* Regime banner */
+    .regime-banner {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--green);
+      border-radius: 12px; padding: 14px 24px;
+      display: flex; align-items: center;
+      justify-content: space-between; gap: 16px;
     }
-
-    /* Button */
-    .btn {
-      width: 100%;
-      padding: 14px;
-      background: transparent;
-      border: 0.5px solid var(--border);
-      border-radius: 10px;
-      color: var(--text-secondary);
+    .regime-left { display: flex; flex-direction: column; gap: 3px; }
+    .regime-label {
       font-family: 'Space Mono', monospace;
-      font-size: 11px;
-      letter-spacing: 0.12em;
-      cursor: pointer;
-      transition: border-color 180ms, color 180ms;
+      font-size: 9px; color: var(--text-muted); letter-spacing: 0.15em;
+    }
+    .regime-value {
+      font-family: 'Space Mono', monospace;
+      font-weight: 700; font-size: 14px; letter-spacing: 0.12em;
+    }
+    .regime-vix {
+      font-family: 'Space Mono', monospace;
+      font-size: 9px; color: var(--text-muted); letter-spacing: 0.08em;
     }
 
-    .btn:hover:not(:disabled) {
-      border-color: var(--green);
-      color: var(--green);
+    /* Earnings calendar */
+    .earnings-section { display: flex; flex-direction: column; gap: 8px; }
+    .earnings-row {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px; padding: 13px 16px;
+      display: flex; align-items: center; gap: 12px;
+    }
+    .earnings-ticker {
+      font-family: 'Space Mono', monospace;
+      font-size: 10px; color: var(--blue);
+      border: 1px solid var(--blue-border);
+      background: var(--blue-dim);
+      border-radius: 4px; padding: 3px 8px;
+      letter-spacing: 0.08em; flex-shrink: 0;
+      min-width: 54px; text-align: center;
+    }
+    .earnings-company {
+      font-size: 13px; color: var(--text-primary);
+      flex: 1; min-width: 0; overflow: hidden;
+      text-overflow: ellipsis; white-space: nowrap;
+    }
+    .earnings-date {
+      font-family: 'Space Mono', monospace;
+      font-size: 10px; color: var(--text-secondary); flex-shrink: 0;
+    }
+    .earnings-badge {
+      font-family: 'Space Mono', monospace;
+      font-size: 8px; letter-spacing: 0.08em;
+      padding: 3px 6px; border-radius: 3px; flex-shrink: 0;
+    }
+    .earnings-badge.pre  { color: var(--amber);      background: rgba(196,130,26,0.12); }
+    .earnings-badge.post { color: var(--purple);     background: rgba(139,131,232,0.12); }
+    .earnings-badge.past { color: var(--text-muted); background: rgba(74,81,102,0.10); }
+    .earnings-empty { font-size: 12px; color: var(--text-muted); padding: 4px 0; }
+
+    /* Gappers */
+    .gappers-section { display: flex; flex-direction: column; gap: 8px; }
+    .gapper-row {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px; padding: 12px 16px;
+      display: flex; align-items: center; gap: 12px;
+    }
+    .gapper-ticker {
+      font-family: 'Space Mono', monospace;
+      font-size: 10px; letter-spacing: 0.08em;
+      min-width: 54px; border-radius: 4px;
+      padding: 3px 8px; text-align: center; flex-shrink: 0;
+    }
+    .gapper-ticker.up { color: var(--green); border: 1px solid var(--green-border); background: var(--green-dim); }
+    .gapper-ticker.dn { color: var(--red);   border: 1px solid rgba(229,75,74,0.3);  background: rgba(229,75,74,0.06); }
+    .gapper-company {
+      font-size: 13px; color: var(--text-primary);
+      flex: 1; min-width: 0; overflow: hidden;
+      text-overflow: ellipsis; white-space: nowrap;
+    }
+    .gapper-gap { font-family: 'Space Mono', monospace; font-size: 12px; font-weight: 700; flex-shrink: 0; }
+    .gapper-gap.up { color: var(--green); }
+    .gapper-gap.dn { color: var(--red); }
+    .gapper-vol {
+      font-family: 'Space Mono', monospace;
+      font-size: 9px; color: var(--text-muted);
+      letter-spacing: 0.06em; flex-shrink: 0;
+    }
+    .gappers-closed {
+      font-family: 'Space Mono', monospace;
+      font-size: 9px; color: var(--text-muted); letter-spacing: 0.08em; padding: 4px 0;
     }
 
-    .btn:disabled {
-      opacity: 0.35;
-      cursor: not-allowed;
+    /* Macro calendar */
+    .macro-section { display: flex; flex-direction: column; gap: 8px; }
+    .macro-row {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px; padding: 12px 16px;
+      display: flex; align-items: center; gap: 12px;
     }
+    .macro-name { font-size: 13px; color: var(--text-primary); flex: 1; }
+    .macro-date { font-family: 'Space Mono', monospace; font-size: 10px; color: var(--text-secondary); flex-shrink: 0; }
+    .macro-badge {
+      font-family: 'Space Mono', monospace;
+      font-size: 8px; letter-spacing: 0.08em;
+      padding: 3px 7px; border-radius: 3px; flex-shrink: 0;
+    }
+    .macro-badge.today  { color: var(--red);   background: rgba(229,75,74,0.12); }
+    .macro-badge.soon   { color: var(--amber);  background: rgba(196,130,26,0.12); }
+    .macro-badge.future { color: var(--text-muted); background: transparent; }
 
     @media (max-width: 600px) {
       .cat-grid { grid-template-columns: 1fr; }
       .verdict-card { flex-direction: column; align-items: flex-start; }
       .verdict-right { text-align: left; }
     }
-
-    /* ── Earnings calendar ── */
-    .earnings-section { display: flex; flex-direction: column; gap: 8px; }
-
-    .section-title {
-      font-family: 'Space Mono', monospace;
-      font-size: 9px;
-      letter-spacing: 0.18em;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      margin-bottom: 4px;
-    }
-
-    .earnings-row {
-      background: var(--surface);
-      border: 0.5px solid var(--border);
-      border-radius: 10px;
-      padding: 13px 16px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .earnings-ticker {
-      font-family: 'Space Mono', monospace;
-      font-size: 10px;
-      color: var(--green);
-      border: 0.5px solid rgba(29,158,117,0.3);
-      background: rgba(29,158,117,0.06);
-      border-radius: 4px;
-      padding: 3px 8px;
-      letter-spacing: 0.08em;
-      flex-shrink: 0;
-      min-width: 54px;
-      text-align: center;
-    }
-
-    .earnings-company {
-      font-size: 13px;
-      color: var(--text-primary);
-      flex: 1;
-      min-width: 0;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    .earnings-date {
-      font-family: 'Space Mono', monospace;
-      font-size: 10px;
-      color: var(--text-secondary);
-      flex-shrink: 0;
-    }
-
-    .earnings-badge {
-      font-family: 'Space Mono', monospace;
-      font-size: 8px;
-      letter-spacing: 0.08em;
-      padding: 3px 6px;
-      border-radius: 3px;
-      flex-shrink: 0;
-    }
-
-    .earnings-badge.pre  { color: var(--amber);      background: rgba(186,117,23,0.12); }
-    .earnings-badge.post { color: var(--purple);     background: rgba(127,119,221,0.12); }
-    .earnings-badge.past { color: var(--text-muted); background: rgba(68,68,68,0.10); }
-
-    .earnings-empty {
-      font-size: 12px;
-      color: var(--text-muted);
-      padding: 4px 0;
-    }
-
-    /* Live chip extras */
-    .chip-value.up { color: var(--green); }
-    .chip-value.dn { color: var(--red); }
-    .chip-sub {
-      font-family: 'Space Mono', monospace;
-      font-size: 8px;
-      color: var(--text-muted);
-      letter-spacing: 0.08em;
-      margin-top: 3px;
-    }
-
-    /* ── Regime banner ── */
-    .regime-banner {
-      background: var(--surface);
-      border: 0.5px solid var(--border);
-      border-left: 4px solid var(--green);
-      border-radius: 12px;
-      padding: 14px 24px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 16px;
-    }
-
-    .regime-left { display: flex; flex-direction: column; gap: 3px; }
-
-    .regime-label {
-      font-family: 'Space Mono', monospace;
-      font-size: 9px;
-      color: var(--text-muted);
-      letter-spacing: 0.15em;
-    }
-
-    .regime-value {
-      font-family: 'Space Mono', monospace;
-      font-weight: 700;
-      font-size: 14px;
-      letter-spacing: 0.12em;
-    }
-
-    .regime-vix {
-      font-family: 'Space Mono', monospace;
-      font-size: 9px;
-      color: var(--text-muted);
-      letter-spacing: 0.08em;
-    }
-
-    /* ── Gappers ── */
-    .gappers-section { display: flex; flex-direction: column; gap: 8px; }
-
-    .gapper-row {
-      background: var(--surface);
-      border: 0.5px solid var(--border);
-      border-radius: 10px;
-      padding: 12px 16px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .gapper-ticker {
-      font-family: 'Space Mono', monospace;
-      font-size: 10px;
-      letter-spacing: 0.08em;
-      min-width: 54px;
-      border-radius: 4px;
-      padding: 3px 8px;
-      text-align: center;
-      flex-shrink: 0;
-    }
-
-    .gapper-ticker.up { color: var(--green); border: 0.5px solid rgba(29,158,117,0.3); background: rgba(29,158,117,0.06); }
-    .gapper-ticker.dn { color: var(--red);   border: 0.5px solid rgba(226,75,74,0.3);  background: rgba(226,75,74,0.06); }
-
-    .gapper-company {
-      font-size: 13px;
-      color: var(--text-primary);
-      flex: 1;
-      min-width: 0;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    .gapper-gap {
-      font-family: 'Space Mono', monospace;
-      font-size: 12px;
-      font-weight: 700;
-      flex-shrink: 0;
-    }
-
-    .gapper-gap.up { color: var(--green); }
-    .gapper-gap.dn { color: var(--red); }
-
-    .gapper-vol {
-      font-family: 'Space Mono', monospace;
-      font-size: 9px;
-      color: var(--text-muted);
-      letter-spacing: 0.06em;
-      flex-shrink: 0;
-    }
-
-    .gappers-closed {
-      font-family: 'Space Mono', monospace;
-      font-size: 9px;
-      color: var(--text-muted);
-      letter-spacing: 0.08em;
-      padding: 4px 0;
-    }
-
-    /* ── Macro calendar ── */
-    .macro-section { display: flex; flex-direction: column; gap: 8px; }
-
-    .macro-row {
-      background: var(--surface);
-      border: 0.5px solid var(--border);
-      border-radius: 10px;
-      padding: 12px 16px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .macro-name { font-size: 13px; color: var(--text-primary); flex: 1; }
-
-    .macro-date {
-      font-family: 'Space Mono', monospace;
-      font-size: 10px;
-      color: var(--text-secondary);
-      flex-shrink: 0;
-    }
-
-    .macro-badge {
-      font-family: 'Space Mono', monospace;
-      font-size: 8px;
-      letter-spacing: 0.08em;
-      padding: 3px 7px;
-      border-radius: 3px;
-      flex-shrink: 0;
-    }
-
-    .macro-badge.today  { color: var(--red);          background: rgba(226,75,74,0.12); }
-    .macro-badge.soon   { color: var(--amber);         background: rgba(186,117,23,0.12); }
-    .macro-badge.future { color: var(--text-muted);    background: transparent; }
-
-    /* CTA empty-state card */
-    .cta-card {
-      background: var(--surface);
-      border: 0.5px solid var(--border);
-      border-radius: 14px;
-      padding: 32px 28px;
-    }
-    .cta-label {
-      font-family: 'Space Mono', monospace;
-      font-size: 9px;
-      color: var(--text-muted);
-      letter-spacing: 0.16em;
-      margin-bottom: 10px;
-    }
-    .cta-title {
-      font-family: 'Syne', sans-serif;
-      font-weight: 800;
-      font-size: 21px;
-      margin-bottom: 8px;
-    }
-    .cta-desc {
-      font-size: 13px;
-      color: var(--text-secondary);
-      line-height: 1.65;
-      margin-bottom: 22px;
-    }
-    .btn-primary {
-      width: 100%;
-      padding: 14px;
-      background: var(--green);
-      border: none;
-      border-radius: 9px;
-      color: #050e0a;
-      font-family: 'Space Mono', monospace;
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: 0.14em;
-      cursor: pointer;
-      transition: opacity 160ms;
-    }
-    .btn-primary:hover:not(:disabled) { opacity: 0.82; }
-    .btn-primary:disabled { opacity: 0.35; cursor: not-allowed; }
-
-    /* Multi-step loading */
-    .load-wrap { display: none; padding: 48px 0 40px; }
-    .load-wrap.visible { display: block; }
-    .load-steps { display: flex; flex-direction: column; gap: 8px; margin-bottom: 24px; }
-    .load-step {
-      display: flex; align-items: center; gap: 10px;
-      font-family: 'Space Mono', monospace;
-      font-size: 10px; letter-spacing: 0.1em; color: var(--text-muted);
-      transition: color 300ms;
-    }
-    .load-step.active { color: var(--green); }
-    .load-step.done { opacity: 0.35; }
-    .ls-dot { width: 4px; height: 4px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
-    .load-bar-wrap { height: 1px; background: var(--border); overflow: hidden; margin-bottom: 10px; }
-    .load-bar { height: 100%; background: var(--green); width: 0%; }
-    .load-elapsed { font-family: 'Space Mono', monospace; font-size: 9px; color: var(--text-muted); letter-spacing: 0.12em; }
   </style>
 </head>
 <body>
