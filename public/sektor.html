@@ -15,7 +15,7 @@
     @keyframes ls-pulse { 0%,100%{opacity:1;} 50%{opacity:0.2;} }
     .ls-dot {
       width: 4px; height: 4px; border-radius: 50%;
-      background: var(--blue); flex-shrink: 0;
+      background: var(--green); flex-shrink: 0;
       animation: ls-pulse 1.2s ease-in-out infinite;
     }
 
@@ -57,7 +57,7 @@
         <div class="cta-label">SEKTORANALYSE</div>
         <div class="cta-title">Hvilken sektor leder denne uken?</div>
         <div class="cta-desc">Henter ukentlig % endring for alle 11 SPDR-sektorer via Yahoo Finance. Cachet til neste dag.</div>
-        <button class="btn-primary" id="fetch-btn" onclick="fetchSectors()">HENT SEKTORDATA →</button>
+        <button class="btn-ghost" id="fetch-btn" onclick="fetchSectors()">HENT SEKTORDATA →</button>
       </div>
     </div>
 

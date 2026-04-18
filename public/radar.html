@@ -15,10 +15,10 @@
     @keyframes ls-pulse { 0%,100%{opacity:1;} 50%{opacity:0.15;} }
     .ls-dot {
       width: 4px; height: 4px; border-radius: 50%;
-      background: var(--blue); flex-shrink: 0;
+      background: var(--green); flex-shrink: 0;
       animation: ls-pulse 1.2s ease-in-out infinite;
     }
-    .load-bar { height: 100%; background: var(--blue); width: 0%; transition: width 25s linear; }
+    .load-bar { height: 100%; background: var(--green); width: 0%; transition: width 25s linear; }
 
     /* Radar cards */
     .radar-list { display: none; flex-direction: column; gap: 12px; }
@@ -50,7 +50,7 @@
         <div class="cta-label">SWING SETUP RADAR</div>
         <div class="cta-title">Finn dagens beste setup</div>
         <div class="cta-desc">AI screener som leter etter aksjer med høy short float (&gt;15%), positiv momentum og katalysator. Returnerer 3–5 kandidater. Cachet til neste dag.</div>
-        <button class="btn-primary" id="fetch-btn" onclick="fetchRadar()">KJØR RADAR →</button>
+        <button class="btn-ghost" id="fetch-btn" onclick="fetchRadar()">KJØR RADAR →</button>
       </div>
     </div>
 
