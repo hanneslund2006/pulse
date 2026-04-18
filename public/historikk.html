@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PULSE — Historikk</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body { padding: 32px 20px 80px; }
+    .container { max-width: 600px; margin: 0 auto; }
+
+    /* Search */
+    .search-row { display: flex; gap: 10px; margin-bottom: 16px; }
+    .ticker-input {
+      flex: 1; background: var(--surface); border: 1px solid var(--border);
+      border-radius: 9px; padding: 13px 16px;
+      color: var(--text-primary); font-family: 'Space Mono', monospace;
+      font-size: 13px; letter-spacing: 0.1em; outline: none;
+      transition: border-color 180ms;
+    }
+    .ticker-input::placeholder { color: var(--text-muted); }
+    .ticker-input:focus { border-color: var(--green); }
+
+    /* Period selector */
+    .period-row { display: flex; gap: 8px; margin-bottom: 28px; }
+    .period-btn {
+      flex: 1; padding: 10px; background: var(--surface);
+      border: 1px solid var(--border); border-radius: 7px;
+      color: var(--text-muted); font-family: 'Space Mono', monospace;
+      font-size: 10px; letter-spacing: 0.12em; cursor: pointer;
+      transition: all 150ms;
+    }
+    .period-btn:hover { border-color: var(--border-light); color: var(--text-secondary); }
+    .period-btn.active {
+      border-color: var(--green); color: var(--green);
+      background: var(--green-dim);
+    }
+
+    /* Fetch button */
+    .fetch-btn {
+      width: 100%; padding: 13px 24px; background: transparent;
+      border: 1px solid var(--green); border-radius: 8px;
+      color: var(--green); font-family: 'Space Mono', monospace;
+      font-size: 11px; font-weight: 700; letter-spacing: 0.16em;
+      cursor: pointer; transition: background 140ms;
+      margin-bottom: 28px;
+    }
+    .fetch-btn:hover:not(:disabled) { background: var(--green-dim); }
+    .fetch-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+    /* Loading */
+    .load-wrap { display: none; padding: 40px 0; text-align: center; }
+    .load-wrap.visible { display: block; }
+    .load-pulse {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--green); margin: 0 auto 20px;
+      animation: pulse-dot 1.2s ease-in-out infinite;
+    }
+    .load-text {
+      font-family: 'Space Mono', monospace; font-size: 10px;
+      color: var(--text-muted); letter-spacing: 0.14em;
+    }
+
+    /* Timeline */
+    .timeline { display: none; position: relative; }
+    .timeline.visible { display: block; }
+    .timeline-line {
+      position: absolute; left: 7px; top: 8px; bottom: 8px;
+      width: 1px; background: var(--border);
+    }
+
+    .catalyst {
+      display: flex; gap: 20px; padding-bottom: 28px;
+      opacity: 0; animation: fadeUp 0.4s ease forwards;
+    }
+    .catalyst:last-child { padding-bottom: 0; }
+
+    .catalyst-left { flex-shrink: 0; display: flex; flex-direction: column; align-items: center; }
+    .catalyst-dot {
+      width: 15px; height: 15px; border-radius: 50%;
+      border: 2px solid; flex-shrink: 0; background: var(--bg);
+      position: relative; z-index: 1;
+    }
+    .catalyst-dot.positive { border-color: var(--green); box-shadow: 0 0 0 3px var(--green-dim); }
+    .catalyst-dot.negative { border-color: var(--red);   box-shadow: 0 0 0 3px rgba(229,75,74,0.10); }
+    .catalyst-dot.neutral  { border-color: var(--text-muted); }
+
+    .catalyst-body { flex: 1; padding-top: 0; }
+    .catalyst-date {
+      font-family: 'Space Mono', monospace; font-size: 9px;
+      letter-spacing: 0.12em; color: var(--text-muted);
+      margin-bottom: 5px;
+    }
+    .catalyst-headline {
+      font-family: 'Cormorant Garamond', serif; font-weight: 600;
+      font-size: 18px; line-height: 1.2; margin-bottom: 7px;
+      color: var(--text-primary);
+    }
+    .catalyst-headline.positive { color: var(--green); }
+    .catalyst-headline.negative { color: var(--red); }
+    .catalyst-explanation {
+      font-size: 13px; color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
+    /* Empty state inline */
+    .empty-msg {
+      font-family: 'Space Mono', monospace; font-size: 10px;
+      color: var(--text-muted); letter-spacing: 0.1em;
+      text-align: center; padding: 40px 0; display: none;
+    }
+    .empty-msg.visible { display: block; }
+
+    .ticker-label {
+      font-family: 'Space Mono', monospace; font-size: 9px;
+      letter-spacing: 0.16em; color: var(--text-muted);
+      margin-bottom: 20px;
+    }
+    .ticker-label span { color: var(--green); }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <a href="index.html" class="back anim" style="animation-delay:0ms;">← TILBAKE</a>
+
+    <div class="page-title anim" style="animation-delay:40ms;">HISTORIKK</div>
+    <div class="page-subtitle anim" style="animation-delay:80ms;">AI-generert tidslinje over de viktigste katalysatorene bak kursbevegelsene.</div>
+
+    <div class="anim" style="animation-delay:120ms;">
+      <div class="search-row">
+        <input
+          type="text"
+          id="ticker-input"
+          class="ticker-input"
+          placeholder="Ticker (f.eks. NVDA)"
+          maxlength="10"
+          autocomplete="off"
+          autocapitalize="characters"
+          spellcheck="false"
+        />
+      </div>
+
+      <div class="period-row" id="period-row">
+        <button class="period-btn active" data-months="3" onclick="setPeriod(3)">3M</button>
+        <button class="period-btn" data-months="6" onclick="setPeriod(6)">6M</button>
+        <button class="period-btn" data-months="12" onclick="setPeriod(12)">12M</button>
+      </div>
+
+      <button class="fetch-btn" id="fetch-btn" onclick="fetchHistorikk()">ANALYSER HISTORIKK →</button>
+    </div>
+
+    <div class="error-msg" id="error-msg"></div>
+
+    <div class="load-wrap" id="load-wrap">
+      <div class="load-pulse"></div>
+      <div class="load-text" id="load-text">ANALYSERER HISTORIKK…</div>
+    </div>
+
+    <div class="empty-msg" id="empty-msg">INGEN NYHETER FUNNET FOR DENNE PERIODEN</div>
+
+    <div id="results" style="display:none;">
+      <div class="ticker-label" id="ticker-label"></div>
+      <div class="timeline" id="timeline">
+        <div class="timeline-line"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    let selectedMonths = 3;
+    let fetching = false;
+
+    function esc(s) {
+      if (s == null) return '';
+      return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    function setPeriod(months) {
+      selectedMonths = months;
+      document.querySelectorAll('.period-btn').forEach(btn => {
+        btn.classList.toggle('active', parseInt(btn.dataset.months) === months);
+      });
+    }
+
+    function showError(msg) {
+      const el = document.getElementById('error-msg');
+      el.textContent = msg;
+      el.classList.add('visible');
+    }
+
+    function clearError() {
+      document.getElementById('error-msg').classList.remove('visible');
+    }
+
+    function formatDate(iso) {
+      if (!iso) return '—';
+      try {
+        return new Date(iso).toLocaleDateString('no-NO', { day: 'numeric', month: 'short', year: 'numeric' });
+      } catch (_) { return iso.slice(0, 10); }
+    }
+
+    function renderTimeline(data) {
+      const timeline = document.getElementById('timeline');
+      const label = document.getElementById('ticker-label');
+
+      label.innerHTML = `<span>${esc(data.ticker)}</span> — ${selectedMonths} måneder`;
+
+      const items = (data.catalysts || []);
+      const entries = items.map((c, i) => {
+        const s = c.sentiment || 'neutral';
+        return `<div class="catalyst" style="animation-delay:${i * 70}ms;">
+          <div class="catalyst-left">
+            <div class="catalyst-dot ${esc(s)}"></div>
+          </div>
+          <div class="catalyst-body">
+            <div class="catalyst-date">${esc(formatDate(c.date))}</div>
+            <div class="catalyst-headline ${esc(s)}">${esc(c.headline)}</div>
+            <div class="catalyst-explanation">${esc(c.explanation)}</div>
+          </div>
+        </div>`;
+      }).join('');
+
+      // Rebuild timeline preserving the line
+      timeline.innerHTML = '<div class="timeline-line"></div>' + entries;
+      timeline.classList.add('visible');
+
+      document.getElementById('results').style.display = 'block';
+    }
+
+    async function fetchHistorikk() {
+      const raw = document.getElementById('ticker-input').value.trim().toUpperCase();
+      if (!raw) {
+        showError('Skriv inn et ticker-symbol.');
+        return;
+      }
+      if (fetching) return;
+
+      clearError();
+      document.getElementById('results').style.display = 'none';
+      document.getElementById('empty-msg').classList.remove('visible');
+
+      const CACHE_KEY = `pulse_historikk_${raw}_${selectedMonths}m_${new Date().toISOString().slice(0, 10)}`;
+      try {
+        const cached = JSON.parse(localStorage.getItem(CACHE_KEY) || 'null');
+        if (cached && Array.isArray(cached.catalysts)) {
+          renderTimeline(cached);
+          return;
+        }
+      } catch (_) {}
+
+      fetching = true;
+      const btn = document.getElementById('fetch-btn');
+      btn.disabled = true;
+      const loadText = document.getElementById('load-text');
+      loadText.textContent = `ANALYSERER ${raw} HISTORIKK…`;
+      document.getElementById('load-wrap').classList.add('visible');
+
+      try {
+        const res = await fetch(`/api/historikk?ticker=${encodeURIComponent(raw)}&months=${selectedMonths}`);
+        if (!res.ok) throw new Error('Serverfeil ' + res.status);
+        const data = await res.json();
+        if (data.error) throw new Error(data.error);
+
+        document.getElementById('load-wrap').classList.remove('visible');
+
+        if (data.empty || !data.catalysts?.length) {
+          document.getElementById('empty-msg').classList.add('visible');
+        } else {
+          localStorage.setItem(CACHE_KEY, JSON.stringify(data));
+          renderTimeline(data);
+        }
+      } catch (e) {
+        document.getElementById('load-wrap').classList.remove('visible');
+        showError('FEIL: ' + e.message);
+      } finally {
+        fetching = false;
+        btn.disabled = false;
+      }
+    }
+
+    document.getElementById('ticker-input').addEventListener('keydown', e => {
+      if (e.key === 'Enter') fetchHistorikk();
+    });
+
+    // Pre-fill from URL param
+    const urlTicker = new URLSearchParams(location.search).get('ticker');
+    if (urlTicker) {
+      document.getElementById('ticker-input').value = urlTicker.toUpperCase();
+    }
+  </script>
+  <script src="bg.js"></script>
+  <script src="live.js"></script>
+</body>
+</html>
