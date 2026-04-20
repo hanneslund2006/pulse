@@ -175,8 +175,9 @@
     .cards {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 12px;
+      gap: 14px;
       align-items: stretch;
+      grid-auto-rows: 1fr;
     }
 
     .card {
@@ -266,6 +267,16 @@
 
     .card:hover .card-cta {
       gap: 14px;
+    }
+
+    /* ─── PRIMARY CARDS ─── */
+    .card-primary {
+      padding: 36px 28px 28px;
+      border-left: 3px solid var(--green);
+    }
+
+    .card-primary .card-title {
+      font-size: 34px;
     }
 
     /* ─── GAUGE STRIP ─── */
@@ -421,7 +432,7 @@
     <div class="section-label">Velg analyse</div>
     <div class="cards">
 
-      <a class="card" href="market.html">
+      <a class="card card-primary" href="market.html">
         <div class="card-tag">DAGLIG RAPPORT</div>
         <svg class="card-icon" viewBox="0 0 40 40" fill="none">
           <rect x="3" y="32" width="4" height="5" rx="1" fill="#1DB87E" opacity="0.25"/>
@@ -437,7 +448,7 @@
         <div class="card-cta">HENT RAPPORT →</div>
       </a>
 
-      <a class="card" href="ticker.html">
+      <a class="card card-primary" href="ticker.html">
         <div class="card-tag">ENKELTAKSJER</div>
         <svg class="card-icon" viewBox="0 0 40 40" fill="none">
           <circle cx="18" cy="18" r="11" stroke="#1DB87E" stroke-width="2" fill="none"/>
@@ -507,9 +518,7 @@
         <div class="card-cta">ÅPNE LOGG →</div>
       </a>
 
-      <div class="card" style="pointer-events:none; opacity:0; border:none; background:transparent; box-shadow:none;"></div>
-
-      <a class="card" href="historikk.html">
+      <a class="card" href="historikk.html" style="grid-column: 1 / -1;">
         <div class="card-tag">HISTORISK KONTEKST</div>
         <svg class="card-icon" viewBox="0 0 40 40" fill="none">
           <circle cx="20" cy="21" r="13" stroke="#1DB87E" stroke-width="1.5" fill="none" opacity="0.4"/>
