@@ -1,126 +1,28 @@
-const YF_BASE = 'https://query1.finance.yahoo.com';
-const HEADERS = { 'User-Agent': 'Mozilla/5.0 (compatible; PULSE/1.0)' };
+const Anthropic = require('@anthropic-ai/sdk');
 
-async function fetchQuoteSummary(ticker) {
-  const modules = [
-    'defaultKeyStatistics',
-    'earningsHistory',
-    'earningsTrend',
-    'financialData',
-    'upgradeDowngradeHistory',
-    'incomeStatementHistoryQuarterly',
-  ].join(',');
-  const url = `${YF_BASE}/v10/finance/quoteSummary/${ticker}?modules=${modules}`;
-  const res = await fetch(url, { headers: HEADERS });
-  if (!res.ok) throw new Error(`Yahoo quoteSummary ${res.status}`);
-  const json = await res.json();
-  const result = json?.quoteSummary?.result?.[0];
-  if (!result) throw new Error('Ticker ikke funnet');
-  return result;
+function extractJSON(text) {
+  try { return JSON.parse(text.trim()); } catch (_) {}
+  const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/);
+  if (fenced) { try { return JSON.parse(fenced[1].trim()); } catch (_) {} }
+  const obj = text.match(/\{[\s\S]*\}/);
+  if (obj) { try { return JSON.parse(obj[0]); } catch (_) {} }
+  return null;
 }
 
-async function fetchImpliedMove(ticker, currentPrice) {
-  const url = `${YF_BASE}/v7/finance/options/${ticker}`;
-  const res = await fetch(url, { headers: HEADERS });
-  if (!res.ok) return null;
-  const json = await res.json();
-  const opt = json?.optionChain?.result?.[0];
-  if (!opt) return null;
-
-  const expiry = opt.expirationDates?.[0];
-  const calls = opt.options?.[0]?.calls || [];
-  const puts  = opt.options?.[0]?.puts  || [];
-  if (!calls.length || !puts.length) return null;
-
-  // Find ATM strike (nearest to current price)
-  const strikes = calls.map(c => c.strike).filter(Boolean);
-  const atm = strikes.reduce((prev, curr) =>
-    Math.abs(curr - currentPrice) < Math.abs(prev - currentPrice) ? curr : prev
-  );
-
-  const call = calls.find(c => c.strike === atm);
-  const put  = puts.find(p => p.strike === atm);
-  if (!call || !put) return null;
-
-  const callMid = ((call.bid ?? 0) + (call.ask ?? 0)) / 2;
-  const putMid  = ((put.bid  ?? 0) + (put.ask  ?? 0)) / 2;
-  const straddle = callMid + putMid;
-  const percent  = currentPrice > 0 ? (straddle / currentPrice) * 100 : 0;
-
-  const expiryDate = expiry
-    ? new Date(expiry * 1000).toISOString().slice(0, 10)
-    : null;
-
-  return {
-    percent:  parseFloat(percent.toFixed(2)),
-    straddle: parseFloat(straddle.toFixed(2)),
-    expiry:   expiryDate,
-    strike:   atm,
-  };
-}
-
-function parseKeyStats(ks) {
-  return {
-    shortFloat:       ks?.shortPercentOfFloat?.raw  ?? null,
-    forwardPE:        ks?.forwardPE?.raw             ?? null,
-    insiderOwnership: ks?.heldPercentInsiders?.raw   ?? null,
-    floatShares:      ks?.floatShares?.raw            ?? null,
-  };
-}
-
-function parseEpsHistory(eh) {
-  const items = eh?.history || [];
-  return items.slice(0, 4).map(h => ({
-    quarter:   h.quarter?.fmt   ?? null,
-    actual:    h.epsActual?.raw  ?? null,
-    estimate:  h.epsEstimate?.raw ?? null,
-    surprise:  h.epsDifference?.raw ?? null,
-    surprisePct: h.surprisePercent?.raw ?? null,
-  }));
-}
-
-function parseEstimates(et) {
-  const trend = et?.trend?.[0];
-  if (!trend) return {};
-  return {
-    forwardEPS:        trend.earningsEstimate?.avg?.raw     ?? null,
-    forwardRevenue:    trend.revenueEstimate?.avg?.raw      ?? null,
-    analystCount:      trend.earningsEstimate?.numberOfAnalysts?.raw ?? null,
-    revisionMomentum7d:  trend.earningsEstimate?.growth?.raw ?? null,
-    epsTrend7d:        trend.epsTrend?.['7daysAgo']?.raw    ?? null,
-    epsTrend30d:       trend.epsTrend?.['30daysAgo']?.raw   ?? null,
-    epsTrendCurrent:   trend.epsTrend?.current?.raw         ?? null,
-    earningsDate:      et?.trend?.find(t => t.period === '0q')
-                         ?.earningsDate?.[0]?.fmt            ?? null,
-  };
-}
-
-function parseRevenueTrend(ish) {
-  const stmts = ish?.incomeStatementHistory || [];
-  return stmts.slice(0, 6).map(s => ({
-    date:      s.endDate?.fmt      ?? null,
-    revenue:   s.totalRevenue?.raw  ?? null,
-    netIncome: s.netIncome?.raw      ?? null,
-  }));
-}
-
-function parseAnalystSentiment(fd, udh) {
-  const recentChanges = (udh?.history || []).slice(0, 5).map(h => ({
-    firm: h.firm       ?? null,
-    from: h.fromGrade  ?? null,
-    to:   h.toGrade    ?? null,
-    date: h.epochGradeDate
-      ? new Date(h.epochGradeDate * 1000).toISOString().slice(0, 10)
-      : null,
-    action: h.action ?? null,
-  }));
-
-  return {
-    consensus:   fd?.recommendationKey  ?? null,
-    targetPrice: fd?.targetMeanPrice?.raw ?? null,
-    currentPrice: fd?.currentPrice?.raw  ?? null,
-    recentChanges,
-  };
+async function fetchAlpacaNews(ticker) {
+  const start = new Date();
+  start.setMonth(start.getMonth() - 3);
+  const startISO = start.toISOString().slice(0, 10);
+  const url = `https://data.alpaca.markets/v1beta1/news?symbols=${encodeURIComponent(ticker)}&start=${startISO}&limit=50&sort=desc`;
+  const res = await fetch(url, {
+    headers: {
+      'APCA-API-KEY-ID': process.env.ALPACA_API_KEY,
+      'APCA-API-SECRET-KEY': process.env.ALPACA_API_SECRET,
+    },
+  });
+  if (!res.ok) return [];
+  const data = await res.json();
+  return data.news || [];
 }
 
 module.exports = async (req, res) => {
@@ -128,36 +30,109 @@ module.exports = async (req, res) => {
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
 
   const ticker = (req.query.ticker || '').toUpperCase().trim();
-  if (!ticker) return res.status(400).json({ error: 'Mangler ticker-parameter' });
+  if (!ticker || !/^[A-Z0-9.]{1,6}$/.test(ticker)) {
+    return res.status(400).json({ error: 'Mangler eller ugyldig ticker-parameter' });
+  }
+
+  if (!process.env.ANTHROPIC_API_KEY) {
+    return res.status(500).json({ error: 'ANTHROPIC_API_KEY mangler.' });
+  }
+  if (!process.env.ALPACA_API_KEY || !process.env.ALPACA_API_SECRET) {
+    return res.status(500).json({ error: 'Alpaca API-nøkler mangler.' });
+  }
 
   try {
-    const summary = await fetchQuoteSummary(ticker);
+    const articles = await fetchAlpacaNews(ticker).catch(() => []);
+    const newsContext = articles.length > 0
+      ? articles.slice().reverse()
+          .map(a => `[${(a.created_at || '').slice(0, 10)}] ${a.headline}${a.summary ? ': ' + a.summary : ''}`)
+          .join('\n')
+      : 'Ingen nyheter funnet fra Alpaca.';
 
-    const ks  = summary.defaultKeyStatistics;
-    const eh  = summary.earningsHistory;
-    const et  = summary.earningsTrend;
-    const fd  = summary.financialData;
-    const udh = summary.upgradeDowngradeHistory;
-    const ish = summary.incomeStatementHistoryQuarterly;
+    const systemPrompt = `You are a financial data analyst. Use web search to find current financial data for ${ticker}, and use the provided news articles as additional context.
 
-    const currentPrice = fd?.currentPrice?.raw ?? null;
-    const impliedMove  = currentPrice
-      ? await fetchImpliedMove(ticker, currentPrice).catch(() => null)
-      : null;
+Return ONLY valid JSON matching this exact structure (no preamble, no markdown):
+{
+  "ticker": "${ticker}",
+  "currentPrice": 174.50,
+  "keyStats": {
+    "shortFloat": 0.023,
+    "forwardPE": 28.5,
+    "insiderOwnership": 0.038,
+    "floatShares": 15400000000
+  },
+  "epsHistory": [
+    {"quarter": "2025-09-01", "actual": 1.64, "estimate": 1.60, "surprise": 0.04, "surprisePct": 0.025}
+  ],
+  "estimates": {
+    "forwardEPS": 1.62,
+    "forwardRevenue": 94500000000,
+    "analystCount": 38,
+    "epsTrendCurrent": 1.62,
+    "epsTrend7d": 1.60,
+    "epsTrend30d": 1.58,
+    "earningsDate": "2026-05-01"
+  },
+  "revenueTrend": [
+    {"date": "2025-09-30", "revenue": 94930000000, "netIncome": 14736000000}
+  ],
+  "analystSentiment": {
+    "consensus": "buy",
+    "targetPrice": 225.00,
+    "currentPrice": 174.50,
+    "recentChanges": [
+      {"firm": "Goldman Sachs", "from": "Neutral", "to": "Buy", "date": "2026-04-01", "action": "upgrade"}
+    ]
+  },
+  "impliedMove": null
+}
 
-    const data = {
-      ticker,
-      currentPrice,
-      keyStats:        parseKeyStats(ks),
-      epsHistory:      parseEpsHistory(eh),
-      estimates:       parseEstimates(et),
-      revenueTrend:    parseRevenueTrend(ish),
-      analystSentiment: parseAnalystSentiment(fd, udh),
-      impliedMove,
-    };
+Rules:
+- Use null for any field you cannot find — never guess or hallucinate numbers
+- shortFloat and insiderOwnership are decimals (0.05 = 5%)
+- surprisePct is a decimal (0.025 = 2.5%)
+- revenue and netIncome are in absolute dollars (not millions)
+- epsHistory: up to 4 most recent quarters, most recent first
+- revenueTrend: up to 6 most recent quarters, most recent first
+- consensus must be exactly one of: "strongBuy", "buy", "hold", "underperform", "sell", or null
+- impliedMove.percent: the implied move as a PERCENTAGE NUMBER e.g. 6.9 means ±6.9% (NOT a decimal like 0.069); otherwise null
+- earningsDate: next upcoming earnings date in YYYY-MM-DD format
+- Return ONLY the JSON object, nothing else`;
 
-    return res.status(200).json(data);
-  } catch (e) {
-    return res.status(500).json({ error: e.message });
+    const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+
+    const response = await anthropic.messages.create({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 2500,
+      system: systemPrompt,
+      tools: [{ type: 'web_search_20250305', name: 'web_search' }],
+      messages: [{
+        role: 'user',
+        content: `Build an earnings play analysis for ${ticker}.\n\nRecent news context (last 3 months):\n${newsContext}\n\nSearch for: current price, EPS history (4 quarters with estimates and surprises), forward EPS/revenue consensus estimates, analyst count, EPS revision trend, upcoming earnings date, short float, forward P/E, insider ownership, recent analyst upgrades/downgrades (last 5). Return the complete JSON.`,
+      }],
+    });
+
+    const finalText = response.content
+      .filter(b => b.type === 'text')
+      .map(b => b.text)
+      .join('\n')
+      .trim();
+
+    const parsed = extractJSON(finalText);
+    if (!parsed || !parsed.ticker) {
+      console.error('Earnings-play JSON-feil. Råtekst:', finalText);
+      return res.status(500).json({ error: 'AI returnerte ugyldig format. Prøv igjen.' });
+    }
+
+    return res.status(200).json(parsed);
+
+  } catch (error) {
+    console.error('Earnings-play API feil:', error);
+    const message = error.status === 401
+      ? 'Ugyldig API-nøkkel.'
+      : error.status === 429
+        ? 'For mange forespørsler. Vent litt og prøv igjen.'
+        : 'Klarte ikke analysere earnings. Prøv igjen.';
+    return res.status(500).json({ error: message });
   }
 };

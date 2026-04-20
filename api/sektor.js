@@ -41,17 +41,22 @@ module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
 
-  const results = await Promise.all(
-    SECTORS.map(async s => {
-      const data = await fetchWeeklyChange(s.symbol).catch(() => null);
-      if (!data) return null;
-      return { ...s, ...data };
-    })
-  );
+  try {
+    const results = await Promise.all(
+      SECTORS.map(async s => {
+        const data = await fetchWeeklyChange(s.symbol).catch(() => null);
+        if (!data) return null;
+        return { ...s, ...data };
+      })
+    );
 
-  const sectors = results
-    .filter(Boolean)
-    .sort((a, b) => b.weeklyChange - a.weeklyChange);
+    const sectors = results
+      .filter(Boolean)
+      .sort((a, b) => b.weeklyChange - a.weeklyChange);
 
-  return res.status(200).json(sectors);
+    return res.status(200).json(sectors);
+  } catch (error) {
+    console.error('Sektor API feil:', error);
+    return res.status(500).json({ error: 'Klarte ikke hente sektordata.' });
+  }
 };

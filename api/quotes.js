@@ -79,14 +79,19 @@ module.exports = async (req, res) => {
     return res.status(200).json(_cache);
   }
 
-  const results = await Promise.all(
-    symbols.map(sym => fetchQuote(sym).catch(() => null))
-  );
-  const data = results.filter(Boolean);
+  try {
+    const results = await Promise.all(
+      symbols.map(sym => fetchQuote(sym).catch(() => null))
+    );
+    const data = results.filter(Boolean);
 
-  _cache = data;
-  _cacheKey = cacheKey;
-  _cachedAt = Date.now();
+    _cache = data;
+    _cacheKey = cacheKey;
+    _cachedAt = Date.now();
 
-  return res.status(200).json(data);
+    return res.status(200).json(data);
+  } catch (error) {
+    console.error('Quotes API feil:', error);
+    return res.status(500).json({ error: 'Klarte ikke hente kursdata.' });
+  }
 };

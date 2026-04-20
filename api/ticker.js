@@ -67,51 +67,19 @@ module.exports = async (req, res) => {
       }
     ];
 
-    let finalText = '';
-    const MAX_ITERATIONS = 10;
-    let iterations = 0;
+    const response = await anthropic.messages.create({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 600,
+      system: SYSTEM_PROMPT,
+      tools: [{ type: 'web_search_20250305', name: 'web_search' }],
+      messages
+    });
 
-    while (iterations < MAX_ITERATIONS) {
-      iterations++;
-
-      const response = await anthropic.messages.create({
-        model: 'claude-sonnet-4-6',
-        max_tokens: 600,
-        system: SYSTEM_PROMPT,
-        tools: [{ type: 'web_search_20250305', name: 'web_search' }],
-        messages
-      });
-
-      if (response.stop_reason === 'end_turn') {
-        finalText = response.content
-          .filter(b => b.type === 'text')
-          .map(b => b.text)
-          .join('\n')
-          .trim();
-        break;
-      }
-
-      if (response.stop_reason === 'tool_use') {
-        messages.push({ role: 'assistant', content: response.content });
-        const toolResults = response.content
-          .filter(b => b.type === 'tool_use')
-          .map(b => ({ type: 'tool_result', tool_use_id: b.id, content: [] }));
-        if (toolResults.length > 0) {
-          messages.push({ role: 'user', content: toolResults });
-        }
-      } else {
-        // max_tokens eller annen uventet stop_reason
-        if (response.stop_reason === 'max_tokens') {
-          console.error('Ticker: max_tokens nådd — respons trunkert');
-        }
-        finalText = response.content
-          .filter(b => b.type === 'text')
-          .map(b => b.text)
-          .join('\n')
-          .trim();
-        break;
-      }
-    }
+    const finalText = response.content
+      .filter(b => b.type === 'text')
+      .map(b => b.text)
+      .join('\n')
+      .trim();
 
     if (!finalText) {
       return res.status(500).json({ error: 'Fikk ikke svar fra AI. Prøv igjen.' });

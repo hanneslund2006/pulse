@@ -70,44 +70,19 @@ Regler:
       }
     ];
 
-    let finalText = '';
-    const MAX_ITER = 8;
-    let iter = 0;
+    const response = await anthropic.messages.create({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 600,
+      system: SYSTEM,
+      tools: [{ type: 'web_search_20250305', name: 'web_search' }],
+      messages,
+    });
 
-    while (iter < MAX_ITER) {
-      iter++;
-      const response = await anthropic.messages.create({
-        model: 'claude-sonnet-4-6',
-        max_tokens: 600,
-        system: SYSTEM,
-        tools: [{ type: 'web_search_20250305', name: 'web_search' }],
-        messages,
-      });
-
-      if (response.stop_reason === 'end_turn') {
-        finalText = response.content
-          .filter(b => b.type === 'text')
-          .map(b => b.text)
-          .join('\n')
-          .trim();
-        break;
-      }
-
-      if (response.stop_reason === 'tool_use') {
-        messages.push({ role: 'assistant', content: response.content });
-        const results = response.content
-          .filter(b => b.type === 'tool_use')
-          .map(b => ({ type: 'tool_result', tool_use_id: b.id, content: [] }));
-        if (results.length) messages.push({ role: 'user', content: results });
-      } else {
-        finalText = response.content
-          .filter(b => b.type === 'text')
-          .map(b => b.text)
-          .join('\n')
-          .trim();
-        break;
-      }
-    }
+    const finalText = response.content
+      .filter(b => b.type === 'text')
+      .map(b => b.text)
+      .join('\n')
+      .trim();
 
     if (!finalText) return res.status(500).json({ error: 'Ingen respons fra AI.' });
 
