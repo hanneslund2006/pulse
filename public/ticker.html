@@ -1,479 +1,166 @@
 <!DOCTYPE html>
 <html lang="no">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PULSE — Ticker</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css">
-  <style>
-    body { padding: 32px 20px 64px; }
-    .container { max-width: 560px; margin: 0 auto; }
+<meta charset="UTF-8">
+<title>PULSE — Ticker</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="shell.css">
+<style>
+  /* Result header */
+  .result-head { display: flex; justify-content: space-between; align-items: flex-start; margin: 20px 0 14px; gap: 20px; }
+  .result-name-col { min-width: 0; flex: 1; }
+  .result-company { font-family: 'Cormorant Garamond', serif; font-weight: 600; font-size: 26px; color: #ECEEF4; line-height: 1.15; }
+  .result-ticker-badge { font-family: 'Space Mono', monospace; font-size: 11px; color: #1D9E75; letter-spacing: 0.14em; margin-top: 6px; }
+  .price-col { text-align: right; flex-shrink: 0; }
+  .price-val { font-family: 'Space Mono', monospace; font-size: 24px; font-weight: 700; color: #C8D0E0; letter-spacing: 0.02em; }
+  .price-chg { font-family: 'Space Mono', monospace; font-size: 12px; margin-top: 2px; }
+  .price-chg.up { color: #1D9E75; }
+  .price-chg.dn { color: #E24B4A; }
+  .price-delay { font-family: 'Space Mono', monospace; font-size: 8.5px; color: #4A5166; letter-spacing: 0.1em; margin-top: 4px; }
 
-    /* Search */
-    .search-wrap { margin-bottom: 14px; }
-    .search-input {
-      width: 100%; background: var(--surface);
-      border: 1px solid var(--border); border-radius: 10px;
-      padding: 14px 18px; font-family: 'Space Mono', monospace;
-      font-size: 18px; color: var(--text-primary);
-      letter-spacing: 0.08em; text-transform: uppercase;
-      outline: none; transition: border-color 200ms, box-shadow 200ms;
-    }
-    .search-input::placeholder {
-      color: var(--text-muted); font-size: 13px;
-      text-transform: none; letter-spacing: 0.04em;
-      font-family: 'DM Sans', sans-serif;
-    }
-    .search-input:focus {
-      border-color: var(--green-border);
-      box-shadow: 0 0 0 2px rgba(29,184,126,0.12);
-    }
+  /* Verdict bar: BIG coloured badge + score */
+  .verdict-bar { display: grid; grid-template-columns: auto 1fr auto; gap: 18px; align-items: center; background: #111318; border: 1px solid #252836; border-left: 3px solid #1D9E75; border-radius: 12px; padding: 22px 24px; margin-bottom: 8px; }
+  .verdict-badge { font-family: 'Space Mono', monospace; font-size: 13px; letter-spacing: 0.14em; padding: 8px 14px; border-radius: 4px; text-transform: uppercase; font-weight: 700; background: rgba(29,158,117,0.14); color: #1D9E75; border: 1px solid rgba(29,158,117,0.4); white-space: nowrap; }
+  .verdict-badge.bear { background: rgba(226,75,74,0.14); color: #E24B4A; border-color: rgba(226,75,74,0.4); }
+  .verdict-badge.mixed { background: rgba(127,119,221,0.14); color: #8B83E8; border-color: rgba(127,119,221,0.4); }
+  .verdict-badge.wait { background: rgba(198,130,26,0.14); color: #C4821A; border-color: rgba(198,130,26,0.4); }
+  .verdict-mid { min-width: 0; }
+  .verdict-tagline { font-size: 12.5px; color: #C8D0E0; line-height: 1.45; }
+  .verdict-kicker { font-family: 'Space Mono', monospace; font-size: 8.5px; letter-spacing: 0.14em; color: #4A5166; margin-bottom: 6px; text-transform: uppercase; }
+  .verdict-score { text-align: right; }
+  .verdict-score-num { font-family: 'Space Mono', monospace; font-size: 42px; font-weight: 700; color: #ECEEF4; line-height: 1; letter-spacing: -0.01em; }
+  .verdict-score-lbl { font-family: 'Space Mono', monospace; font-size: 8.5px; color: #4A5166; letter-spacing: 0.14em; text-transform: uppercase; margin-top: 4px; }
 
-    /* Pills */
-    .pills { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 40px; }
-    .pill {
-      font-family: 'Space Mono', monospace; font-size: 11px;
-      color: var(--text-muted); border: 1px solid var(--border);
-      border-radius: 4px; padding: 5px 10px; cursor: pointer;
-      letter-spacing: 0.06em;
-      transition: color 150ms, border-color 150ms, background 150ms;
-      user-select: none;
-    }
-    .pill:hover {
-      color: var(--green); border-color: var(--green-border);
-      background: var(--green-dim);
-    }
+  /* 5-layer compact cards — label left, data right */
+  .layers { display: flex; flex-direction: column; gap: 6px; margin-top: 14px; }
+  .layer { display: grid; grid-template-columns: 120px 1fr auto; gap: 16px; align-items: center; background: #111318; border: 1px solid #252836; border-left: 3px solid #252836; border-radius: 8px; padding: 12px 16px; transition: border-color 150ms, background 150ms; }
+  .layer:hover { background: #141720; }
+  .layer.bull { border-left-color: #1D9E75; }
+  .layer.bear { border-left-color: #E24B4A; }
+  .layer.mixed { border-left-color: #8B83E8; }
+  .layer.wait { border-left-color: #C4821A; }
+  .layer-label { font-family: 'Space Mono', monospace; font-size: 10px; font-weight: 700; letter-spacing: 0.14em; color: #8892A4; text-transform: uppercase; }
+  .layer-data { font-family: 'Space Mono', monospace; font-size: 12px; color: #C8D0E0; letter-spacing: 0.03em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .layer-data .sep { color: #4A5166; margin: 0 8px; }
+  .layer-data .pos { color: #1D9E75; }
+  .layer-data .neg { color: #E24B4A; }
+  .layer-data .neutral { color: #C4821A; }
+  .layer-badge { font-family: 'Space Mono', monospace; font-size: 9px; letter-spacing: 0.12em; padding: 3px 8px; border-radius: 3px; text-transform: uppercase; font-weight: 700; white-space: nowrap; }
+  .layer-badge.bull { color: #1D9E75; background: rgba(29,158,117,0.12); border: 1px solid rgba(29,158,117,0.3); }
+  .layer-badge.bear { color: #E24B4A; background: rgba(226,75,74,0.12); border: 1px solid rgba(226,75,74,0.3); }
+  .layer-badge.mixed { color: #8B83E8; background: rgba(127,119,221,0.12); border: 1px solid rgba(127,119,221,0.3); }
+  .layer-badge.wait { color: #C4821A; background: rgba(198,130,26,0.12); border: 1px solid rgba(198,130,26,0.3); }
 
-    /* Price bar */
-    .price-bar { display: none; align-items: baseline; gap: 10px; margin: 6px 0 14px; flex-wrap: wrap; }
-    .price-bar.visible { display: flex; }
-    .price-bar-val { font-family: 'Space Mono', monospace; font-size: 26px; font-weight: 700; color: var(--text-data); }
-    .price-bar-chg { font-family: 'Space Mono', monospace; font-size: 13px; }
-    .price-bar-chg.up { color: var(--green); }
-    .price-bar-chg.dn { color: var(--red); }
-    .price-bar-delay { font-family: 'Space Mono', monospace; font-size: 9px; color: var(--text-muted); letter-spacing: 0.08em; }
+  /* Mini strip: key stats */
+  .stats-strip { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: #252836; border: 1px solid #252836; border-radius: 10px; overflow: hidden; margin-top: 20px; }
+  .stat { background: #0D0F14; padding: 12px 14px; }
+  .stat-lbl { font-family: 'Space Mono', monospace; font-size: 8.5px; letter-spacing: 0.14em; color: #4A5166; text-transform: uppercase; margin-bottom: 4px; }
+  .stat-val { font-family: 'Space Mono', monospace; font-size: 15px; font-weight: 700; color: #C8D0E0; }
+  .stat-val.up { color: #1D9E75; }
+  .stat-val.dn { color: #E24B4A; }
 
-    /* Watchlist pill */
-    .wpill-price { font-family: 'Space Mono', monospace; font-size: 9px; color: var(--text-muted); letter-spacing: 0.04em; margin-left: 2px; }
-    .wpill-price.up { color: var(--green); opacity: 0.8; }
-    .wpill-price.dn { color: var(--red); opacity: 0.8; }
-
-    /* Result */
-    .result-section { display: none; }
-    .result-section.visible { display: block; }
-    .result-header { margin-bottom: 20px; }
-    .result-company { font-family: 'Cormorant Garamond', serif; font-weight: 600; font-size: 26px; }
-    .result-ticker-badge {
-      font-family: 'Space Mono', monospace; font-size: 11px;
-      color: var(--green); letter-spacing: 0.1em; margin-top: 5px;
-    }
-
-    /* Layer cards */
-    .layer-card {
-      background: var(--surface); border: 1px solid var(--border);
-      border-left: 3px solid var(--border); border-radius: 12px;
-      padding: 20px 24px; margin-bottom: 10px;
-      transition: transform 180ms ease;
-    }
-    .layer-card:last-child { margin-bottom: 0; }
-    .layer-card:hover { transform: translateY(-2px); }
-    .layer-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-    .layer-name { font-family: 'Space Mono', monospace; font-weight: 700; font-size: 11px; letter-spacing: 0.08em; }
-    .layer-summary { font-size: 13px; color: var(--text-secondary); line-height: 1.55; }
-
-    /* Watchlist */
-    .watchlist-section { margin-bottom: 28px; }
-    .watchlist-pills { display: flex; flex-wrap: wrap; gap: 8px; min-height: 26px; align-items: center; }
-    .watchlist-empty { font-size: 12px; color: var(--text-muted); }
-    .wpill {
-      display: inline-flex; align-items: center; gap: 6px;
-      font-family: 'Space Mono', monospace; font-size: 11px;
-      color: var(--green); border: 1px solid var(--green-border);
-      border-radius: 4px; padding: 5px 8px 5px 10px; cursor: pointer;
-      letter-spacing: 0.06em; background: var(--green-dim);
-      transition: background 150ms; user-select: none;
-    }
-    .wpill:hover { background: rgba(29,184,126,0.18); }
-    .wpill-del { display: inline-flex; align-items: center; justify-content: center; width: 14px; height: 14px; font-size: 10px; color: var(--text-muted); border-radius: 2px; transition: color 150ms; flex-shrink: 0; }
-    .wpill-del:hover { color: var(--red); }
-    .wpill-warn { font-family: 'Space Mono', monospace; font-size: 8px; color: var(--amber); letter-spacing: 0.04em; margin-left: 2px; flex-shrink: 0; }
-    .wpill-warn.urgent { color: var(--red); }
-
-    /* Search row + button */
-    .search-row { display: flex; gap: 8px; align-items: stretch; }
-    .search-row .search-input { flex: 1; }
-    .add-btn {
-      background: transparent; border: 1px solid var(--border);
-      border-radius: 10px; color: var(--text-muted);
-      font-family: 'Space Mono', monospace; font-size: 20px;
-      width: 50px; flex-shrink: 0; cursor: pointer;
-      transition: border-color 180ms, color 180ms; line-height: 1;
-    }
-    .add-btn:hover:not(:disabled) { border-color: var(--green-border); color: var(--green); }
-    .add-btn:disabled { opacity: 0.25; cursor: not-allowed; }
-  </style>
+  /* Quick-pick tickers row */
+  .pills-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; margin-bottom: 4px; }
+  .pill-label { font-family: 'Space Mono', monospace; font-size: 9px; color: #4A5166; letter-spacing: 0.14em; margin-right: 4px; align-self: center; text-transform: uppercase; }
+</style>
 </head>
 <body>
-  <div class="container">
+<canvas id="bg-canvas"></canvas>
+<div class="glow-top"></div>
 
-    <a href="index.html" class="back anim" style="animation-delay: 0ms;">← TILBAKE</a>
+<div class="page">
+  <nav class="nav">
+    <a class="nav-logo" href="../ui_kits/web/index.html">PULSE</a>
+    <div class="nav-badge">TICKER · 5-LAGS ANALYSE</div>
+  </nav>
 
-    <div class="page-title anim" style="animation-delay: 40ms;">TICKER</div>
-    <div class="page-subtitle anim" style="animation-delay: 80ms;">Analyser en aksje på fem lag.</div>
+  <a class="back" href="../ui_kits/web/index.html">← TILBAKE TIL DASHBOARD</a>
 
-    <!-- Watchlist -->
-    <div class="watchlist-section anim" style="animation-delay: 110ms;">
-      <div class="section-title">WATCHLIST</div>
-      <div class="watchlist-pills" id="watchlist-pills"></div>
-    </div>
-
-    <div class="search-wrap anim" style="animation-delay: 120ms;">
-      <div class="search-row">
-        <input
-          type="text"
-          id="search-input"
-          class="search-input"
-          placeholder="Skriv inn ticker — eks. AAPL, NVDA, TSLA"
-          maxlength="6"
-          autocomplete="off"
-          autocorrect="off"
-          autocapitalize="characters"
-          spellcheck="false"
-        >
-        <button id="add-btn" class="add-btn" onclick="addToWatchlist()" disabled title="Kjør analyse først">+</button>
-      </div>
-    </div>
-
-    <div class="pills anim" id="pills" style="animation-delay: 160ms;"></div>
-
-    <div class="load-wrap" id="load-wrap">
-      <div class="load-steps" id="load-steps"></div>
-      <div class="load-bar-wrap"><div class="load-bar" id="load-bar"></div></div>
-      <div class="load-elapsed" id="load-elapsed">0s</div>
-    </div>
-
-    <div class="error-msg" id="error-msg"></div>
-
-    <div class="result-section" id="result-section">
-      <div class="result-header">
-        <div class="result-company" id="result-company"></div>
-        <div class="price-bar" id="price-bar"></div>
-        <div class="result-ticker-badge" id="result-ticker-badge"></div>
-      </div>
-      <div id="layers-container"></div>
-    </div>
-
+  <input class="search-input anim" placeholder="Skriv inn ticker (f.eks. AAPL)" value="NVDA" id="search" />
+  <div class="pills-row anim" style="animation-delay:40ms">
+    <span class="pill-label">HURTIG →</span>
+    <button class="pill active">NVDA</button>
+    <button class="pill">TSLA</button>
+    <button class="pill">AAPL</button>
+    <button class="pill">AMD</button>
+    <button class="pill">PLTR</button>
+    <button class="pill">META</button>
+    <button class="pill">MSFT</button>
   </div>
 
-  <script>
-    // ── Watchlist ──────────────────────────────────────────────
-    const WL_KEY = 'pulse_watchlist';
-    let lastFoundTicker = null;
-    let quoteCache = {};
+  <div class="result-head anim" style="animation-delay:80ms">
+    <div class="result-name-col">
+      <div class="result-company">NVIDIA Corporation</div>
+      <div class="result-ticker-badge">NVDA · NASDAQ</div>
+    </div>
+    <div class="price-col">
+      <div class="price-val">918.42</div>
+      <div class="price-chg up">+12.30 (+1.36%)</div>
+      <div class="price-delay">15-MIN FORSINKET</div>
+    </div>
+  </div>
 
-    if (!localStorage.getItem(WL_KEY)) {
-      localStorage.setItem(WL_KEY, JSON.stringify(['BN', 'MSFT', 'NVDA', 'UBER', 'ASTS']));
-    }
+  <div class="verdict-bar anim" style="animation-delay:120ms">
+    <div class="verdict-badge">BULLISH</div>
+    <div class="verdict-mid">
+      <div class="verdict-kicker">KONKLUSJON</div>
+      <div class="verdict-tagline">Momentum intakt etter GTC. Analytikere hever kursmål, AI-narrativ sterk. Risk: strukket RSI på daglig.</div>
+    </div>
+    <div class="verdict-score">
+      <div class="verdict-score-num">74</div>
+      <div class="verdict-score-lbl">PULSE-SCORE</div>
+    </div>
+  </div>
 
-    function getWatchlist() {
-      try { return JSON.parse(localStorage.getItem(WL_KEY) || '[]'); } catch { return []; }
-    }
-    function saveWatchlist(list) { localStorage.setItem(WL_KEY, JSON.stringify(list)); }
+  <div class="section-label">Fem-lags analyse</div>
+  <div class="layers">
+    <div class="layer bull anim" style="animation-delay:160ms">
+      <div class="layer-label">NYHETER</div>
+      <div class="layer-data">3 <span class="pos">BULLISH</span> <span class="sep">·</span> 1 nøytral <span class="sep">·</span> Morgan Stanley +$180 PT</div>
+      <div class="layer-badge bull">BULLISH</div>
+    </div>
+    <div class="layer bull anim" style="animation-delay:200ms">
+      <div class="layer-label">EARNINGS</div>
+      <div class="layer-data"><span class="pos">BEAT</span> EPS 0.78 <span class="sep">vs</span> 0.73 est <span class="sep">·</span> Q2 guide ↑</div>
+      <div class="layer-badge bull">BEAT</div>
+    </div>
+    <div class="layer wait anim" style="animation-delay:240ms">
+      <div class="layer-label">INSIDER</div>
+      <div class="layer-data">CFO −$4.2M <span class="sep">·</span> Form 4 ×2 <span class="sep">·</span> 10b5-1 plan</div>
+      <div class="layer-badge wait">MIXED</div>
+    </div>
+    <div class="layer bull anim" style="animation-delay:280ms">
+      <div class="layer-label">SHORT FLOAT</div>
+      <div class="layer-data">2.1% <span class="sep">·</span> DTC 1.4d <span class="sep">·</span> <span class="pos">INGEN SQUEEZE-RISK</span></div>
+      <div class="layer-badge bull">LAV</div>
+    </div>
+    <div class="layer bull anim" style="animation-delay:320ms">
+      <div class="layer-label">SENTIMENT</div>
+      <div class="layer-data">C/P 0.62 <span class="sep">·</span> Retail +18% WoW <span class="sep">·</span> IV 42%</div>
+      <div class="layer-badge bull">STERK</div>
+    </div>
+  </div>
 
-    function fmtPill(p) {
-      if (p >= 1000) return p.toLocaleString('en-US', { maximumFractionDigits: 0 });
-      return p.toFixed(2);
-    }
+  <div class="stats-strip anim" style="animation-delay:360ms">
+    <div class="stat"><div class="stat-lbl">MCAP</div><div class="stat-val">2.26T</div></div>
+    <div class="stat"><div class="stat-lbl">P/E</div><div class="stat-val">64.8</div></div>
+    <div class="stat"><div class="stat-lbl">52W HIGH</div><div class="stat-val up">974.00</div></div>
+    <div class="stat"><div class="stat-lbl">52W LOW</div><div class="stat-val dn">385.20</div></div>
+    <div class="stat"><div class="stat-lbl">VOL</div><div class="stat-val">48.2M</div></div>
+    <div class="stat"><div class="stat-lbl">AVG VOL</div><div class="stat-val">52.1M</div></div>
+    <div class="stat"><div class="stat-lbl">RSI(14)</div><div class="stat-val" style="color:#C4821A">71.4</div></div>
+    <div class="stat"><div class="stat-lbl">BETA</div><div class="stat-val">1.82</div></div>
+  </div>
 
-    function getEarningsWarning(ticker) {
-      try {
-        const today = new Date().toISOString().slice(0, 10);
-        const cached = JSON.parse(localStorage.getItem('pulse_earnings_' + today) || 'null');
-        if (!cached || !Array.isArray(cached)) return null;
-        const entry = cached.find(e => e.ticker === ticker);
-        if (!entry || !entry.date) return null;
-        const daysUntil = Math.round(
-          (new Date(entry.date + 'T12:00:00') - new Date()) / 86400000
-        );
-        if (daysUntil < 0) return null;
-        if (daysUntil === 0) return { text: '⚠ ER I DAG', urgent: true };
-        if (daysUntil <= 3) return { text: `⚠ ER om ${daysUntil}d`, urgent: false };
-        return null;
-      } catch { return null; }
-    }
+  <div class="footer">
+    <div class="footer-brand">PULSE · 5-LAGS ANALYSE</div>
+    <div class="footer-note">Ikke finansiell rådgivning</div>
+  </div>
+</div>
 
-    function renderWatchlist() {
-      const list = getWatchlist();
-      const el = document.getElementById('watchlist-pills');
-      if (list.length === 0) {
-        el.innerHTML = '<span class="watchlist-empty">Ingen tickers lagt til ennå</span>';
-        return;
-      }
-      el.innerHTML = list.map(t => {
-        const q = quoteCache[t];
-        let priceHtml = '';
-        if (q) {
-          const up = q.changePercent > 0, dn = q.changePercent < 0;
-          const cls = up ? 'up' : dn ? 'dn' : '';
-          priceHtml = `<span class="wpill-price ${cls}">${fmtPill(q.price)}</span>`;
-        }
-        const warn = getEarningsWarning(t);
-        const warnHtml = warn
-          ? `<span class="wpill-warn${warn.urgent ? ' urgent' : ''}">${warn.text}</span>`
-          : '';
-        return `<div class="wpill" onclick="runSearch('${esc(t)}')">
-          ${esc(t)}${priceHtml}${warnHtml}
-          <span class="wpill-del" onclick="event.stopPropagation();removeFromWatchlist('${esc(t)}')">✕</span>
-        </div>`;
-      }).join('');
-    }
-
-    async function loadWatchlistQuotes() {
-      const wl = getWatchlist();
-      if (!wl.length) return;
-      try {
-        const res = await fetch('/api/quotes?symbols=' + encodeURIComponent(wl.join(',')));
-        if (!res.ok) return;
-        const data = await res.json();
-        (data || []).forEach(q => { quoteCache[q.symbol] = q; });
-        renderWatchlist();
-      } catch (_) {}
-    }
-
-    function addToWatchlist() {
-      if (!lastFoundTicker) return;
-      const list = getWatchlist();
-      if (list.includes(lastFoundTicker)) return;
-      if (list.length >= 10) { alert('Watchlist er full (maks 10 tickers).'); return; }
-      list.push(lastFoundTicker);
-      saveWatchlist(list);
-      renderWatchlist();
-      document.getElementById('add-btn').disabled = true;
-    }
-
-    function removeFromWatchlist(ticker) {
-      saveWatchlist(getWatchlist().filter(t => t !== ticker));
-      renderWatchlist();
-      if (lastFoundTicker === ticker) document.getElementById('add-btn').disabled = false;
-    }
-
-    // ── Constants ──────────────────────────────────────────────
-    const POPULAR = ['AAPL', 'NVDA', 'TSLA', 'MSFT', 'AMZN', 'META', 'CEG'];
-
-    const SENTIMENT_COLORS  = { 'Bullish': '#1DB87E', 'Bearish': '#E54B4A', 'Nøytral': '#4A5166' };
-    const BADGE_TEXT_COLORS = { 'Bullish': '#1DB87E', 'Bearish': '#E54B4A', 'Nøytral': '#4A5166' };
-    const BADGE_BG          = { 'Bullish': 'rgba(29,184,126,0.10)', 'Bearish': 'rgba(229,75,74,0.10)', 'Nøytral': 'rgba(74,81,102,0.12)' };
-
-    function esc(str) {
-      return String(str)
-        .replace(/&/g, '&amp;').replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-    }
-
-    // ── Multi-step loading ─────────────────────────────────────
-    const LOAD_STEPS = ['SØKER NYHETER', 'SJEKKER EARNINGS', 'SJEKKER INSIDER', 'BEREGNER SENTIMENT'];
-    const loadState  = { stepTimer: null, elapsedTimer: null, startTime: 0, stepIdx: 0 };
-
-    function startLoading() {
-      loadState.stepIdx   = 0;
-      loadState.startTime = Date.now();
-
-      const stepsEl   = document.getElementById('load-steps');
-      const barEl     = document.getElementById('load-bar');
-      const elapsedEl = document.getElementById('load-elapsed');
-
-      stepsEl.innerHTML = LOAD_STEPS.map((s, i) =>
-        `<div class="load-step${i === 0 ? ' active' : ''}" id="ls-${i}">
-          <div class="ls-dot"></div>${s}
-        </div>`
-      ).join('');
-
-      barEl.style.transition = 'none';
-      barEl.style.width = '0%';
-      elapsedEl.textContent = '0s';
-      document.getElementById('load-wrap').classList.add('visible');
-
-      requestAnimationFrame(() => {
-        barEl.style.transition = 'width 22s linear';
-        barEl.style.width = '88%';
-      });
-
-      loadState.stepTimer = setInterval(() => {
-        const prev = document.getElementById('ls-' + loadState.stepIdx);
-        if (prev) { prev.classList.remove('active'); prev.classList.add('done'); }
-        loadState.stepIdx = Math.min(loadState.stepIdx + 1, LOAD_STEPS.length - 1);
-        const cur = document.getElementById('ls-' + loadState.stepIdx);
-        if (cur) cur.classList.add('active');
-      }, 5000);
-
-      loadState.elapsedTimer = setInterval(() => {
-        elapsedEl.textContent = Math.floor((Date.now() - loadState.startTime) / 1000) + 's';
-      }, 1000);
-    }
-
-    function stopLoading() {
-      clearInterval(loadState.stepTimer);
-      clearInterval(loadState.elapsedTimer);
-      document.getElementById('load-wrap').classList.remove('visible');
-    }
-
-    // ── Price bar ──────────────────────────────────────────────
-    async function fetchRealPrice(ticker) {
-      const bar = document.getElementById('price-bar');
-      if (!bar) return;
-      bar.classList.remove('visible');
-      try {
-        let q = quoteCache[ticker];
-        if (!q && window.PULSE_QUOTES) {
-          q = (window.PULSE_QUOTES || []).find(x => x.symbol === ticker || x.displaySymbol === ticker);
-        }
-        if (!q) {
-          const res = await fetch('/api/quotes?symbols=' + encodeURIComponent(ticker));
-          if (!res.ok) throw new Error();
-          const data = await res.json();
-          q = (data || [])[0];
-        }
-        if (!q) return;
-
-        const up = q.changePercent > 0, dn = q.changePercent < 0;
-        const cls  = up ? 'up' : dn ? 'dn' : '';
-        const sign = up ? '+' : '';
-        const priceStr = q.price >= 1000
-          ? q.price.toLocaleString('en-US', { maximumFractionDigits: 2 })
-          : q.price.toFixed(2);
-
-        bar.innerHTML = `<span class="price-bar-val">$${priceStr}</span>
-          <span class="price-bar-chg ${cls}">${sign}${q.changePercent.toFixed(2)}%</span>
-          <span class="price-bar-delay">15-MIN FORSINKET</span>`;
-        bar.classList.add('visible');
-      } catch (_) {}
-    }
-
-    // ── Render layers ──────────────────────────────────────────
-    function animateLayers() {
-      document.querySelectorAll('.layer-card').forEach((card, i) => {
-        card.style.opacity = '0';
-        card.style.transform = 'translateY(16px)';
-        card.style.transition = 'none';
-        requestAnimationFrame(() => {
-          setTimeout(() => {
-            card.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
-            card.style.opacity = '1';
-            card.style.transform = 'translateY(0)';
-          }, i * 80);
-        });
-      });
-    }
-
-    function renderTicker(data) {
-      document.getElementById('result-company').textContent = data.company || data.ticker;
-      document.getElementById('result-ticker-badge').textContent = '● ' + data.ticker;
-
-      const container = document.getElementById('layers-container');
-      container.innerHTML = (data.layers || []).map(layer => {
-        const borderColor = SENTIMENT_COLORS[layer.sentiment]  || '#3A3A3A';
-        const badgeColor  = BADGE_TEXT_COLORS[layer.sentiment] || '#555';
-        const badgeBg     = BADGE_BG[layer.sentiment]          || '#1e1e1e';
-        return `<div class="layer-card" style="border-left-color: ${borderColor};">
-          <div class="layer-header">
-            <div class="layer-name">${esc(layer.name.toUpperCase())}</div>
-            <div class="badge" style="color: ${badgeColor}; background: ${badgeBg};">
-              ${esc(layer.sentiment.toUpperCase())}
-            </div>
-          </div>
-          <div class="layer-summary">${esc(layer.summary)}</div>
-        </div>`;
-      }).join('');
-
-      const header = document.getElementById('result-section').querySelector('.result-header');
-      header.style.opacity = '0';
-      header.style.transform = 'translateY(16px)';
-      header.style.transition = 'none';
-      requestAnimationFrame(() => {
-        setTimeout(() => {
-          header.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
-          header.style.opacity = '1';
-          header.style.transform = 'translateY(0)';
-        }, 0);
-      });
-
-      setResult(true);
-      animateLayers();
-
-      lastFoundTicker = data.ticker;
-      const addBtn = document.getElementById('add-btn');
-      const inList = getWatchlist().includes(data.ticker);
-      addBtn.disabled = inList;
-      addBtn.title = inList ? 'Allerede i watchlist' : 'Legg til i watchlist';
-
-      fetchRealPrice(data.ticker);
-    }
-
-    // ── State helpers ──────────────────────────────────────────
-    function setError(msg) {
-      const el = document.getElementById('error-msg');
-      if (msg) { el.textContent = msg; el.classList.add('visible'); }
-      else el.classList.remove('visible');
-    }
-
-    function setResult(show) {
-      document.getElementById('result-section').classList.toggle('visible', show);
-    }
-
-    // ── Search ─────────────────────────────────────────────────
-    async function runSearch(ticker) {
-      ticker = ticker.trim().toUpperCase();
-      if (!ticker) return;
-
-      input.value = ticker;
-      setError(null);
-      setResult(false);
-      document.getElementById('price-bar').classList.remove('visible');
-      startLoading();
-      lastFoundTicker = null;
-      document.getElementById('add-btn').disabled = true;
-
-      try {
-        const res = await fetch('/api/ticker', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ticker })
-        });
-        if (!res.ok) throw new Error('Serverfeil ' + res.status);
-        const data = await res.json();
-
-        stopLoading();
-        if (data.error) { setError(data.error); return; }
-        if (!data.found) { setError(`Fant ikke ticker "${ticker}". Sjekk symbolet og prøv igjen.`); return; }
-
-        renderTicker(data);
-      } catch (e) {
-        stopLoading();
-        setError('Klarte ikke hente data. Sjekk tilkoblingen og prøv igjen.');
-      }
-    }
-
-    // ── Init ───────────────────────────────────────────────────
-    renderWatchlist();
-    loadWatchlistQuotes();
-
-    const pillsEl = document.getElementById('pills');
-    pillsEl.innerHTML = POPULAR.map(t =>
-      `<div class="pill" onclick="runSearch('${t}')">${t}</div>`
-    ).join('');
-
-    const input = document.getElementById('search-input');
-    input.addEventListener('input', () => {
-      input.value = input.value.toUpperCase().replace(/[^A-Z0-9.]/g, '');
-    });
-    input.addEventListener('keydown', e => {
-      if (e.key === 'Enter') { const v = input.value.trim(); if (v) runSearch(v); }
-    });
-  </script>
-<script src="bg.js"></script>
-<script src="live.js"></script>
+<script src="../assets/bg-terminal.js"></script>
 </body>
 </html>

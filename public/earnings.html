@@ -1,591 +1,242 @@
 <!DOCTYPE html>
 <html lang="no">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PULSE — Earnings Play</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css">
-  <style>
-    body { padding: 32px 20px 80px; }
-    .container { max-width: 620px; margin: 0 auto; }
+<meta charset="UTF-8">
+<title>PULSE — Earnings</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="shell.css">
+<style>
+  .week-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 20px; }
+  .week-title { font-family: 'Space Mono', monospace; font-size: 10px; letter-spacing: 0.16em; color: #8892A4; text-transform: uppercase; }
+  .week-range { font-family: 'Space Mono', monospace; font-size: 10px; color: #4A5166; letter-spacing: 0.14em; }
+  .week-nav { display: flex; gap: 6px; }
+  .week-nav button { background: transparent; border: 1px solid #252836; border-radius: 4px; width: 26px; height: 26px; color: #8892A4; font-family: 'Space Mono', monospace; cursor: pointer; transition: border-color 150ms, color 150ms; }
+  .week-nav button:hover { border-color: rgba(29,158,117,0.4); color: #1D9E75; }
 
-    .search-row { display: flex; gap: 10px; margin-bottom: 10px; }
-    .ticker-input {
-      flex: 1; background: var(--surface); border: 1px solid var(--border);
-      border-radius: 9px; padding: 13px 16px;
-      color: var(--text-primary); font-family: 'Space Mono', monospace;
-      font-size: 13px; letter-spacing: 0.1em; outline: none;
-      transition: border-color 180ms;
-    }
-    .ticker-input::placeholder { color: var(--text-muted); }
-    .ticker-input:focus { border-color: var(--green); }
+  /* Day group */
+  .day-group { margin-bottom: 20px; }
+  .day-head { display: flex; justify-content: space-between; align-items: center; padding: 0 2px 8px; border-bottom: 1px solid #252836; margin-bottom: 6px; gap: 12px; }
+  .day-head > div:first-child { display: flex; align-items: baseline; gap: 10px; white-space: nowrap; min-width: 0; flex-shrink: 1; }
+  .day-head .day-count { flex-shrink: 0; }
+  .day-head.today { border-bottom-color: rgba(29,158,117,0.4); }
+  .day-name { font-family: 'Cormorant Garamond', serif; font-size: 18px; font-weight: 600; color: #ECEEF4; }
+  .day-name em { font-style: italic; color: #1DB87E; }
+  .day-date { font-family: 'Space Mono', monospace; font-size: 10px; color: #4A5166; letter-spacing: 0.14em; }
+  .day-count { font-family: 'Space Mono', monospace; font-size: 9px; letter-spacing: 0.12em; color: #8892A4; background: #111318; border: 1px solid #252836; padding: 2px 7px; border-radius: 3px; }
 
-    .earnings-date-hint {
-      font-family: 'Space Mono', monospace; font-size: 10px;
-      color: var(--amber); letter-spacing: 0.1em;
-      min-height: 18px; margin-bottom: 24px;
-    }
+  /* Earnings rows */
+  .e-table { width: 100%; border-collapse: collapse; font-family: 'Space Mono', monospace; }
+  .e-table thead th { font-size: 8.5px; letter-spacing: 0.14em; color: #4A5166; text-transform: uppercase; text-align: right; padding: 8px 10px; font-weight: 400; border-bottom: 1px solid #1A1D26; }
+  .e-table thead th:first-child { text-align: left; padding-left: 2px; }
+  .e-table thead th.sl { text-align: center; }
+  .e-table tbody tr { cursor: pointer; transition: background 120ms; }
+  .e-table tbody tr:hover { background: #111318; }
+  .e-table tbody td { padding: 10px; text-align: right; border-bottom: 1px solid #1A1D26; font-size: 12px; color: #C8D0E0; letter-spacing: 0.02em; }
+  .e-table tbody td:first-child { text-align: left; padding-left: 2px; }
+  .e-ticker { font-weight: 700; color: #ECEEF4; letter-spacing: 0.08em; font-size: 13px; }
+  .e-co { font-family: 'DM Sans', sans-serif; font-size: 11.5px; color: #8892A4; margin-top: 2px; letter-spacing: 0; }
+  .e-time { text-align: center !important; }
+  .slot { font-size: 8.5px; letter-spacing: 0.14em; padding: 3px 7px; border-radius: 3px; font-weight: 700; }
+  .slot.bmo { color: #C4821A; background: rgba(198,130,26,0.1); border: 1px solid rgba(198,130,26,0.28); }
+  .slot.amc { color: #8B83E8; background: rgba(127,119,221,0.1); border: 1px solid rgba(127,119,221,0.28); }
+  .slot.mid { color: #8892A4; background: rgba(136,146,164,0.08); border: 1px solid rgba(136,146,164,0.2); }
+  .pos { color: #1D9E75; }
+  .neg { color: #E24B4A; }
+  .muted { color: #4A5166; }
+  .sent-cell { text-align: center !important; }
+  .sent { font-size: 8.5px; letter-spacing: 0.14em; padding: 3px 7px; border-radius: 3px; font-weight: 700; display: inline-block; }
+  .sent.bull { color: #1D9E75; background: rgba(29,158,117,0.12); border: 1px solid rgba(29,158,117,0.32); }
+  .sent.bear { color: #E24B4A; background: rgba(226,75,74,0.12); border: 1px solid rgba(226,75,74,0.32); }
+  .sent.mixed { color: #8B83E8; background: rgba(127,119,221,0.12); border: 1px solid rgba(127,119,221,0.32); }
+  .sent.wait { color: #C4821A; background: rgba(198,130,26,0.12); border: 1px solid rgba(198,130,26,0.32); }
 
-    .ep-card {
-      background: var(--surface); border: 1px solid var(--border);
-      border-radius: 12px; padding: 22px 24px; margin-bottom: 12px;
-      animation: fadeUp 0.4s ease forwards; opacity: 0;
-    }
-
-    .skeleton {
-      background: var(--surface); border: 1px solid var(--border);
-      border-radius: 12px; padding: 22px 24px; margin-bottom: 12px;
-      display: none;
-    }
-    .skeleton.visible { display: block; }
-    .skel-line {
-      height: 12px; border-radius: 4px;
-      background: linear-gradient(90deg, var(--surface-2) 25%, var(--border-light) 50%, var(--surface-2) 75%);
-      background-size: 200% 100%;
-      animation: shimmer 1.4s infinite;
-      margin-bottom: 10px;
-    }
-    @keyframes shimmer { 0%{background-position:200% 0;} 100%{background-position:-200% 0;} }
-    .skel-line:last-child { margin-bottom: 0; width: 60%; }
-
-    .stats-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
-    .stat-box { text-align: center; }
-    .stat-val {
-      font-family: 'Cormorant Garamond', serif; font-weight: 600;
-      font-size: 26px; line-height: 1;
-    }
-    .stat-lbl {
-      font-family: 'Space Mono', monospace; font-size: 9px;
-      letter-spacing: 0.14em; color: var(--text-muted); margin-top: 6px;
-    }
-    .stat-val.red { color: var(--red); }
-    .stat-val.green { color: var(--green); }
-    .stat-val.amber { color: var(--amber); }
-
-    .ep-table { width: 100%; border-collapse: collapse; }
-    .ep-table th {
-      font-family: 'Space Mono', monospace; font-size: 9px;
-      letter-spacing: 0.12em; color: var(--text-muted);
-      text-align: right; padding: 0 0 10px; font-weight: 400;
-    }
-    .ep-table th:first-child { text-align: left; }
-    .ep-table td {
-      font-size: 13px; color: var(--text-secondary);
-      text-align: right; padding: 8px 0;
-      border-top: 1px solid var(--border);
-    }
-    .ep-table td:first-child {
-      font-family: 'Space Mono', monospace; font-size: 10px;
-      color: var(--text-muted); text-align: left; letter-spacing: 0.06em;
-    }
-    .ep-table td.pos { color: var(--green); font-weight: 500; }
-    .ep-table td.neg { color: var(--red); font-weight: 500; }
-    .beat-ratio {
-      font-family: 'Space Mono', monospace; font-size: 10px;
-      color: var(--text-muted); margin-top: 12px; letter-spacing: 0.1em;
-    }
-    .beat-ratio span { color: var(--green); }
-
-    .est-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-    .est-box { background: var(--surface-2); border-radius: 8px; padding: 14px 16px; }
-    .est-box-lbl {
-      font-family: 'Space Mono', monospace; font-size: 9px;
-      letter-spacing: 0.12em; color: var(--text-muted); margin-bottom: 6px;
-    }
-    .est-box-val { font-family: 'Cormorant Garamond', serif; font-weight: 600; font-size: 20px; }
-    .rev-row {
-      display: flex; justify-content: space-between; align-items: center;
-      margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border);
-    }
-    .rev-lbl { font-size: 12px; color: var(--text-muted); }
-    .rev-val {
-      font-family: 'Space Mono', monospace; font-size: 11px;
-      display: flex; align-items: center; gap: 4px;
-    }
-    .rev-val.up { color: var(--green); }
-    .rev-val.dn { color: var(--red); }
-    .rev-val.flat { color: var(--text-muted); }
-    .analyst-count {
-      font-family: 'Space Mono', monospace; font-size: 9px;
-      color: var(--text-muted); letter-spacing: 0.12em; margin-top: 14px;
-    }
-
-    .rev-bars { display: flex; align-items: flex-end; gap: 6px; height: 70px; }
-    .rev-bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; }
-    .rev-bar {
-      width: 100%; border-radius: 3px 3px 0 0;
-      background: var(--green); opacity: 0.5; transition: opacity 180ms;
-    }
-    .rev-bar:hover { opacity: 0.8; }
-    .rev-bar.loss { background: var(--red); }
-    .rev-bar-lbl {
-      font-family: 'Space Mono', monospace; font-size: 8px;
-      color: var(--text-muted); letter-spacing: 0.04em;
-      white-space: nowrap; text-align: center;
-    }
-    .rev-qoq { font-family: 'Space Mono', monospace; font-size: 8px; text-align: center; margin-top: 4px; }
-    .rev-qoq.pos { color: var(--green); }
-    .rev-qoq.neg { color: var(--red); }
-
-    .consensus-row { display: flex; align-items: center; gap: 14px; margin-bottom: 16px; }
-    .consensus-badge {
-      font-family: 'Space Mono', monospace; font-size: 10px;
-      letter-spacing: 0.1em; padding: 5px 10px; border-radius: 4px; flex-shrink: 0;
-    }
-    .upside-val { font-family: 'Cormorant Garamond', serif; font-weight: 600; font-size: 22px; }
-    .upside-lbl {
-      font-family: 'Space Mono', monospace; font-size: 9px;
-      color: var(--text-muted); letter-spacing: 0.12em; margin-top: 2px;
-    }
-    .upgrade-row {
-      display: flex; align-items: center; gap: 10px;
-      padding: 8px 0; border-top: 1px solid var(--border); font-size: 12px;
-    }
-    .upgrade-firm { color: var(--text-secondary); flex: 1; }
-    .upgrade-arrow { font-family: 'Space Mono', monospace; font-size: 11px; color: var(--text-muted); flex-shrink: 0; }
-    .upgrade-date { font-family: 'Space Mono', monospace; font-size: 9px; color: var(--text-muted); flex-shrink: 0; letter-spacing: 0.06em; }
-
-    .implied-center { text-align: center; padding: 10px 0 16px; }
-    .implied-pct { font-family: 'Cormorant Garamond', serif; font-weight: 600; font-size: 52px; line-height: 1; color: var(--purple); }
-    .implied-sub { font-size: 13px; color: var(--text-secondary); margin-top: 8px; }
-    .implied-compare {
-      display: flex; justify-content: center; gap: 32px;
-      padding-top: 16px; border-top: 1px solid var(--border); margin-top: 16px;
-    }
-    .ic-item { text-align: center; }
-    .ic-val { font-family: 'Space Mono', monospace; font-size: 14px; font-weight: 700; }
-    .ic-lbl { font-family: 'Space Mono', monospace; font-size: 8px; color: var(--text-muted); letter-spacing: 0.12em; margin-top: 4px; }
-    .implied-badge {
-      display: inline-block; margin-top: 16px;
-      font-family: 'Space Mono', monospace; font-size: 9px;
-      letter-spacing: 0.14em; padding: 4px 10px; border-radius: 3px;
-    }
-    .implied-badge.low  { background: rgba(29,184,126,0.12); color: var(--green); }
-    .implied-badge.norm { background: rgba(196,130,26,0.12);  color: var(--amber); }
-    .implied-badge.high { background: rgba(229,75,74,0.12);   color: var(--red); }
-
-    @media (max-width: 480px) {
-      .stats-row { grid-template-columns: 1fr 1fr; }
-      .est-grid  { grid-template-columns: 1fr; }
-      .implied-pct { font-size: 40px; }
-    }
-  </style>
+  /* Summary strip */
+  .summary-strip { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: #252836; border: 1px solid #252836; border-radius: 10px; overflow: hidden; margin-bottom: 28px; }
+  .summary-cell { background: #0D0F14; padding: 14px 16px; }
+  .summary-lbl { font-family: 'Space Mono', monospace; font-size: 8.5px; letter-spacing: 0.14em; color: #4A5166; text-transform: uppercase; margin-bottom: 4px; }
+  .summary-val { font-family: 'Space Mono', monospace; font-size: 20px; font-weight: 700; color: #ECEEF4; }
+  .summary-val.bull { color: #1D9E75; }
+  .summary-val.bear { color: #E24B4A; }
+</style>
 </head>
 <body>
-  <div class="container">
+<canvas id="bg-canvas"></canvas>
+<div class="glow-top"></div>
 
-    <a href="index.html" class="back anim" style="animation-delay:0ms;">← TILBAKE</a>
+<div class="page">
+  <nav class="nav">
+    <a class="nav-logo" href="../ui_kits/web/index.html">PULSE</a>
+    <div class="nav-badge">EARNINGS · UKE 16</div>
+  </nav>
+  <a class="back" href="../ui_kits/web/index.html">← TILBAKE TIL DASHBOARD</a>
 
-    <div class="page-title anim" style="animation-delay:40ms;">EARNINGS PLAY</div>
-    <div class="page-subtitle anim" style="animation-delay:80ms;">Komplett beslutningsgrunnlag før en earnings-trade.</div>
+  <div class="page-title anim">EARNINGS-KALENDER</div>
+  <div class="page-sub anim" style="animation-delay:40ms">Denne <em>uken</em></div>
+  <div class="page-desc anim" style="animation-delay:80ms">12 selskaper rapporterer 20.–24. april. Klikk en rad for komplett beslutningsgrunnlag: EPS-historikk, implied move og analyst sentiment.</div>
 
-    <div class="anim" style="animation-delay:120ms;">
-      <div class="search-row">
-        <input
-          type="text"
-          id="ticker-input"
-          class="ticker-input"
-          placeholder="Ticker (f.eks. AAPL)"
-          maxlength="10"
-          autocomplete="off"
-          autocapitalize="characters"
-          spellcheck="false"
-        />
-        <button class="btn-primary" id="analyse-btn" onclick="runAnalysis()">ANALYSER →</button>
-      </div>
-      <div class="earnings-date-hint" id="earnings-hint"></div>
-    </div>
-
-    <div class="error-msg" id="error-msg"></div>
-
-    <!-- Skeleton loading -->
-    <div class="skeleton" id="skel-1">
-      <div class="skel-line" style="width:40%; height:9px; margin-bottom:16px;"></div>
-      <div class="skel-line"></div><div class="skel-line"></div><div class="skel-line"></div>
-    </div>
-    <div class="skeleton" id="skel-2">
-      <div class="skel-line" style="width:35%; height:9px; margin-bottom:16px;"></div>
-      <div class="skel-line"></div><div class="skel-line"></div>
-    </div>
-    <div class="skeleton" id="skel-3">
-      <div class="skel-line" style="width:45%; height:9px; margin-bottom:16px;"></div>
-      <div class="skel-line"></div><div class="skel-line"></div>
-    </div>
-
-    <!-- Results -->
-    <div id="results" style="display:none;"></div>
-
+  <div class="summary-strip anim" style="animation-delay:120ms">
+    <div class="summary-cell"><div class="summary-lbl">TOTAL</div><div class="summary-val">12</div></div>
+    <div class="summary-cell"><div class="summary-lbl">BULLISH</div><div class="summary-val bull">6</div></div>
+    <div class="summary-cell"><div class="summary-lbl">BEARISH</div><div class="summary-val bear">3</div></div>
+    <div class="summary-cell"><div class="summary-lbl">AVVENT</div><div class="summary-val" style="color:#C4821A">3</div></div>
   </div>
 
-  <script>
-    function esc(s) {
-      if (s == null) return '—';
-      return String(s)
-        .replace(/&/g,'&amp;')
-        .replace(/</g,'&lt;')
-        .replace(/>/g,'&gt;')
-        .replace(/"/g,'&quot;');
-    }
+  <div class="week-head">
+    <div class="week-title">UKE 16 · 2026</div>
+    <div class="week-nav">
+      <button>←</button>
+      <button>→</button>
+    </div>
+  </div>
 
-    function fmt(n, decimals = 2) {
-      if (n == null || isNaN(n)) return '—';
-      return parseFloat(n).toFixed(decimals);
-    }
+  <!-- MANDAG -->
+  <div class="day-group">
+    <div class="day-head today">
+      <div><span class="day-name"><em>Mandag</em></span> <span class="day-date" style="margin-left:10px">20. APR · I DAG</span></div>
+      <div class="day-count">3</div>
+    </div>
+    <table class="e-table">
+      <thead><tr>
+        <th>TICKER</th><th class="sl">TID</th><th>EST. EPS</th><th>FORRIGE</th><th>IMPL ±</th><th class="sl">SENTIMENT</th>
+      </tr></thead>
+      <tbody>
+        <tr class="anim" style="animation-delay:160ms">
+          <td><div class="e-ticker">NFLX</div><div class="e-co">Netflix, Inc.</div></td>
+          <td class="e-time"><span class="slot amc">AMC</span></td>
+          <td class="pos">5.42</td><td class="muted">5.28</td><td>±8.4%</td>
+          <td class="sent-cell"><span class="sent wait">AVVENT</span></td>
+        </tr>
+        <tr class="anim" style="animation-delay:200ms">
+          <td><div class="e-ticker">JNJ</div><div class="e-co">Johnson &amp; Johnson</div></td>
+          <td class="e-time"><span class="slot bmo">FØR BØRS</span></td>
+          <td class="pos">2.62</td><td class="muted">2.58</td><td>±3.1%</td>
+          <td class="sent-cell"><span class="sent bull">BULLISH</span></td>
+        </tr>
+        <tr class="anim" style="animation-delay:240ms">
+          <td><div class="e-ticker">UAL</div><div class="e-co">United Airlines Holdings</div></td>
+          <td class="e-time"><span class="slot amc">AMC</span></td>
+          <td class="neg">−0.72</td><td class="neg">−0.85</td><td>±6.8%</td>
+          <td class="sent-cell"><span class="sent mixed">MIXED</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
 
-    function fmtB(n) {
-      if (n == null) return '—';
-      if (Math.abs(n) >= 1e9) return (n / 1e9).toFixed(2) + 'B';
-      if (Math.abs(n) >= 1e6) return (n / 1e6).toFixed(1) + 'M';
-      return n.toLocaleString();
-    }
+  <!-- TIRSDAG -->
+  <div class="day-group">
+    <div class="day-head">
+      <div><span class="day-name">Tirsdag</span> <span class="day-date" style="margin-left:10px">21. APR</span></div>
+      <div class="day-count">3</div>
+    </div>
+    <table class="e-table">
+      <thead><tr><th>TICKER</th><th class="sl">TID</th><th>EST. EPS</th><th>FORRIGE</th><th>IMPL ±</th><th class="sl">SENTIMENT</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><div class="e-ticker">TSLA</div><div class="e-co">Tesla, Inc.</div></td>
+          <td class="e-time"><span class="slot amc">AMC</span></td>
+          <td class="pos">0.42</td><td class="pos">0.66</td><td>±9.2%</td>
+          <td class="sent-cell"><span class="sent bear">BEARISH</span></td>
+        </tr>
+        <tr>
+          <td><div class="e-ticker">VZ</div><div class="e-co">Verizon Communications</div></td>
+          <td class="e-time"><span class="slot bmo">FØR BØRS</span></td>
+          <td class="pos">1.18</td><td class="pos">1.15</td><td>±3.8%</td>
+          <td class="sent-cell"><span class="sent bull">BULLISH</span></td>
+        </tr>
+        <tr>
+          <td><div class="e-ticker">LMT</div><div class="e-co">Lockheed Martin Corp.</div></td>
+          <td class="e-time"><span class="slot bmo">FØR BØRS</span></td>
+          <td class="pos">6.48</td><td class="pos">6.21</td><td>±4.2%</td>
+          <td class="sent-cell"><span class="sent bull">BULLISH</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
 
-    function pct(n) {
-      if (n == null) return '—';
-      return (n * 100).toFixed(1) + '%';
-    }
+  <!-- ONSDAG -->
+  <div class="day-group">
+    <div class="day-head">
+      <div><span class="day-name">Onsdag</span> <span class="day-date" style="margin-left:10px">22. APR</span></div>
+      <div class="day-count">3</div>
+    </div>
+    <table class="e-table">
+      <thead><tr><th>TICKER</th><th class="sl">TID</th><th>EST. EPS</th><th>FORRIGE</th><th>IMPL ±</th><th class="sl">SENTIMENT</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><div class="e-ticker">MSFT</div><div class="e-co">Microsoft Corporation</div></td>
+          <td class="e-time"><span class="slot amc">AMC</span></td>
+          <td class="pos">3.24</td><td class="pos">2.94</td><td>±5.4%</td>
+          <td class="sent-cell"><span class="sent bull">BULLISH</span></td>
+        </tr>
+        <tr>
+          <td><div class="e-ticker">META</div><div class="e-co">Meta Platforms, Inc.</div></td>
+          <td class="e-time"><span class="slot amc">AMC</span></td>
+          <td class="pos">4.86</td><td class="pos">4.71</td><td>±7.1%</td>
+          <td class="sent-cell"><span class="sent bull">BULLISH</span></td>
+        </tr>
+        <tr>
+          <td><div class="e-ticker">BA</div><div class="e-co">The Boeing Company</div></td>
+          <td class="e-time"><span class="slot bmo">FØR BØRS</span></td>
+          <td class="neg">−1.42</td><td class="neg">−1.18</td><td>±6.2%</td>
+          <td class="sent-cell"><span class="sent bear">BEARISH</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
 
-    function consensusStyle(key) {
-      const map = {
-        'strongBuy':  { bg: 'rgba(29,184,126,0.15)', color: '#1DB87E', label: 'STRONG BUY' },
-        'buy':        { bg: 'rgba(29,184,126,0.10)', color: '#1DB87E', label: 'BUY' },
-        'hold':       { bg: 'rgba(196,130,26,0.12)', color: '#C4821A', label: 'HOLD' },
-        'underperform':{ bg: 'rgba(229,75,74,0.10)', color: '#E54B4A', label: 'UNDERPERFORM' },
-        'sell':       { bg: 'rgba(229,75,74,0.12)', color: '#E54B4A', label: 'SELL' },
-      };
-      return map[key] || { bg: 'rgba(74,81,102,0.12)', color: '#4A5166', label: (key || 'N/A').toUpperCase() };
-    }
+  <!-- TORSDAG -->
+  <div class="day-group">
+    <div class="day-head">
+      <div><span class="day-name">Torsdag</span> <span class="day-date" style="margin-left:10px">23. APR</span></div>
+      <div class="day-count">2</div>
+    </div>
+    <table class="e-table">
+      <thead><tr><th>TICKER</th><th class="sl">TID</th><th>EST. EPS</th><th>FORRIGE</th><th>IMPL ±</th><th class="sl">SENTIMENT</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><div class="e-ticker">GOOGL</div><div class="e-co">Alphabet Inc. Class A</div></td>
+          <td class="e-time"><span class="slot amc">AMC</span></td>
+          <td class="pos">2.14</td><td class="pos">1.89</td><td>±6.4%</td>
+          <td class="sent-cell"><span class="sent bull">BULLISH</span></td>
+        </tr>
+        <tr>
+          <td><div class="e-ticker">INTC</div><div class="e-co">Intel Corporation</div></td>
+          <td class="e-time"><span class="slot amc">AMC</span></td>
+          <td class="neg">−0.08</td><td class="pos">0.18</td><td>±8.8%</td>
+          <td class="sent-cell"><span class="sent wait">AVVENT</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
 
-    function revDir(current, old) {
-      if (current == null || old == null || old === 0) return 'flat';
-      const diff = ((current - old) / Math.abs(old)) * 100;
-      if (diff > 0.5)  return 'up';
-      if (diff < -0.5) return 'dn';
-      return 'flat';
-    }
+  <!-- FREDAG -->
+  <div class="day-group">
+    <div class="day-head">
+      <div><span class="day-name">Fredag</span> <span class="day-date" style="margin-left:10px">24. APR</span></div>
+      <div class="day-count">1</div>
+    </div>
+    <table class="e-table">
+      <thead><tr><th>TICKER</th><th class="sl">TID</th><th>EST. EPS</th><th>FORRIGE</th><th>IMPL ±</th><th class="sl">SENTIMENT</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><div class="e-ticker">XOM</div><div class="e-co">Exxon Mobil Corporation</div></td>
+          <td class="e-time"><span class="slot bmo">FØR BØRS</span></td>
+          <td class="pos">2.18</td><td class="pos">2.41</td><td>±4.1%</td>
+          <td class="sent-cell"><span class="sent wait">AVVENT</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
 
-    function renderKeyStats(d) {
-      const sf = d.keyStats.shortFloat;
-      const sfVal = sf != null ? (sf * 100).toFixed(1) + '%' : '—';
-      const sfCls = sf != null && sf > 0.15 ? 'red' : sf != null && sf > 0.08 ? 'amber' : 'green';
+  <div class="footer">
+    <div class="footer-brand">PULSE · EARNINGS-KALENDER</div>
+    <div class="footer-note">Ikke finansiell rådgivning</div>
+  </div>
+</div>
 
-      const pe = d.keyStats.forwardPE;
-      const peCls = pe != null && pe < 0 ? 'red' : pe != null && pe > 40 ? 'amber' : 'green';
-
-      const ins = d.keyStats.insiderOwnership;
-
-      return `
-        <div class="ep-card" style="animation-delay:0ms;">
-          <div class="section-label">KEY STATS</div>
-          <div class="stats-row">
-            <div class="stat-box">
-              <div class="stat-val ${sfCls}">${esc(sfVal)}</div>
-              <div class="stat-lbl">SHORT FLOAT</div>
-            </div>
-            <div class="stat-box">
-              <div class="stat-val ${peCls}">${pe != null ? fmt(pe, 1) + 'x' : '—'}</div>
-              <div class="stat-lbl">FORWARD P/E</div>
-            </div>
-            <div class="stat-box">
-              <div class="stat-val">${ins != null ? (ins * 100).toFixed(1) + '%' : '—'}</div>
-              <div class="stat-lbl">INSIDER EIE</div>
-            </div>
-          </div>
-        </div>`;
-    }
-
-    function renderEpsHistory(d) {
-      const rows = d.epsHistory;
-      if (!rows.length) return '';
-
-      const beats = rows.filter(r => r.surprise != null && r.surprise > 0).length;
-      const tableRows = rows.map(r => {
-        const spct = r.surprisePct != null ? r.surprisePct * 100 : null;
-        const cls  = spct != null ? (spct >= 0 ? 'pos' : 'neg') : '';
-        const sign = spct != null && spct > 0 ? '+' : '';
-        return `<tr>
-          <td>${esc(r.quarter)}</td>
-          <td>${r.estimate != null ? fmt(r.estimate) : '—'}</td>
-          <td>${r.actual   != null ? fmt(r.actual)   : '—'}</td>
-          <td class="${cls}">${spct != null ? sign + fmt(spct, 1) + '%' : '—'}</td>
-        </tr>`;
-      }).join('');
-
-      return `
-        <div class="ep-card" style="animation-delay:60ms;">
-          <div class="section-label">EPS HISTORY — ${rows.length} QUARTERS</div>
-          <table class="ep-table">
-            <thead>
-              <tr>
-                <th>QUARTER</th>
-                <th>EST</th>
-                <th>ACTUAL</th>
-                <th>SURPRISE</th>
-              </tr>
-            </thead>
-            <tbody>${tableRows}</tbody>
-          </table>
-          <div class="beat-ratio">BEAT-RATIO: <span>${beats}/${rows.length}</span> siste quarters</div>
-        </div>`;
-    }
-
-    function renderEstimates(d) {
-      const est = d.estimates;
-      const dir7  = revDir(est.epsTrendCurrent, est.epsTrend7d);
-      const dir30 = revDir(est.epsTrendCurrent, est.epsTrend30d);
-
-      function arrow(dir) {
-        if (dir === 'up') return '↑';
-        if (dir === 'dn') return '↓';
-        return '→';
-      }
-
-      const fwdEPS = est.forwardEPS != null ? (est.forwardEPS >= 0 ? '+' : '') + fmt(est.forwardEPS) : '—';
-      const fwdRev = est.forwardRevenue != null ? fmtB(est.forwardRevenue) : '—';
-
-      return `
-        <div class="ep-card" style="animation-delay:120ms;">
-          <div class="section-label">ESTIMATE MOMENTUM</div>
-          <div class="est-grid">
-            <div class="est-box">
-              <div class="est-box-lbl">FORWARD EPS (EST)</div>
-              <div class="est-box-val">${esc(fwdEPS)}</div>
-            </div>
-            <div class="est-box">
-              <div class="est-box-lbl">FORWARD REVENUE (EST)</div>
-              <div class="est-box-val">${esc(fwdRev)}</div>
-            </div>
-          </div>
-          <div class="rev-row">
-            <div class="rev-lbl">EPS revision 7d</div>
-            <div class="rev-val ${dir7}">${arrow(dir7)} ${dir7 === 'up' ? 'Oppjustert' : dir7 === 'dn' ? 'Nedjustert' : 'Uendret'}</div>
-          </div>
-          <div class="rev-row" style="padding-top:10px; margin-top:0; border-top:none;">
-            <div class="rev-lbl">EPS revision 30d</div>
-            <div class="rev-val ${dir30}">${arrow(dir30)} ${dir30 === 'up' ? 'Oppjustert' : dir30 === 'dn' ? 'Nedjustert' : 'Uendret'}</div>
-          </div>
-          ${est.analystCount != null ? `<div class="analyst-count">${est.analystCount} ANALYTIKERE</div>` : ''}
-        </div>`;
-    }
-
-    function renderRevenueTrend(d) {
-      const items = d.revenueTrend.slice().reverse(); // oldest first
-      if (!items.length) return '';
-
-      const maxRev = Math.max(...items.map(i => Math.abs(i.revenue || 0)), 1);
-
-      const bars = items.map((item, idx) => {
-        const barH = item.revenue != null
-          ? Math.max((Math.abs(item.revenue) / maxRev) * 60, 4)
-          : 4;
-        const isLoss = item.netIncome != null && item.netIncome < 0;
-        const label = item.date ? item.date.slice(0, 7) : '—';
-
-        let qoq = '';
-        if (idx > 0 && items[idx - 1].revenue && item.revenue) {
-          const growth = ((item.revenue - items[idx-1].revenue) / Math.abs(items[idx-1].revenue)) * 100;
-          const sign   = growth >= 0 ? '+' : '';
-          const cls    = growth >= 0 ? 'pos' : 'neg';
-          qoq = `<div class="rev-qoq ${cls}">${sign}${growth.toFixed(0)}%</div>`;
-        }
-
-        return `<div class="rev-bar-col">
-          <div class="rev-bar ${isLoss ? 'loss' : ''}" style="height:${barH}px;" title="${fmtB(item.revenue)}"></div>
-          <div class="rev-bar-lbl">${esc(label)}</div>
-          ${qoq}
-        </div>`;
-      }).join('');
-
-      return `
-        <div class="ep-card" style="animation-delay:180ms;">
-          <div class="section-label">REVENUE TREND — ${items.length} QUARTERS</div>
-          <div class="rev-bars">${bars}</div>
-        </div>`;
-    }
-
-    function renderAnalystSentiment(d) {
-      const as = d.analystSentiment;
-      const cs = consensusStyle(as.consensus);
-
-      const upside = as.targetPrice && as.currentPrice
-        ? ((as.targetPrice - as.currentPrice) / as.currentPrice * 100).toFixed(1)
-        : null;
-      const upsideCls = upside != null
-        ? (upside >= 0 ? 'green' : 'red')
-        : '';
-      const upsideSign = upside != null && upside > 0 ? '+' : '';
-
-      const upgradeRows = (as.recentChanges || []).map(c => {
-        const from = c.from || '—';
-        const to   = c.to   || '—';
-        return `<div class="upgrade-row">
-          <div class="upgrade-firm">${esc(c.firm)}</div>
-          <div class="upgrade-arrow">${esc(from)} → ${esc(to)}</div>
-          <div class="upgrade-date">${esc(c.date || '—')}</div>
-        </div>`;
-      }).join('');
-
-      return `
-        <div class="ep-card" style="animation-delay:240ms;">
-          <div class="section-label">ANALYST SENTIMENT</div>
-          <div class="consensus-row">
-            <div class="consensus-badge" style="background:${cs.bg}; color:${cs.color};">${cs.label}</div>
-            ${upside != null ? `
-            <div>
-              <div class="upside-val" style="color:var(--${upsideCls});">${upsideSign}${upside}%</div>
-              <div class="upside-lbl">UPSIDE TIL TARGET</div>
-            </div>` : ''}
-            ${as.targetPrice != null ? `
-            <div>
-              <div class="upside-val" style="color:var(--text-secondary);">$${fmt(as.targetPrice, 0)}</div>
-              <div class="upside-lbl">MEAN TARGET</div>
-            </div>` : ''}
-          </div>
-          ${upgradeRows}
-        </div>`;
-    }
-
-    function renderImpliedMove(d) {
-      const im = d.impliedMove;
-      if (!im) return '';
-
-      const histMoves = d.epsHistory
-        .map(r => r.surprisePct != null ? Math.abs(r.surprisePct * 100) : null)
-        .filter(v => v != null);
-      const avgHist = histMoves.length
-        ? histMoves.reduce((a, b) => a + b, 0) / histMoves.length
-        : null;
-
-      let badgeClass = 'norm', badgeText = 'NORMALT PRISET';
-      if (avgHist != null) {
-        const ratio = im.percent / avgHist;
-        if (ratio < 0.75) { badgeClass = 'low';  badgeText = 'PRISET INN LAVT'; }
-        else if (ratio > 1.3) { badgeClass = 'high'; badgeText = 'PRISET INN HØYT'; }
-      }
-
-      return `
-        <div class="ep-card" style="animation-delay:300ms;">
-          <div class="section-label">IMPLIED MOVE</div>
-          <div class="implied-center">
-            <div class="implied-pct">±${fmt(im.percent, 1)}%</div>
-            <div class="implied-sub">Markedet pricer inn ±${fmt(im.percent, 1)}% på earnings</div>
-            <div class="implied-badge ${badgeClass}">${badgeText}</div>
-          </div>
-          <div class="implied-compare">
-            <div class="ic-item">
-              <div class="ic-val" style="color:var(--purple);">$${fmt(im.straddle, 2)}</div>
-              <div class="ic-lbl">ATM STRADDLE</div>
-            </div>
-            <div class="ic-item">
-              <div class="ic-val" style="color:var(--purple);">$${fmt(im.strike, 0)}</div>
-              <div class="ic-lbl">ATM STRIKE</div>
-            </div>
-            ${avgHist != null ? `
-            <div class="ic-item">
-              <div class="ic-val" style="color:var(--amber);">${fmt(avgHist, 1)}%</div>
-              <div class="ic-lbl">HIST. SNITT MOVE</div>
-            </div>` : ''}
-            ${im.expiry ? `
-            <div class="ic-item">
-              <div class="ic-val" style="color:var(--text-muted); font-size:11px;">${esc(im.expiry)}</div>
-              <div class="ic-lbl">UTLØP</div>
-            </div>` : ''}
-          </div>
-        </div>`;
-    }
-
-    function renderAll(d) {
-      const html =
-        renderKeyStats(d) +
-        renderEpsHistory(d) +
-        renderEstimates(d) +
-        renderRevenueTrend(d) +
-        renderAnalystSentiment(d) +
-        renderImpliedMove(d);
-
-      document.getElementById('results').innerHTML = html;
-      document.getElementById('results').style.display = 'block';
-
-      if (d.estimates.earningsDate) {
-        document.getElementById('earnings-hint').textContent =
-          'NESTE EARNINGS: ' + d.estimates.earningsDate;
-      }
-    }
-
-    function showSkeletons(on) {
-      ['skel-1', 'skel-2', 'skel-3'].forEach(id => {
-        document.getElementById(id).classList.toggle('visible', on);
-      });
-    }
-
-    function showError(msg) {
-      const el = document.getElementById('error-msg');
-      el.textContent = msg;
-      el.classList.add('visible');
-    }
-
-    function clearError() {
-      document.getElementById('error-msg').classList.remove('visible');
-    }
-
-    let fetching = false;
-
-    async function runAnalysis() {
-      const raw = document.getElementById('ticker-input').value.trim().toUpperCase();
-      if (!raw) return;
-      if (fetching) return;
-
-      clearError();
-      document.getElementById('results').style.display = 'none';
-      document.getElementById('earnings-hint').textContent = '';
-
-      const TODAY = new Date().toISOString().slice(0, 10);
-      const CACHE_KEY = 'pulse_ep_' + raw + '_' + TODAY;
-
-      try {
-        const cached = JSON.parse(localStorage.getItem(CACHE_KEY) || 'null');
-        if (cached && cached.ticker === raw) {
-          renderAll(cached);
-          return;
-        }
-      } catch (_) {}
-
-      fetching = true;
-      const btn = document.getElementById('analyse-btn');
-      btn.disabled = true;
-      showSkeletons(true);
-
-      try {
-        const res = await fetch('/api/earnings-play?ticker=' + encodeURIComponent(raw));
-        if (!res.ok) throw new Error('Serverfeil ' + res.status);
-        const data = await res.json();
-        if (data.error) throw new Error(data.error);
-        localStorage.setItem(CACHE_KEY, JSON.stringify(data));
-        showSkeletons(false);
-        renderAll(data);
-      } catch (e) {
-        showSkeletons(false);
-        showError('FEIL: ' + e.message);
-      } finally {
-        fetching = false;
-        btn.disabled = false;
-      }
-    }
-
-    document.getElementById('ticker-input').addEventListener('keydown', e => {
-      if (e.key === 'Enter') runAnalysis();
-    });
-
-    // Pre-fill from URL param
-    const urlTicker = new URLSearchParams(location.search).get('ticker');
-    if (urlTicker) {
-      document.getElementById('ticker-input').value = urlTicker.toUpperCase();
-      runAnalysis();
-    }
-  </script>
-  <script src="bg.js"></script>
-  <script src="live.js"></script>
+<script src="../assets/bg-terminal.js"></script>
 </body>
 </html>

@@ -1,174 +1,183 @@
 <!DOCTYPE html>
 <html lang="no">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PULSE — Radar</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css">
-  <style>
-    body { padding: 32px 20px 64px; }
-    .container { max-width: 600px; margin: 0 auto; }
+<meta charset="UTF-8">
+<title>PULSE — Radar</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="shell.css">
+<style>
+  .meta-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; font-family: 'Space Mono', monospace; font-size: 10px; letter-spacing: 0.14em; color: #4A5166; text-transform: uppercase; }
+  .meta-row .live { color: #1D9E75; display: flex; align-items: center; gap: 6px; }
+  .meta-row .live::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: #1D9E75; animation: pulse-dot 1.4s ease-in-out infinite; }
+  @keyframes pulse-dot { 0%,100%{opacity:1} 50%{opacity:0.25} }
 
-    @keyframes ls-pulse { 0%,100%{opacity:1;} 50%{opacity:0.15;} }
-    .ls-dot {
-      width: 4px; height: 4px; border-radius: 50%;
-      background: var(--green); flex-shrink: 0;
-      animation: ls-pulse 1.2s ease-in-out infinite;
-    }
-    .load-bar { height: 100%; background: var(--green); width: 0%; transition: width 25s linear; }
+  /* Filter row */
+  .filter-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 16px; }
 
-    /* Radar cards */
-    .radar-list { display: none; flex-direction: column; gap: 12px; }
-    .radar-list.visible { display: flex; }
-    .radar-card {
-      background: var(--surface); border: 1px solid var(--border);
-      border-left: 3px solid var(--green); border-radius: 12px;
-      padding: 20px 24px;
-      opacity: 0; animation: fadeUp 0.4s ease forwards;
-      transition: transform 180ms ease;
-    }
-    .radar-card:hover { transform: translateY(-2px); }
-    .radar-header { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
-    .radar-ticker { font-family: 'Space Mono', monospace; font-weight: 700; font-size: 15px; color: var(--text-data); letter-spacing: 0.08em; }
-    .radar-badge { font-family: 'Space Mono', monospace; font-size: 9px; letter-spacing: 0.1em; padding: 3px 7px; border-radius: 3px; }
-    .radar-reason { font-size: 13px; color: var(--text-secondary); line-height: 1.55; }
-  </style>
+  /* Radar card: dense, scannable */
+  .r-list { display: flex; flex-direction: column; gap: 8px; }
+  .r-card { display: grid; grid-template-columns: 76px 1fr auto; gap: 14px; align-items: center; background: #111318; border: 1px solid #252836; border-left: 3px solid #1D9E75; border-radius: 10px; padding: 14px 18px; transition: transform 150ms, background 150ms; cursor: pointer; }
+  .r-card:hover { transform: translateY(-2px); background: #141720; }
+  .r-card.bear { border-left-color: #E24B4A; }
+  .r-card.mixed { border-left-color: #8B83E8; }
+  .r-card.wait { border-left-color: #C4821A; }
+
+  .r-left { display: flex; flex-direction: column; gap: 4px; }
+  .r-ticker { font-family: 'Space Mono', monospace; font-weight: 700; font-size: 15px; color: #ECEEF4; letter-spacing: 0.08em; }
+  .r-chg { font-family: 'Space Mono', monospace; font-size: 11px; letter-spacing: 0.02em; }
+  .r-chg.up { color: #1D9E75; }
+  .r-chg.dn { color: #E24B4A; }
+
+  .r-mid { min-width: 0; }
+  .r-reason { font-size: 13px; color: #C8D0E0; line-height: 1.45; margin-bottom: 6px; }
+  .r-tags { display: flex; gap: 8px; font-family: 'Space Mono', monospace; font-size: 9px; letter-spacing: 0.12em; color: #4A5166; text-transform: uppercase; }
+  .r-tags span { white-space: nowrap; }
+  .r-tags .hi { color: #8892A4; }
+
+  .r-right { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+  .r-badge { font-family: 'Space Mono', monospace; font-size: 9.5px; font-weight: 700; letter-spacing: 0.14em; padding: 4px 9px; border-radius: 3px; text-transform: uppercase; white-space: nowrap; }
+  .r-badge.bull { color: #1D9E75; background: rgba(29,158,117,0.12); border: 1px solid rgba(29,158,117,0.35); }
+  .r-badge.bear { color: #E24B4A; background: rgba(226,75,74,0.12); border: 1px solid rgba(226,75,74,0.35); }
+  .r-badge.mixed { color: #8B83E8; background: rgba(127,119,221,0.12); border: 1px solid rgba(127,119,221,0.35); }
+  .r-badge.wait { color: #C4821A; background: rgba(198,130,26,0.12); border: 1px solid rgba(198,130,26,0.35); }
+  .r-conf { font-family: 'Space Mono', monospace; font-size: 9px; color: #4A5166; letter-spacing: 0.14em; }
+</style>
 </head>
 <body>
-  <div class="container">
+<canvas id="bg-canvas"></canvas>
+<div class="glow-top"></div>
 
-    <a href="index.html" class="back anim" style="animation-delay:0ms;">← TILBAKE</a>
+<div class="page">
+  <nav class="nav">
+    <a class="nav-logo" href="../ui_kits/web/index.html">PULSE</a>
+    <div class="nav-badge">RADAR · AI SCREENING</div>
+  </nav>
+  <a class="back" href="../ui_kits/web/index.html">← TILBAKE TIL DASHBOARD</a>
 
-    <div class="page-title anim" style="animation-delay:40ms;">RADAR</div>
-    <div class="page-subtitle anim" style="animation-delay:80ms;">Daglig swing setup-screening — short float, momentum og katalysator.</div>
+  <div class="page-title anim">RADAR</div>
+  <div class="page-sub anim" style="animation-delay:40ms">Dagens <em>setups</em></div>
+  <div class="page-desc anim" style="animation-delay:80ms">AI-screening etter swing-kandidater med høy short float, momentum og katalysator. 8 kandidater identifisert kl. 09:47 CET.</div>
 
-    <div id="empty-state" class="anim" style="animation-delay:120ms;">
-      <div class="cta-card">
-        <div class="cta-label">SWING SETUP RADAR</div>
-        <div class="cta-title">Finn dagens beste setup</div>
-        <div class="cta-desc">AI screener som leter etter aksjer med høy short float (&gt;15%), positiv momentum og katalysator. Returnerer 3–5 kandidater. Cachet til neste dag.</div>
-        <button class="btn-ghost" id="fetch-btn" onclick="fetchRadar()">KJØR RADAR →</button>
-      </div>
-    </div>
-
-    <div class="load-wrap" id="load-wrap">
-      <div class="load-step">
-        <div class="ls-dot"></div>
-        <span id="load-label">SCREENER MARKEDET</span>
-      </div>
-      <div class="load-bar-wrap"><div class="load-bar" id="load-bar"></div></div>
-    </div>
-
-    <div id="results-wrap" style="display:none;">
-      <div class="section-title">SWING-KANDIDATER</div>
-      <div class="radar-list" id="radar-list"></div>
-      <div style="margin-top:14px;">
-        <button class="btn" onclick="clearAndRefetch()">KJØR NY SCREENING</button>
-      </div>
-    </div>
-
+  <div class="meta-row anim" style="animation-delay:120ms">
+    <span>20. APR 2026 · CACHET TIL 22:00</span>
+    <span class="live">LIVE · 09:47 CET</span>
   </div>
 
-  <script>
-    const TODAY     = new Date().toISOString().slice(0, 10);
-    const CACHE_KEY = 'pulse_radar_' + TODAY;
+  <div class="filter-row anim" style="animation-delay:160ms">
+    <button class="pill active">ALLE (8)</button>
+    <button class="pill">BULLISH (4)</button>
+    <button class="pill">BEARISH (2)</button>
+    <button class="pill">MIXED (1)</button>
+    <button class="pill">AVVENT (1)</button>
+  </div>
 
-    const LOAD_LABELS = ['SCREENER MARKEDET', 'SJEKKER SHORT FLOAT', 'VURDERER KATALYSATOR', 'VELGER BESTE SETUP'];
-    let labelIdx = 0, labelTimer = null;
+  <div class="r-list">
+    <div class="r-card bull anim" style="animation-delay:200ms">
+      <div class="r-left">
+        <div class="r-ticker">SMCI</div>
+        <div class="r-chg up">+4.82%</div>
+      </div>
+      <div class="r-mid">
+        <div class="r-reason">Short float 22% + breakout fra konsolidering. AI-infra narrative intakt, volum 2.1× snitt.</div>
+        <div class="r-tags"><span class="hi">SHORT 22%</span><span>DTC 3.4</span><span>RSI 68</span><span class="hi">VOL 2.1×</span></div>
+      </div>
+      <div class="r-right"><div class="r-badge bull">BULLISH</div><div class="r-conf">CONF 82</div></div>
+    </div>
 
-    function esc(s) {
-      return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-    }
+    <div class="r-card bull anim" style="animation-delay:240ms">
+      <div class="r-left">
+        <div class="r-ticker">PLTR</div>
+        <div class="r-chg up">+3.14%</div>
+      </div>
+      <div class="r-mid">
+        <div class="r-reason">Ny forsvarskontrakt, bryter $28. Momentum bekreftet av institusjonell flow siste 3 dager.</div>
+        <div class="r-tags"><span>SHORT 6.8%</span><span>DTC 1.2</span><span>RSI 64</span><span class="hi">VOL 1.8×</span></div>
+      </div>
+      <div class="r-right"><div class="r-badge bull">BULLISH</div><div class="r-conf">CONF 74</div></div>
+    </div>
 
-    const COLORS = { 'Bullish': '#1D9E75', 'Bearish': '#E24B4A' };
-    const BG     = { 'Bullish': 'rgba(29,158,117,0.1)', 'Bearish': 'rgba(226,75,74,0.1)' };
+    <div class="r-card bull anim" style="animation-delay:280ms">
+      <div class="r-left">
+        <div class="r-ticker">RKLB</div>
+        <div class="r-chg up">+6.21%</div>
+      </div>
+      <div class="r-mid">
+        <div class="r-reason">Neutron-launch bekreftet Q3. Short float 18%, potensielt squeeze-setup ved brudd $9.40.</div>
+        <div class="r-tags"><span class="hi">SHORT 18%</span><span>DTC 4.1</span><span>RSI 61</span><span>VOL 1.4×</span></div>
+      </div>
+      <div class="r-right"><div class="r-badge bull">BULLISH</div><div class="r-conf">CONF 71</div></div>
+    </div>
 
-    function renderRadar(data) {
-      const list = document.getElementById('radar-list');
-      list.innerHTML = data.map((r, i) => {
-        const dir   = r.direction || 'Bullish';
-        const color = COLORS[dir] || '#BA7517';
-        const bg    = BG[dir]    || 'rgba(186,117,23,0.1)';
-        return `<div class="radar-card" style="border-left-color:${color}; animation-delay:${i * 80}ms;">
-          <div class="radar-header">
-            <div class="radar-ticker">${esc(r.ticker)}</div>
-            <div class="radar-badge" style="color:${color}; background:${bg};">${esc(dir.toUpperCase())}</div>
-          </div>
-          <div class="radar-reason">${esc(r.reason || '')}</div>
-        </div>`;
-      }).join('');
+    <div class="r-card bull anim" style="animation-delay:320ms">
+      <div class="r-left">
+        <div class="r-ticker">MSTR</div>
+        <div class="r-chg up">+2.76%</div>
+      </div>
+      <div class="r-mid">
+        <div class="r-reason">BTC korrelasjon, teknisk oppsprett på 200d. Earnings om 3 dager — potensiell katalysator.</div>
+        <div class="r-tags"><span>SHORT 12%</span><span>DTC 2.8</span><span>RSI 58</span><span class="hi">EARN 3D</span></div>
+      </div>
+      <div class="r-right"><div class="r-badge bull">BULLISH</div><div class="r-conf">CONF 67</div></div>
+    </div>
 
-      list.classList.add('visible');
-      document.getElementById('empty-state').style.display = 'none';
-      document.getElementById('load-wrap').classList.remove('visible');
-      document.getElementById('results-wrap').style.display = 'block';
-      stopLoadLabels();
-    }
+    <div class="r-card mixed anim" style="animation-delay:360ms">
+      <div class="r-left">
+        <div class="r-ticker">COIN</div>
+        <div class="r-chg up">+0.84%</div>
+      </div>
+      <div class="r-mid">
+        <div class="r-reason">Konfliktsignaler: sterk volum, men earnings imminent. Insider-salg siste 14 dager vekker uro.</div>
+        <div class="r-tags"><span>SHORT 9.4%</span><span>DTC 1.6</span><span>RSI 54</span><span class="hi">INSIDER−</span></div>
+      </div>
+      <div class="r-right"><div class="r-badge mixed">MIXED</div><div class="r-conf">CONF 58</div></div>
+    </div>
 
-    function startLoadLabels() {
-      labelIdx = 0;
-      document.getElementById('load-label').textContent = LOAD_LABELS[0];
-      labelTimer = setInterval(() => {
-        labelIdx = (labelIdx + 1) % LOAD_LABELS.length;
-        document.getElementById('load-label').textContent = LOAD_LABELS[labelIdx];
-      }, 6000);
-      const bar = document.getElementById('load-bar');
-      requestAnimationFrame(() => { bar.style.width = '88%'; });
-    }
+    <div class="r-card wait anim" style="animation-delay:400ms">
+      <div class="r-left">
+        <div class="r-ticker">NFLX</div>
+        <div class="r-chg dn">−0.62%</div>
+      </div>
+      <div class="r-mid">
+        <div class="r-reason">Earnings i morgen etter børs. Implied move 8.4%. Vent på rapport før posisjonering.</div>
+        <div class="r-tags"><span>SHORT 1.8%</span><span>IV 62%</span><span class="hi">EARN 1D</span><span>IMPL 8.4%</span></div>
+      </div>
+      <div class="r-right"><div class="r-badge wait">AVVENT</div><div class="r-conf">CONF 48</div></div>
+    </div>
 
-    function stopLoadLabels() {
-      clearInterval(labelTimer);
-      const bar = document.getElementById('load-bar');
-      bar.style.transition = 'none';
-      bar.style.width = '0%';
-    }
+    <div class="r-card bear anim" style="animation-delay:440ms">
+      <div class="r-left">
+        <div class="r-ticker">TSLA</div>
+        <div class="r-chg dn">−2.26%</div>
+      </div>
+      <div class="r-mid">
+        <div class="r-reason">Delivery-miss bekreftet, margin under press. Brudd på $190-støtte åpner for $172.</div>
+        <div class="r-tags"><span>SHORT 3.4%</span><span>DTC 0.9</span><span>RSI 38</span><span class="hi">GUIDE−</span></div>
+      </div>
+      <div class="r-right"><div class="r-badge bear">BEARISH</div><div class="r-conf">CONF 76</div></div>
+    </div>
 
-    let fetching = false;
+    <div class="r-card bear anim" style="animation-delay:480ms">
+      <div class="r-left">
+        <div class="r-ticker">LCID</div>
+        <div class="r-chg dn">−3.48%</div>
+      </div>
+      <div class="r-mid">
+        <div class="r-reason">Cash burn + kapitalinnhenting varslet. Teknisk nedbrudd under $2.40, neste støtte $1.95.</div>
+        <div class="r-tags"><span>SHORT 28%</span><span>DTC 6.2</span><span>RSI 28</span><span class="hi">DILUTE</span></div>
+      </div>
+      <div class="r-right"><div class="r-badge bear">BEARISH</div><div class="r-conf">CONF 69</div></div>
+    </div>
+  </div>
 
-    async function fetchRadar() {
-      if (fetching) return;
-      fetching = true;
-      const btn = document.getElementById('fetch-btn');
-      if (btn) btn.disabled = true;
-      document.getElementById('empty-state').style.display = 'none';
-      document.getElementById('load-wrap').classList.add('visible');
-      startLoadLabels();
+  <div class="footer">
+    <div class="footer-brand">PULSE · SWING-RADAR</div>
+    <div class="footer-note">Ikke finansiell rådgivning</div>
+  </div>
+</div>
 
-      try {
-        const res = await fetch('/api/radar', { method: 'POST' });
-        if (!res.ok) throw new Error('Serverfeil ' + res.status);
-        const data = await res.json();
-        if (data.error) throw new Error(data.error);
-        localStorage.setItem(CACHE_KEY, JSON.stringify(data));
-        renderRadar(data);
-      } catch (e) {
-        stopLoadLabels();
-        document.getElementById('load-wrap').classList.remove('visible');
-        document.getElementById('empty-state').style.display = 'block';
-        if (btn) btn.disabled = false;
-        alert('Feil: ' + e.message);
-      } finally {
-        fetching = false;
-      }
-    }
-
-    function clearAndRefetch() {
-      localStorage.removeItem(CACHE_KEY);
-      document.getElementById('radar-list').classList.remove('visible');
-      document.getElementById('results-wrap').style.display = 'none';
-      fetchRadar();
-    }
-
-    // Load from cache on init
-    try {
-      const cached = JSON.parse(localStorage.getItem(CACHE_KEY) || 'null');
-      if (cached && Array.isArray(cached)) renderRadar(cached);
-    } catch (_) {}
-  </script>
-  <script src="bg.js"></script>
-  <script src="live.js"></script>
+<script src="../assets/bg-terminal.js"></script>
 </body>
 </html>
