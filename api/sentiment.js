@@ -99,6 +99,7 @@ module.exports = async (req, res) => {
       return res.status(500).json({ error: 'Fikk ikke svar fra AI. Prøv igjen.' });
     }
 
+    console.error('[sentiment] Claude råtekst:', finalText);
     const parsed = extractJSON(finalText);
     if (!parsed) {
       console.error('JSON-parsing feilet. Råtekst:', finalText);

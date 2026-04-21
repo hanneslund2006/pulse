@@ -46,6 +46,7 @@ module.exports = async (req, res) => {
     const finalText = response.content.filter(b => b.type === 'text').map(b => b.text).join('\n').trim();
     if (!finalText) return res.status(500).json({ error: 'Ingen respons fra AI.' });
 
+    console.error('[gappers] Claude råtekst:', finalText);
     const parsed = extractJSON(finalText);
     if (!parsed || !Array.isArray(parsed)) {
       return res.status(500).json({ error: 'AI returnerte ugyldig format.' });

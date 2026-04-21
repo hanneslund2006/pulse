@@ -86,6 +86,7 @@ Regler:
 
     if (!finalText) return res.status(500).json({ error: 'Ingen respons fra AI.' });
 
+    console.error('[earnings] Claude råtekst:', finalText);
     const parsed = extractJSON(finalText);
     if (!Array.isArray(parsed)) {
       console.error('Earnings JSON-feil. Råtekst:', finalText);
