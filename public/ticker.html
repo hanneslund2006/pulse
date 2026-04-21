@@ -76,10 +76,11 @@
       background: var(--surface); border: 1px solid var(--border);
       border-left: 3px solid var(--border); border-radius: 12px;
       padding: 20px 24px; margin-bottom: 10px;
-      transition: transform 180ms ease;
+      backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+      transition: border-color 200ms ease, box-shadow 200ms ease;
     }
     .layer-card:last-child { margin-bottom: 0; }
-    .layer-card:hover { transform: translateY(-2px); }
+    .layer-card:hover { border-color: rgba(29,184,126,0.28); box-shadow: 0 0 0 1px rgba(29,184,126,0.08), 0 0 20px rgba(29,184,126,0.06); }
     .layer-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
     .layer-name { font-family: 'Space Mono', monospace; font-weight: 700; font-size: 11px; letter-spacing: 0.08em; }
     .layer-summary { font-size: 13px; color: var(--text-secondary); line-height: 1.55; }

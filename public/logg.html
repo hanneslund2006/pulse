@@ -18,7 +18,7 @@
       border: 1px solid var(--border); border-radius: 10px;
       overflow: hidden; margin-bottom: 28px;
     }
-    .stat-cell { background: var(--surface); padding: 16px 14px; text-align: center; }
+    .stat-cell { background: var(--surface); padding: 16px 14px; text-align: center; backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
     .stat-cell-val {
       font-family: 'Space Mono', monospace; font-weight: 700;
       font-size: 18px; line-height: 1;
@@ -31,6 +31,7 @@
     .form-card {
       background: var(--surface); border: 1px solid var(--border);
       border-radius: 12px; padding: 22px 24px; margin-bottom: 24px;
+      backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
     }
     .form-toggle { display: flex; align-items: center; justify-content: space-between; cursor: pointer; }
     .form-toggle-title {
@@ -98,6 +99,7 @@
       background: var(--surface); border: 1px solid var(--border);
       border-left: 3px solid var(--border); border-radius: 10px; padding: 14px 18px;
       animation: fadeUp 0.35s ease forwards; opacity: 0;
+      backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
     }
     .trade-card.win  { border-left-color: var(--green); }
     .trade-card.loss { border-left-color: var(--red); }
@@ -148,6 +150,7 @@
     .modal {
       background: var(--surface); border: 1px solid var(--border);
       border-radius: 14px; padding: 28px 24px; width: 100%; max-width: 360px;
+      backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
     }
     .modal-title {
       font-family: 'Cormorant Garamond', serif; font-weight: 600;

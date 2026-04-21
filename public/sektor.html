@@ -28,10 +28,11 @@
       background: var(--surface); border: 1px solid var(--border);
       border-left: 3px solid var(--border); border-radius: 10px;
       padding: 14px 18px; display: flex; align-items: center; gap: 14px;
-      transition: transform 180ms ease;
+      backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+      transition: border-color 200ms ease, box-shadow 200ms ease;
       opacity: 0; animation: fadeUp2 0.35s ease forwards;
     }
-    .sector-row:hover { transform: translateY(-2px); }
+    .sector-row:hover { border-color: rgba(29,184,126,0.28); box-shadow: 0 0 0 1px rgba(29,184,126,0.08), 0 0 16px rgba(29,184,126,0.05); }
     .sector-rank { font-family: 'Space Mono', monospace; font-size: 9px; color: var(--text-muted); width: 16px; flex-shrink: 0; text-align: right; }
     .sector-name { font-size: 14px; color: var(--text-primary); flex: 1; }
     .sector-symbol { font-family: 'Space Mono', monospace; font-size: 10px; color: var(--text-muted); letter-spacing: 0.06em; flex-shrink: 0; }

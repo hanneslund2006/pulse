@@ -28,9 +28,10 @@
       border-left: 3px solid var(--green); border-radius: 12px;
       padding: 20px 24px;
       opacity: 0; animation: fadeUp 0.4s ease forwards;
-      transition: transform 180ms ease;
+      backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+      transition: border-color 200ms ease, box-shadow 200ms ease;
     }
-    .radar-card:hover { transform: translateY(-2px); }
+    .radar-card:hover { border-color: rgba(29,184,126,0.30); box-shadow: 0 0 0 1px rgba(29,184,126,0.10), 0 0 20px rgba(29,184,126,0.06); }
     .radar-header { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
     .radar-ticker { font-family: 'Space Mono', monospace; font-weight: 700; font-size: 15px; color: var(--text-data); letter-spacing: 0.08em; }
     .radar-badge { font-family: 'Space Mono', monospace; font-size: 9px; letter-spacing: 0.1em; padding: 3px 7px; border-radius: 3px; }

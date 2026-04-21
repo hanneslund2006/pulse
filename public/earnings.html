@@ -33,7 +33,9 @@
       background: var(--surface); border: 1px solid var(--border);
       border-radius: 12px; padding: 22px 24px; margin-bottom: 12px;
       animation: fadeUp 0.4s ease forwards; opacity: 0;
+      backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
     }
+    #results .ep-card:first-child { border-left: 3px solid var(--green); }
 
     .skeleton {
       background: var(--surface); border: 1px solid var(--border);
@@ -55,7 +57,7 @@
     .stat-box { text-align: center; }
     .stat-val {
       font-family: 'Cormorant Garamond', serif; font-weight: 600;
-      font-size: 26px; line-height: 1;
+      font-size: 26px; line-height: 1; font-variant-numeric: tabular-nums;
     }
     .stat-lbl {
       font-family: 'Space Mono', monospace; font-size: 9px;
@@ -95,7 +97,7 @@
       font-family: 'Space Mono', monospace; font-size: 9px;
       letter-spacing: 0.12em; color: var(--text-muted); margin-bottom: 6px;
     }
-    .est-box-val { font-family: 'Cormorant Garamond', serif; font-weight: 600; font-size: 20px; }
+    .est-box-val { font-family: 'Cormorant Garamond', serif; font-weight: 600; font-size: 20px; font-variant-numeric: tabular-nums; }
     .rev-row {
       display: flex; justify-content: space-between; align-items: center;
       margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border);
