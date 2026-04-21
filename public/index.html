@@ -23,12 +23,12 @@
     /* ─── AMBIENT GLOW ─── */
     .glow-top {
       position: fixed;
-      top: -200px;
+      top: -120px;
       left: 50%;
       transform: translateX(-50%);
-      width: 800px;
-      height: 400px;
-      background: radial-gradient(ellipse at center, rgba(29,184,126,0.05) 0%, transparent 70%);
+      width: 900px;
+      height: 560px;
+      background: radial-gradient(ellipse at center, rgba(29,184,126,0.14) 0%, rgba(74,144,217,0.07) 40%, transparent 70%);
       pointer-events: none;
       z-index: 0;
     }
@@ -146,6 +146,8 @@
     .step {
       background: var(--surface);
       padding: 24px 22px 28px;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
     }
 
     .step-num {
@@ -188,7 +190,9 @@
       cursor: pointer;
       position: relative;
       overflow: hidden;
-      transition: border-color 220ms ease, transform 220ms ease, box-shadow 220ms ease;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      transition: border-color 220ms ease, box-shadow 220ms ease;
       text-decoration: none;
       display: flex;
       flex-direction: column;
@@ -208,9 +212,8 @@
     }
 
     .card:hover {
-      border-color: var(--border-light);
-      transform: translateY(-3px);
-      box-shadow: 0 8px 32px rgba(0,0,0,0.35);
+      border-color: rgba(29,184,126,0.32);
+      box-shadow: 0 0 0 1px rgba(29,184,126,0.10), 0 0 28px rgba(29,184,126,0.08);
     }
 
     .card:hover::before {
@@ -288,6 +291,8 @@
       display: flex;
       align-items: center;
       gap: 20px;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
     }
 
     .gauge-svg { flex-shrink: 0; }
@@ -374,11 +379,11 @@
     <!-- GAUGE STRIP -->
     <div class="gauge-strip a3">
       <svg class="gauge-svg" width="56" height="56" viewBox="0 0 56 56">
-        <circle cx="28" cy="28" r="22" fill="none" stroke="#252836" stroke-width="4"/>
+        <circle cx="28" cy="28" r="22" fill="none" stroke="#162840" stroke-width="4"/>
         <circle id="gauge-arc"
           cx="28" cy="28" r="22"
           fill="none"
-          stroke="#252836"
+          stroke="#162840"
           stroke-width="4"
           stroke-linecap="round"
           stroke-dasharray="138.23"
@@ -389,7 +394,7 @@
           font-family="'Space Mono', monospace"
           font-weight="700"
           font-size="13"
-          fill="#3A3F55"
+          fill="#3a5878"
           text-anchor="middle"
           dominant-baseline="middle">--</text>
       </svg>
