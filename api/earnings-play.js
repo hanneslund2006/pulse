@@ -15,7 +15,7 @@ async function fetchAlpacaNews(ticker) {
   const start = new Date();
   start.setMonth(start.getMonth() - 3);
   const startISO = start.toISOString().slice(0, 10);
-  const url = `https://data.alpaca.markets/v1beta1/news?symbols=${encodeURIComponent(ticker)}&start=${startISO}&limit=50&sort=desc`;
+  const url = `https://data.alpaca.markets/v1beta1/news?symbols=${encodeURIComponent(ticker)}&start=${startISO}&limit=10&sort=desc`;
   const res = await fetch(url, {
     headers: {
       'APCA-API-KEY-ID': process.env.ALPACA_API_KEY,
@@ -111,7 +111,7 @@ Rules:
 
     const response = await anthropic.messages.create({
       model: 'claude-sonnet-4-6',
-      max_tokens: 2500,
+      max_tokens: 1500,
       system: systemPrompt,
       tools: [{ type: 'web_search_20250305', name: 'web_search' }],
       messages: [{

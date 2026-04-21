@@ -49,7 +49,7 @@ module.exports = async (req, res) => {
   // Fetch news from Alpaca
   let articles = [];
   try {
-    const alpacaUrl = `https://data.alpaca.markets/v1beta1/news?symbols=${encodeURIComponent(ticker)}&start=${startISO}&limit=50&sort=desc`;
+    const alpacaUrl = `https://data.alpaca.markets/v1beta1/news?symbols=${encodeURIComponent(ticker)}&start=${startISO}&limit=20&sort=desc`;
     const alpacaRes = await fetch(alpacaUrl, {
       headers: {
         'APCA-API-KEY-ID': process.env.ALPACA_API_KEY,
@@ -106,7 +106,7 @@ Return catalysts in chronological order, oldest first. sentiment must be exactly
   try {
     const response = await anthropic.messages.create({
       model: 'claude-sonnet-4-6',
-      max_tokens: 2000,
+      max_tokens: 1000,
       system: systemPrompt,
       messages: [
         {
