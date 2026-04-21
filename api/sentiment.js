@@ -1,4 +1,6 @@
 const Anthropic = require('@anthropic-ai/sdk');
+const { check: rateCheck } = require('./_ratelimit');
+const cache = require('./_cache');
 
 const SYSTEM_PROMPT = `Du er en finansmarkedsanalytiker. Søk etter dagens ferske markedsnyheter og -data.
 
@@ -71,6 +73,16 @@ module.exports = async (req, res) => {
     return res.status(500).json({ error: 'API-nøkkel mangler. Sett ANTHROPIC_API_KEY i miljøvariabler.' });
   }
 
+  const rl = rateCheck(req);
+  if (rl) return res.status(429).json({ error: `Du har nådd grensen for analyser denne timen. Prøv igjen om ${rl.waitMinutes} minutter.` });
+
+  const cached = cache.get('sentiment');
+  if (cached) {
+    console.log('[sentiment] CACHE HIT');
+    return res.status(200).json(cached);
+  }
+  console.log('[sentiment] CACHE MISS — calling Claude');
+
   const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
   try {
@@ -85,7 +97,7 @@ module.exports = async (req, res) => {
       model: 'claude-sonnet-4-6',
       max_tokens: 800,
       system: SYSTEM_PROMPT,
-      tools: [{ type: 'web_search_20250305', name: 'web_search' }],
+      tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: 3 }],
       messages
     });
 
@@ -106,6 +118,7 @@ module.exports = async (req, res) => {
       return res.status(500).json({ error: 'AI returnerte ugyldig format. Prøv igjen.' });
     }
 
+    cache.set('sentiment', parsed, cache.nextMidnightTTL());
     return res.status(200).json(parsed);
 
   } catch (error) {

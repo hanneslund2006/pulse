@@ -1,6 +1,8 @@
 const fs = require('fs');
 const path = require('path');
 const CACHE_DIR = '/tmp/pulse-cache';
+// MERK: /tmp er per lambda-instans på Vercel. Cache-treff skjer kun innenfor
+// samme varme instans. Krever Vercel KV / Redis for kryssinstans-caching.
 
 function ensureDir() {
   if (!fs.existsSync(CACHE_DIR)) fs.mkdirSync(CACHE_DIR, { recursive: true });

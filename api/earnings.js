@@ -1,4 +1,5 @@
 const Anthropic = require('@anthropic-ai/sdk');
+const { check: rateCheck } = require('./_ratelimit');
 
 function getWeekRange() {
   const now = new Date();
@@ -26,6 +27,9 @@ module.exports = async (req, res) => {
   if (!process.env.ANTHROPIC_API_KEY) {
     return res.status(500).json({ error: 'API-nøkkel mangler.' });
   }
+
+  const rl = rateCheck(req);
+  if (rl) return res.status(429).json({ error: `Du har nådd grensen for analyser denne timen. Prøv igjen om ${rl.waitMinutes} minutter.` });
 
   // Parse watchlist from query param
   const watchlistParam = req.query.watchlist || '';
@@ -74,7 +78,7 @@ Regler:
       model: 'claude-sonnet-4-6',
       max_tokens: 600,
       system: SYSTEM,
-      tools: [{ type: 'web_search_20250305', name: 'web_search' }],
+      tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: 3 }],
       messages,
     });
 
