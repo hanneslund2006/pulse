@@ -61,55 +61,9 @@ module.exports = async (req, res) => {
           .join('\n')
       : 'Ingen nyheter funnet fra Alpaca.';
 
-    const systemPrompt = `You are a financial data analyst. Use web search to find current financial data for ${ticker}, and use the provided news articles as additional context.
-
-Return ONLY valid JSON matching this exact structure (no preamble, no markdown):
-{
-  "ticker": "${ticker}",
-  "currentPrice": 174.50,
-  "keyStats": {
-    "shortFloat": 0.023,
-    "forwardPE": 28.5,
-    "insiderOwnership": 0.038,
-    "floatShares": 15400000000
-  },
-  "epsHistory": [
-    {"quarter": "2025-09-01", "actual": 1.64, "estimate": 1.60, "surprise": 0.04, "surprisePct": 0.025}
-  ],
-  "estimates": {
-    "forwardEPS": 1.62,
-    "forwardRevenue": 94500000000,
-    "analystCount": 38,
-    "epsTrendCurrent": 1.62,
-    "epsTrend7d": 1.60,
-    "epsTrend30d": 1.58,
-    "earningsDate": "2026-05-01"
-  },
-  "revenueTrend": [
-    {"date": "2025-09-30", "revenue": 94930000000, "netIncome": 14736000000}
-  ],
-  "analystSentiment": {
-    "consensus": "buy",
-    "targetPrice": 225.00,
-    "currentPrice": 174.50,
-    "recentChanges": [
-      {"firm": "Goldman Sachs", "from": "Neutral", "to": "Buy", "date": "2026-04-01", "action": "upgrade"}
-    ]
-  },
-  "impliedMove": null
-}
-
-Rules:
-- Use null for any field you cannot find — never guess or hallucinate numbers
-- shortFloat and insiderOwnership are decimals (0.05 = 5%)
-- surprisePct is a decimal (0.025 = 2.5%)
-- revenue and netIncome are in absolute dollars (not millions)
-- epsHistory: up to 4 most recent quarters, most recent first
-- revenueTrend: up to 6 most recent quarters, most recent first
-- consensus must be exactly one of: "strongBuy", "buy", "hold", "underperform", "sell", or null
-- impliedMove.percent: the implied move as a PERCENTAGE NUMBER e.g. 6.9 means ±6.9% (NOT a decimal like 0.069); otherwise null
-- earningsDate: next upcoming earnings date in YYYY-MM-DD format
-- Return ONLY the JSON object, nothing else`;
+    const systemPrompt = `You are a financial data analyst. Use web search to find current financial data for ${ticker}. Return ONLY valid JSON (no text, no markdown):
+{"ticker":"${ticker}","currentPrice":null,"keyStats":{"shortFloat":null,"forwardPE":null,"insiderOwnership":null,"floatShares":null},"epsHistory":[{"quarter":"YYYY-MM-DD","actual":null,"estimate":null,"surprise":null,"surprisePct":null}],"estimates":{"forwardEPS":null,"forwardRevenue":null,"analystCount":null,"epsTrendCurrent":null,"epsTrend7d":null,"epsTrend30d":null,"earningsDate":null},"revenueTrend":[{"date":"YYYY-MM-DD","revenue":null,"netIncome":null}],"analystSentiment":{"consensus":null,"targetPrice":null,"currentPrice":null,"recentChanges":[{"firm":null,"from":null,"to":null,"date":null,"action":null}]},"impliedMove":null}
+Rules: null=unknown(never guess). shortFloat/insiderOwnership/surprisePct=decimals(0.05=5%). revenue/netIncome=absolute dollars(not millions). epsHistory=4 quarters newest-first. revenueTrend=6 quarters newest-first. consensus="strongBuy"|"buy"|"hold"|"underperform"|"sell"|null. impliedMove={"percent":6.9}for±6.9%(not 0.069)or null. earningsDate=YYYY-MM-DD.`;
 
     const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 

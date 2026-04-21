@@ -32,7 +32,11 @@ module.exports = async (req, res) => {
   if (rl) return res.status(429).json({ error: `Du har nådd grensen for analyser denne timen. Prøv igjen om ${rl.waitMinutes} minutter.` });
 
   const cached = cache.get(`historikk_${ticker}_${months}`);
-  if (cached) return res.status(200).json(cached);
+  if (cached) {
+    console.log(`[historikk] CACHE HIT: ${ticker} ${months}m`);
+    return res.status(200).json(cached);
+  }
+  console.log(`[historikk] CACHE MISS: ${ticker} ${months}m — calling Claude`);
 
   if (!process.env.ANTHROPIC_API_KEY) {
     return res.status(500).json({ error: 'ANTHROPIC_API_KEY mangler.' });
@@ -106,7 +110,7 @@ Return catalysts in chronological order, oldest first. sentiment must be exactly
   try {
     const response = await anthropic.messages.create({
       model: 'claude-sonnet-4-6',
-      max_tokens: 1000,
+      max_tokens: 700,
       system: systemPrompt,
       messages: [
         {

@@ -63,7 +63,11 @@ module.exports = async (req, res) => {
   if (rl) return res.status(429).json({ error: `Du har nådd grensen for analyser denne timen. Prøv igjen om ${rl.waitMinutes} minutter.` });
 
   const cached = cache.get(`ticker_${raw}`);
-  if (cached) return res.status(200).json(cached);
+  if (cached) {
+    console.log(`[ticker] CACHE HIT: ${raw}`);
+    return res.status(200).json(cached);
+  }
+  console.log(`[ticker] CACHE MISS: ${raw} — calling Claude`);
 
   const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
@@ -79,7 +83,7 @@ module.exports = async (req, res) => {
       model: 'claude-sonnet-4-6',
       max_tokens: 600,
       system: SYSTEM_PROMPT,
-      tools: [{ type: 'web_search_20250305', name: 'web_search' }],
+      tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: 3 }],
       messages
     });
 
