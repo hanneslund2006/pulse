@@ -47,7 +47,11 @@ module.exports = async (req, res) => {
   if (rl) return res.status(429).json({ error: `Du har nådd grensen for analyser denne timen. Prøv igjen om ${rl.waitMinutes} minutter.` });
 
   const cached = cache.get(`earnings_play_${ticker}`);
-  if (cached) return res.status(200).json(cached);
+  if (cached) {
+    console.log(`[earnings-play] CACHE HIT: ${ticker}`);
+    return res.status(200).json(cached);
+  }
+  console.log(`[earnings-play] CACHE MISS: ${ticker} — calling Claude`);
 
   try {
     const articles = await fetchAlpacaNews(ticker).catch(() => []);
@@ -111,12 +115,12 @@ Rules:
 
     const response = await anthropic.messages.create({
       model: 'claude-sonnet-4-6',
-      max_tokens: 1500,
+      max_tokens: 1000,
       system: systemPrompt,
-      tools: [{ type: 'web_search_20250305', name: 'web_search' }],
+      tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: 2 }],
       messages: [{
         role: 'user',
-        content: `Build an earnings play analysis for ${ticker}.\n\nRecent news context (last 3 months):\n${newsContext}\n\nSearch for: current price, EPS history (4 quarters with estimates and surprises), forward EPS/revenue consensus estimates, analyst count, EPS revision trend, upcoming earnings date, short float, forward P/E, insider ownership, recent analyst upgrades/downgrades (last 5). Return the complete JSON.`,
+        content: `Build an earnings play analysis for ${ticker}. You have exactly 2 web searches — use them efficiently:\n- Search 1: "${ticker} stock EPS history quarterly actual vs estimate analyst consensus target price forward PE earnings date 2026"\n- Search 2: "${ticker} short float insider ownership"\n\nRecent news (last 3 months):\n${newsContext}\n\nReturn the complete JSON.`,
       }],
     });
 
