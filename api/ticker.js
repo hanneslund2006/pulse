@@ -1,4 +1,6 @@
 const Anthropic = require('@anthropic-ai/sdk');
+const { check: rateCheck } = require('./_ratelimit');
+const cache = require('./_cache');
 
 const SYSTEM_PROMPT = `Du er en aksjeanalytiker. Du får et ticker-symbol og søker etter fersk informasjon.
 
@@ -57,6 +59,12 @@ module.exports = async (req, res) => {
     return res.status(400).json({ error: 'Ugyldig ticker-symbol.' });
   }
 
+  const rl = rateCheck(req);
+  if (rl) return res.status(429).json({ error: `Du har nådd grensen for analyser denne timen. Prøv igjen om ${rl.waitMinutes} minutter.` });
+
+  const cached = cache.get(`ticker_${raw}`);
+  if (cached) return res.status(200).json(cached);
+
   const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
   try {
@@ -96,6 +104,7 @@ module.exports = async (req, res) => {
       });
     }
 
+    cache.set(`ticker_${raw}`, parsed, 6 * 3600);
     return res.status(200).json(parsed);
 
   } catch (error) {

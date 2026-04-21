@@ -1,4 +1,6 @@
 const Anthropic = require('@anthropic-ai/sdk');
+const { check: rateCheck } = require('./_ratelimit');
+const cache = require('./_cache');
 
 function extractJSON(text) {
   try { return JSON.parse(text.trim()); } catch (_) {}
@@ -40,6 +42,12 @@ module.exports = async (req, res) => {
   if (!process.env.ALPACA_API_KEY || !process.env.ALPACA_API_SECRET) {
     return res.status(500).json({ error: 'Alpaca API-nøkler mangler.' });
   }
+
+  const rl = rateCheck(req);
+  if (rl) return res.status(429).json({ error: `Du har nådd grensen for analyser denne timen. Prøv igjen om ${rl.waitMinutes} minutter.` });
+
+  const cached = cache.get(`earnings_play_${ticker}`);
+  if (cached) return res.status(200).json(cached);
 
   try {
     const articles = await fetchAlpacaNews(ticker).catch(() => []);
@@ -124,6 +132,7 @@ Rules:
       return res.status(500).json({ error: 'AI returnerte ugyldig format. Prøv igjen.' });
     }
 
+    cache.set(`earnings_play_${ticker}`, parsed, 12 * 3600);
     return res.status(200).json(parsed);
 
   } catch (error) {

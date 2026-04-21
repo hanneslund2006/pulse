@@ -1,4 +1,6 @@
 const Anthropic = require('@anthropic-ai/sdk');
+const { check: rateCheck } = require('./_ratelimit');
+const cache = require('./_cache');
 
 function extractJSON(text) {
   try { return JSON.parse(text.trim()); } catch (_) {}
@@ -25,6 +27,12 @@ module.exports = async (req, res) => {
   if (![3, 6, 12].includes(months)) {
     return res.status(400).json({ error: 'Ugyldig tidsperiode. Velg 3, 6 eller 12 måneder.' });
   }
+
+  const rl = rateCheck(req);
+  if (rl) return res.status(429).json({ error: `Du har nådd grensen for analyser denne timen. Prøv igjen om ${rl.waitMinutes} minutter.` });
+
+  const cached = cache.get(`historikk_${ticker}_${months}`);
+  if (cached) return res.status(200).json(cached);
 
   if (!process.env.ANTHROPIC_API_KEY) {
     return res.status(500).json({ error: 'ANTHROPIC_API_KEY mangler.' });
@@ -120,6 +128,7 @@ Return catalysts in chronological order, oldest first. sentiment must be exactly
       return res.status(500).json({ error: 'AI returnerte ugyldig format. Prøv igjen.' });
     }
 
+    cache.set(`historikk_${ticker}_${months}`, parsed, 24 * 3600);
     return res.status(200).json(parsed);
 
   } catch (error) {

@@ -1,4 +1,6 @@
 const Anthropic = require('@anthropic-ai/sdk');
+const { check: rateCheck } = require('./_ratelimit');
+const cache = require('./_cache');
 
 const SYSTEM_PROMPT = `Du er en swingtrading-assistent. Søk etter US-aksjer som er gode swing trading-kandidater akkurat nå.
 
@@ -29,6 +31,12 @@ module.exports = async (req, res) => {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
   if (!process.env.ANTHROPIC_API_KEY) return res.status(500).json({ error: 'API-nøkkel mangler' });
 
+  const rl = rateCheck(req);
+  if (rl) return res.status(429).json({ error: `Du har nådd grensen for analyser denne timen. Prøv igjen om ${rl.waitMinutes} minutter.` });
+
+  const cached = cache.get('radar');
+  if (cached) return res.status(200).json(cached);
+
   const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
   try {
@@ -48,6 +56,7 @@ module.exports = async (req, res) => {
       return res.status(500).json({ error: 'AI returnerte ugyldig format.' });
     }
 
+    cache.set('radar', parsed, cache.nextMidnightTTL());
     return res.status(200).json(parsed);
 
   } catch (error) {
