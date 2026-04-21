@@ -84,6 +84,8 @@ Rules: null=unknown(never guess). shortFloat/insiderOwnership/surprisePct=decima
       .join('\n')
       .trim();
 
+    console.log(`[earnings-play] Claude raw response (${finalText.length} chars):`, finalText.slice(0, 500));
+
     const parsed = extractJSON(finalText);
     if (!parsed || !parsed.ticker) {
       console.error('Earnings-play JSON-feil. Råtekst:', finalText);
