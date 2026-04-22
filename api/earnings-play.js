@@ -164,7 +164,13 @@ Rules:
     console.error('[earnings-play] raw length:', finalText?.length);
     console.error('[earnings-play] raw start:', finalText?.substring(0, 200));
 
-    const parsed = extractJSON(finalText);
+    const cleaned = finalText
+      .replace(/^\s*json\s*/i, '')
+      .replace(/^```json\s*/i, '')
+      .replace(/```\s*$/i, '')
+      .trim();
+
+    const parsed = extractJSON(cleaned);
     console.log('[earnings-play] parsed:', JSON.stringify(parsed));
 
     if (!parsed || typeof parsed !== 'object') {
