@@ -3,11 +3,41 @@ const { check: rateCheck } = require('./_ratelimit');
 const cache = require('./_cache');
 
 function extractJSON(text) {
+  if (!text) return null;
+
+  // 1. Direct parse
   try { return JSON.parse(text.trim()); } catch (_) {}
+
+  // 2. Strip markdown code fence
   const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/);
-  if (fenced) { try { return JSON.parse(fenced[1].trim()); } catch (_) {} }
-  const obj = text.match(/\{[\s\S]*\}/);
-  if (obj) { try { return JSON.parse(obj[0]); } catch (_) {} }
+  if (fenced) {
+    try { return JSON.parse(fenced[1].trim()); } catch (_) {}
+  }
+
+  // 3. Balanced-brace walk — handles text before/after JSON and avoids
+  //    greedy regex over-matching when Claude adds trailing text with braces
+  const start = text.indexOf('{');
+  if (start !== -1) {
+    let depth = 0, inString = false, escape = false;
+    for (let i = start; i < text.length; i++) {
+      const ch = text[i];
+      if (escape) { escape = false; continue; }
+      if (ch === '\\' && inString) { escape = true; continue; }
+      if (ch === '"') { inString = !inString; continue; }
+      if (!inString) {
+        if (ch === '{') depth++;
+        else if (ch === '}' && --depth === 0) {
+          try { return JSON.parse(text.slice(start, i + 1)); } catch (_) {}
+          break;
+        }
+      }
+    }
+  }
+
+  // 4. Last resort: strip non-printable chars (BOM, zero-width spaces) and retry
+  const cleaned = text.replace(/[^\x20-\x7E\n\r\t]/g, '').trim();
+  try { return JSON.parse(cleaned); } catch (_) {}
+
   return null;
 }
 
@@ -131,6 +161,8 @@ Rules:
       .trim();
 
     console.log(`[earnings-play] Claude raw response (${finalText.length} chars):`, finalText.slice(0, 500));
+    console.error('[earnings-play] raw length:', finalText?.length);
+    console.error('[earnings-play] raw start:', finalText?.substring(0, 200));
 
     const parsed = extractJSON(finalText);
     console.log('[earnings-play] parsed:', JSON.stringify(parsed));
