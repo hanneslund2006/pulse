@@ -46,7 +46,7 @@ module.exports = async (req, res) => {
   const rl = rateCheck(req);
   if (rl) return res.status(429).json({ error: `Du har nådd grensen for analyser denne timen. Prøv igjen om ${rl.waitMinutes} minutter.` });
 
-  const cached = cache.get(`earnings_play_${ticker}`);
+  const cached = await cache.get(`earnings_play_${ticker}`);
   if (cached) {
     console.log(`[earnings-play] CACHE HIT: ${ticker}`);
     return res.status(200).json(cached);
@@ -142,7 +142,7 @@ Rules:
     return res.status(200).json(parsed);
 
   } catch (error) {
-    console.error('Earnings-play API feil:', error);
+    console.error('Earnings-play API feil:', error.status, error.message, error);
     const message = error.status === 401
       ? 'Ugyldig API-nøkkel.'
       : error.status === 429
