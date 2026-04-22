@@ -164,19 +164,24 @@ Rules:
     console.error('[earnings-play] raw length:', finalText?.length);
     console.error('[earnings-play] raw start:', finalText?.substring(0, 200));
 
-    const cleaned = finalText
-      .replace(/^\s*json\s*/i, '')
-      .replace(/^```json\s*/i, '')
-      .replace(/```\s*$/i, '')
-      .trim();
+    const firstBrace = finalText.indexOf('{');
+    const lastBrace = finalText.lastIndexOf('}');
 
-    const parsed = extractJSON(cleaned);
-    console.log('[earnings-play] parsed:', JSON.stringify(parsed));
-
-    if (!parsed || typeof parsed !== 'object') {
-      console.error('[earnings-play] extractJSON returnerte null. Råtekst:', finalText);
-      return res.status(500).json({ error: 'AI returnerte ugyldig format. Prøv igjen.' });
+    if (firstBrace === -1 || lastBrace === -1) {
+      console.error('[earnings-play] Ingen JSON-objekt funnet i råtekst');
+      return res.status(500).json({ error: 'Parsing feilet' });
     }
+
+    const jsonString = finalText.substring(firstBrace, lastBrace + 1);
+    let parsed;
+    try {
+      parsed = JSON.parse(jsonString);
+    } catch (e) {
+      console.error('[earnings-play] JSON.parse feilet:', e.message);
+      return res.status(500).json({ error: 'JSON parse feilet' });
+    }
+
+    console.log('[earnings-play] parsed:', JSON.stringify(parsed));
 
     if (!parsed.ticker) {
       console.error('[earnings-play] parsed.ticker mangler. parsed:', JSON.stringify(parsed));
