@@ -12,17 +12,18 @@ if (process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN) {
   });
 }
 
-function get(key) {
+async function get(key) {
   const entry = memCache.get(key);
   if (entry && Date.now() < entry.expiresAt) return entry.data;
 
-  // Background: hydrate memory from Redis so subsequent calls on this instance hit
   if (redis) {
-    redis.get(key).then(val => {
+    try {
+      const val = await redis.get(key);
       if (val && typeof val === 'object' && Date.now() < val.expiresAt) {
         memCache.set(key, val);
+        return val.data;
       }
-    }).catch(() => {});
+    } catch (_) {}
   }
 
   return null;

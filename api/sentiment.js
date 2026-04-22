@@ -76,7 +76,7 @@ module.exports = async (req, res) => {
   const rl = rateCheck(req);
   if (rl) return res.status(429).json({ error: `Du har nådd grensen for analyser denne timen. Prøv igjen om ${rl.waitMinutes} minutter.` });
 
-  const cached = cache.get('sentiment');
+  const cached = await cache.get('sentiment');
   if (cached) {
     console.log('[sentiment] CACHE HIT');
     return res.status(200).json(cached);
