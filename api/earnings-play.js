@@ -133,13 +133,60 @@ Rules:
     console.log(`[earnings-play] Claude raw response (${finalText.length} chars):`, finalText.slice(0, 500));
 
     const parsed = extractJSON(finalText);
-    if (!parsed || !parsed.ticker) {
-      console.error('Earnings-play JSON-feil. Råtekst:', finalText);
+    console.log('[earnings-play] parsed:', JSON.stringify(parsed));
+
+    if (!parsed || typeof parsed !== 'object') {
+      console.error('[earnings-play] extractJSON returnerte null. Råtekst:', finalText);
       return res.status(500).json({ error: 'AI returnerte ugyldig format. Prøv igjen.' });
     }
 
-    cache.set(`earnings_play_${ticker}`, parsed, 12 * 3600);
-    return res.status(200).json(parsed);
+    if (!parsed.ticker) {
+      console.error('[earnings-play] parsed.ticker mangler. parsed:', JSON.stringify(parsed));
+      return res.status(500).json({ error: `AI-respons mangler ticker-felt. Mottatt: ${Object.keys(parsed).join(', ')}` });
+    }
+
+    // Null-sikre alle nestede felt før serialisering
+    const safe = {
+      ticker: parsed.ticker || ticker,
+      currentPrice: parsed.currentPrice ?? null,
+      keyStats: {
+        shortFloat: parsed.keyStats?.shortFloat ?? null,
+        forwardPE: parsed.keyStats?.forwardPE ?? null,
+        insiderOwnership: parsed.keyStats?.insiderOwnership ?? null,
+        floatShares: parsed.keyStats?.floatShares ?? null,
+      },
+      epsHistory: Array.isArray(parsed.epsHistory) ? parsed.epsHistory : [],
+      estimates: {
+        forwardEPS: parsed.estimates?.forwardEPS ?? null,
+        forwardRevenue: parsed.estimates?.forwardRevenue ?? null,
+        analystCount: parsed.estimates?.analystCount ?? null,
+        epsTrendCurrent: parsed.estimates?.epsTrendCurrent ?? null,
+        epsTrend7d: parsed.estimates?.epsTrend7d ?? null,
+        epsTrend30d: parsed.estimates?.epsTrend30d ?? null,
+        earningsDate: parsed.estimates?.earningsDate ?? null,
+      },
+      revenueTrend: Array.isArray(parsed.revenueTrend) ? parsed.revenueTrend : [],
+      analystSentiment: {
+        consensus: parsed.analystSentiment?.consensus ?? null,
+        targetPrice: parsed.analystSentiment?.targetPrice ?? null,
+        currentPrice: parsed.analystSentiment?.currentPrice ?? null,
+        recentChanges: Array.isArray(parsed.analystSentiment?.recentChanges) ? parsed.analystSentiment.recentChanges : [],
+      },
+      impliedMove: parsed.impliedMove ?? null,
+    };
+
+    try {
+      cache.set(`earnings_play_${ticker}`, safe, 12 * 3600);
+    } catch (cacheErr) {
+      console.error('[earnings-play] cache.set feilet:', cacheErr.message);
+    }
+
+    try {
+      return res.status(200).json(safe);
+    } catch (serializeErr) {
+      console.error('[earnings-play] res.json serialisering feilet:', serializeErr.message, JSON.stringify(safe).slice(0, 500));
+      return res.status(500).json({ error: 'Kunne ikke serialisere respons.' });
+    }
 
   } catch (error) {
     console.error('Earnings-play API feil:', error.status, error.message, error);
