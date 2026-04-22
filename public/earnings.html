@@ -535,6 +535,7 @@
     let fetching = false;
 
     async function runAnalysis() {
+      console.log('Analyser klikket');
       const raw = document.getElementById('ticker-input').value.trim().toUpperCase();
       if (!raw) return;
       if (fetching) return;
