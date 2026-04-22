@@ -36,6 +36,7 @@ module.exports = async (req, res) => {
     console.log(`[historikk] CACHE HIT: ${ticker} ${months}m`);
     return res.status(200).json(cached);
   }
+  console.log('[historikk] Start');
   console.log(`[historikk] CACHE MISS: ${ticker} ${months}m — calling Claude`);
 
   if (!process.env.ANTHROPIC_API_KEY) {
@@ -53,7 +54,7 @@ module.exports = async (req, res) => {
   // Fetch news from Alpaca
   let articles = [];
   try {
-    const alpacaUrl = `https://data.alpaca.markets/v1beta1/news?symbols=${encodeURIComponent(ticker)}&start=${startISO}&limit=20&sort=desc`;
+    const alpacaUrl = `https://data.alpaca.markets/v1beta1/news?symbols=${encodeURIComponent(ticker)}&start=${startISO}&limit=10&sort=desc`;
     const alpacaRes = await fetch(alpacaUrl, {
       headers: {
         'APCA-API-KEY-ID': process.env.ALPACA_API_KEY,
@@ -88,29 +89,16 @@ module.exports = async (req, res) => {
     .map(a => `[${(a.created_at || '').slice(0, 10)}] ${a.headline}${a.summary ? ': ' + a.summary : ''}`)
     .join('\n');
 
-  const systemPrompt = `You are a financial analyst. Given these news articles about ${ticker}, identify the 5-8 most important catalysts that likely caused major price movements. For each catalyst, provide: the date, a short headline (max 8 words), and 2-3 sentences explaining what happened and why it likely moved the stock. Also classify each catalyst sentiment as "positive", "negative", or "neutral" based on its likely impact on the stock price.
-
-Return ONLY valid JSON, no preamble, no markdown. Exact structure:
-{
-  "ticker": "${ticker}",
-  "catalysts": [
-    {
-      "date": "YYYY-MM-DD",
-      "headline": "Short headline max 8 words",
-      "explanation": "2-3 sentences explaining what happened and why it moved the stock.",
-      "sentiment": "positive"
-    }
-  ]
-}
-
-Return catalysts in chronological order, oldest first. sentiment must be exactly one of: "positive", "negative", "neutral".`;
+  const systemPrompt = `List the 5-8 most important stock-moving catalysts for ${ticker} from the provided news. Return ONLY valid JSON, no preamble, no markdown:
+{"ticker":"${ticker}","catalysts":[{"date":"YYYY-MM-DD","headline":"max 8 words","explanation":"1-2 sentences on what happened and why it moved the stock.","sentiment":"positive"}]}
+Rules: chronological order oldest first. sentiment: exactly "positive", "negative", or "neutral".`;
 
   const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
   try {
     const response = await anthropic.messages.create({
       model: 'claude-sonnet-4-6',
-      max_tokens: 700,
+      max_tokens: 500,
       system: systemPrompt,
       messages: [
         {
@@ -146,6 +134,7 @@ Return catalysts in chronological order, oldest first. sentiment must be exactly
     }
 
     cache.set(`historikk_${ticker}_${months}`, parsed, 24 * 3600);
+    console.log('[historikk] Ferdig');
     return res.status(200).json(parsed);
 
   } catch (error) {
