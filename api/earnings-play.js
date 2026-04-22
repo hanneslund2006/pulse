@@ -2,59 +2,121 @@ const Anthropic = require('@anthropic-ai/sdk');
 const { check: rateCheck } = require('./_ratelimit');
 const cache = require('./_cache');
 
-function extractJSON(text) {
-  if (!text) return null;
+async function fetchFMP(ticker) {
+  const k = process.env.FMP_API_KEY;
+  const b = 'https://financialmodelingprep.com/api/v3';
+  const safe = url => fetch(url).then(r => r.ok ? r.json() : []).catch(() => []);
 
-  // 1. Direct parse
-  try { return JSON.parse(text.trim()); } catch (_) {}
+  const [surprises, estimates, income, grades, priceTarget, quote] = await Promise.all([
+    safe(`${b}/earnings-surprises/${ticker}?apikey=${k}`),
+    safe(`${b}/analyst-estimates/${ticker}?period=quarter&limit=4&apikey=${k}`),
+    safe(`${b}/income-statement/${ticker}?period=quarter&limit=6&apikey=${k}`),
+    safe(`${b}/grade/${ticker}?limit=5&apikey=${k}`),
+    safe(`${b}/price-target-consensus/${ticker}?apikey=${k}`),
+    safe(`${b}/quote/${ticker}?apikey=${k}`),
+  ]);
 
-  // 2. Strip markdown code fence
-  const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/);
-  if (fenced) {
-    try { return JSON.parse(fenced[1].trim()); } catch (_) {}
-  }
-
-  // 3. Balanced-brace walk — handles text before/after JSON and avoids
-  //    greedy regex over-matching when Claude adds trailing text with braces
-  const start = text.indexOf('{');
-  if (start !== -1) {
-    let depth = 0, inString = false, escape = false;
-    for (let i = start; i < text.length; i++) {
-      const ch = text[i];
-      if (escape) { escape = false; continue; }
-      if (ch === '\\' && inString) { escape = true; continue; }
-      if (ch === '"') { inString = !inString; continue; }
-      if (!inString) {
-        if (ch === '{') depth++;
-        else if (ch === '}' && --depth === 0) {
-          try { return JSON.parse(text.slice(start, i + 1)); } catch (_) {}
-          break;
-        }
-      }
-    }
-  }
-
-  // 4. Last resort: strip non-printable chars (BOM, zero-width spaces) and retry
-  const cleaned = text.replace(/[^\x20-\x7E\n\r\t]/g, '').trim();
-  try { return JSON.parse(cleaned); } catch (_) {}
-
-  return null;
+  console.log(`[earnings-play] FMP: surprises=${surprises.length}, estimates=${estimates.length}, income=${income.length}, grades=${grades.length}, priceTarget=${Array.isArray(priceTarget) ? priceTarget.length : !!priceTarget}, quote=${quote.length}`);
+  return { surprises, estimates, income, grades, priceTarget, quote };
 }
 
-async function fetchAlpacaNews(ticker) {
-  const start = new Date();
-  start.setMonth(start.getMonth() - 3);
-  const startISO = start.toISOString().slice(0, 10);
-  const url = `https://data.alpaca.markets/v1beta1/news?symbols=${encodeURIComponent(ticker)}&start=${startISO}&limit=10&sort=desc`;
-  const res = await fetch(url, {
-    headers: {
-      'APCA-API-KEY-ID': process.env.ALPACA_API_KEY,
-      'APCA-API-SECRET-KEY': process.env.ALPACA_API_SECRET,
-    },
+function mapFMPData(ticker, fmp) {
+  const { surprises, estimates, income, grades, priceTarget, quote } = fmp;
+
+  const q = Array.isArray(quote) && quote.length > 0 ? quote[0] : null;
+  const pt = Array.isArray(priceTarget) && priceTarget.length > 0 ? priceTarget[0] : (priceTarget && typeof priceTarget === 'object' ? priceTarget : null);
+  const est0 = Array.isArray(estimates) && estimates.length > 0 ? estimates[0] : null;
+
+  const epsHistory = (Array.isArray(surprises) ? surprises : []).slice(0, 4).map(e => {
+    const actual = e.actualEarningResult ?? null;
+    const estimate = e.estimatedEarning ?? null;
+    const surprise = (actual !== null && estimate !== null) ? actual - estimate : null;
+    const surprisePct = (surprise !== null && estimate !== null && estimate !== 0) ? surprise / Math.abs(estimate) : null;
+    return { quarter: e.date ?? null, actual, estimate, surprise, surprisePct };
   });
-  if (!res.ok) return [];
-  const data = await res.json();
-  return data.news || [];
+
+  const revenueTrend = (Array.isArray(income) ? income : []).slice(0, 6).map(s => ({
+    date: s.date ?? null,
+    revenue: s.revenue ?? null,
+    netIncome: s.netIncome ?? null,
+  }));
+
+  const recentChanges = (Array.isArray(grades) ? grades : []).map(g => ({
+    firm: g.gradingCompany ?? null,
+    from: g.previousGrade ?? null,
+    to: g.newGrade ?? null,
+    date: g.date ?? null,
+    action: g.action ?? null,
+  }));
+
+  // earningsDate: prefer quote.earningsAnnouncement, fallback to first future estimate date
+  let earningsDate = q?.earningsAnnouncement ? String(q.earningsAnnouncement).slice(0, 10) : null;
+  if (!earningsDate && Array.isArray(estimates) && estimates.length > 0) {
+    const today = new Date().toISOString().slice(0, 10);
+    const future = estimates.find(e => e.date > today);
+    earningsDate = future?.date ?? null;
+  }
+
+  return {
+    ticker,
+    currentPrice: q?.price ?? null,
+    keyStats: {
+      shortFloat: null,
+      forwardPE: q?.pe ?? null,
+      insiderOwnership: null,
+      floatShares: q?.sharesOutstanding ?? null,
+    },
+    epsHistory,
+    estimates: {
+      forwardEPS: est0?.estimatedEpsAvg ?? null,
+      forwardRevenue: est0?.estimatedRevenueAvg ?? null,
+      analystCount: est0?.numberAnalystEstimatedEps ?? null,
+      epsTrendCurrent: null,
+      epsTrend7d: null,
+      epsTrend30d: null,
+      earningsDate,
+    },
+    revenueTrend,
+    analystSentiment: {
+      consensus: null,
+      targetPrice: pt?.targetConsensus ?? null,
+      currentPrice: q?.price ?? null,
+      recentChanges,
+    },
+  };
+}
+
+async function claudeInterpret(ticker, mapped) {
+  const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+
+  const systemPrompt = `Financial analyst. Given structured earnings data for ${ticker}, return ONLY valid JSON: {"interpretation":"2-3 sentences on earnings outlook","impliedMove":number_or_null}. impliedMove = estimated ±% move at earnings based on historical EPS surprise magnitude. Use null if insufficient data.`;
+
+  const payload = JSON.stringify({
+    epsHistory: mapped.epsHistory,
+    forwardEPS: mapped.estimates.forwardEPS,
+    analystCount: mapped.estimates.analystCount,
+    targetPrice: mapped.analystSentiment.targetPrice,
+    currentPrice: mapped.currentPrice,
+    recentGrades: mapped.analystSentiment.recentChanges,
+  });
+
+  try {
+    const response = await anthropic.messages.create({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 200,
+      system: systemPrompt,
+      messages: [{ role: 'user', content: payload }],
+    });
+
+    const text = response.content.filter(b => b.type === 'text').map(b => b.text).join('').trim();
+    const firstBrace = text.indexOf('{');
+    const lastBrace = text.lastIndexOf('}');
+    if (firstBrace === -1 || lastBrace === -1) return { interpretation: null, impliedMove: null };
+    return JSON.parse(text.substring(firstBrace, lastBrace + 1));
+  } catch (e) {
+    console.error('[earnings-play] claudeInterpret feilet:', e.message);
+    return { interpretation: null, impliedMove: null };
+  }
 }
 
 module.exports = async (req, res) => {
@@ -69,8 +131,8 @@ module.exports = async (req, res) => {
   if (!process.env.ANTHROPIC_API_KEY) {
     return res.status(500).json({ error: 'ANTHROPIC_API_KEY mangler.' });
   }
-  if (!process.env.ALPACA_API_KEY || !process.env.ALPACA_API_SECRET) {
-    return res.status(500).json({ error: 'Alpaca API-nøkler mangler.' });
+  if (!process.env.FMP_API_KEY) {
+    return res.status(500).json({ error: 'FMP_API_KEY mangler.' });
   }
 
   const rl = rateCheck(req);
@@ -81,158 +143,24 @@ module.exports = async (req, res) => {
     console.log(`[earnings-play] CACHE HIT: ${ticker}`);
     return res.status(200).json(cached);
   }
-  console.log(`[earnings-play] CACHE MISS: ${ticker} — calling Claude`);
+  console.log(`[earnings-play] CACHE MISS: ${ticker} — fetching FMP`);
 
   try {
-    const articles = await fetchAlpacaNews(ticker).catch(() => []);
-    const newsContext = articles.length > 0
-      ? articles.slice().reverse()
-          .map(a => `[${(a.created_at || '').slice(0, 10)}] ${a.headline}${a.summary ? ': ' + a.summary : ''}`)
-          .join('\n')
-      : 'Ingen nyheter funnet fra Alpaca.';
+    const fmpRaw = await fetchFMP(ticker);
+    const mapped = mapFMPData(ticker, fmpRaw);
+    const ai = await claudeInterpret(ticker, mapped);
 
-    const systemPrompt = `You are a financial data analyst. Use web search to find current financial data for ${ticker}, and use the provided news articles as additional context.
-
-Return ONLY valid JSON matching this exact structure (no preamble, no markdown):
-{
-  "ticker": "${ticker}",
-  "currentPrice": 174.50,
-  "keyStats": {
-    "shortFloat": 0.023,
-    "forwardPE": 28.5,
-    "insiderOwnership": 0.038,
-    "floatShares": 15400000000
-  },
-  "epsHistory": [
-    {"quarter": "2025-09-01", "actual": 1.64, "estimate": 1.60, "surprise": 0.04, "surprisePct": 0.025}
-  ],
-  "estimates": {
-    "forwardEPS": 1.62,
-    "forwardRevenue": 94500000000,
-    "analystCount": 38,
-    "epsTrendCurrent": 1.62,
-    "epsTrend7d": 1.60,
-    "epsTrend30d": 1.58,
-    "earningsDate": "2026-05-01"
-  },
-  "revenueTrend": [
-    {"date": "2025-09-30", "revenue": 94930000000, "netIncome": 14736000000}
-  ],
-  "analystSentiment": {
-    "consensus": "buy",
-    "targetPrice": 225.00,
-    "currentPrice": 174.50,
-    "recentChanges": [
-      {"firm": "Goldman Sachs", "from": "Neutral", "to": "Buy", "date": "2026-04-01", "action": "upgrade"}
-    ]
-  },
-  "impliedMove": null
-}
-
-Rules:
-- Use null for any field you cannot find — never guess or hallucinate numbers
-- shortFloat and insiderOwnership are decimals (0.05 = 5%)
-- surprisePct is a decimal (0.025 = 2.5%)
-- revenue and netIncome are in absolute dollars (not millions)
-- epsHistory: up to 4 most recent quarters, most recent first
-- revenueTrend: up to 6 most recent quarters, most recent first
-- consensus must be exactly one of: "strongBuy", "buy", "hold", "underperform", "sell", or null
-- impliedMove.percent: the implied move as a PERCENTAGE NUMBER e.g. 6.9 means ±6.9% (NOT a decimal like 0.069); otherwise null
-- earningsDate: next upcoming earnings date in YYYY-MM-DD format
-- Return ONLY the JSON object, nothing else`;
-
-    const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-
-    const response = await anthropic.messages.create({
-      model: 'claude-sonnet-4-6',
-      max_tokens: 1200,
-      system: systemPrompt,
-      tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: 2 }],
-      messages: [{
-        role: 'user',
-        content: `Build an earnings play analysis for ${ticker}. You have exactly 2 web searches — use them efficiently:\n- Search 1: "${ticker} stock EPS history quarterly actual vs estimate analyst consensus target price forward PE earnings date 2026"\n- Search 2: "${ticker} short float insider ownership"\n\nRecent news (last 3 months):\n${newsContext}\n\nReturn the complete JSON.`,
-      }],
-    });
-
-    const finalText = response.content
-      .filter(b => b.type === 'text')
-      .map(b => b.text)
-      .join('\n')
-      .trim();
-
-    console.log(`[earnings-play] Claude raw response (${finalText.length} chars):`, finalText.slice(0, 500));
-    console.error('[earnings-play] raw length:', finalText?.length);
-    console.error('[earnings-play] raw start:', finalText?.substring(0, 200));
-
-    const firstBrace = finalText.indexOf('{');
-    const lastBrace = finalText.lastIndexOf('}');
-
-    if (firstBrace === -1 || lastBrace === -1) {
-      console.error('[earnings-play] Ingen JSON-objekt funnet i råtekst');
-      return res.status(500).json({ error: 'Parsing feilet' });
-    }
-
-    const jsonString = finalText.substring(firstBrace, lastBrace + 1);
-    let parsed;
-    try {
-      parsed = JSON.parse(jsonString);
-    } catch (e) {
-      console.error('[earnings-play] JSON.parse feilet:', e.message);
-      return res.status(500).json({ error: 'JSON parse feilet' });
-    }
-
-    console.log('[earnings-play] parsed:', JSON.stringify(parsed));
-
-    if (!parsed.ticker) {
-      console.error('[earnings-play] parsed.ticker mangler. parsed:', JSON.stringify(parsed));
-      return res.status(500).json({ error: `AI-respons mangler ticker-felt. Mottatt: ${Object.keys(parsed).join(', ')}` });
-    }
-
-    // Null-sikre alle nestede felt før serialisering
     const safe = {
-      ticker: parsed.ticker || ticker,
-      currentPrice: parsed.currentPrice ?? null,
-      keyStats: {
-        shortFloat: parsed.keyStats?.shortFloat ?? null,
-        forwardPE: parsed.keyStats?.forwardPE ?? null,
-        insiderOwnership: parsed.keyStats?.insiderOwnership ?? null,
-        floatShares: parsed.keyStats?.floatShares ?? null,
-      },
-      epsHistory: Array.isArray(parsed.epsHistory) ? parsed.epsHistory : [],
-      estimates: {
-        forwardEPS: parsed.estimates?.forwardEPS ?? null,
-        forwardRevenue: parsed.estimates?.forwardRevenue ?? null,
-        analystCount: parsed.estimates?.analystCount ?? null,
-        epsTrendCurrent: parsed.estimates?.epsTrendCurrent ?? null,
-        epsTrend7d: parsed.estimates?.epsTrend7d ?? null,
-        epsTrend30d: parsed.estimates?.epsTrend30d ?? null,
-        earningsDate: parsed.estimates?.earningsDate ?? null,
-      },
-      revenueTrend: Array.isArray(parsed.revenueTrend) ? parsed.revenueTrend : [],
-      analystSentiment: {
-        consensus: parsed.analystSentiment?.consensus ?? null,
-        targetPrice: parsed.analystSentiment?.targetPrice ?? null,
-        currentPrice: parsed.analystSentiment?.currentPrice ?? null,
-        recentChanges: Array.isArray(parsed.analystSentiment?.recentChanges) ? parsed.analystSentiment.recentChanges : [],
-      },
-      impliedMove: parsed.impliedMove ?? null,
+      ...mapped,
+      interpretation: ai.interpretation ?? null,
+      impliedMove: ai.impliedMove ?? null,
     };
 
-    try {
-      cache.set(`earnings_play_${ticker}`, safe, 12 * 3600);
-    } catch (cacheErr) {
-      console.error('[earnings-play] cache.set feilet:', cacheErr.message);
-    }
-
-    try {
-      return res.status(200).json(safe);
-    } catch (serializeErr) {
-      console.error('[earnings-play] res.json serialisering feilet:', serializeErr.message, JSON.stringify(safe).slice(0, 500));
-      return res.status(500).json({ error: 'Kunne ikke serialisere respons.' });
-    }
+    cache.set(`earnings_play_${ticker}`, safe, 12 * 3600);
+    return res.status(200).json(safe);
 
   } catch (error) {
-    console.error('Earnings-play API feil:', error.status, error.message, error);
+    console.error('[earnings-play] API feil:', error.status, error.message, error);
     const message = error.status === 401
       ? 'Ugyldig API-nøkkel.'
       : error.status === 429
