@@ -7,25 +7,20 @@ async function fetchFMP(ticker) {
   const b = 'https://financialmodelingprep.com/api/v3';
   const safe = url => fetch(url).then(r => r.ok ? r.json() : []).catch(() => []);
 
-  const [surprises, estimates, income, grades, priceTarget, quote] = await Promise.all([
+  const [surprises, income, quote] = await Promise.all([
     safe(`${b}/earnings-surprises/${ticker}?apikey=${k}`),
-    safe(`${b}/analyst-estimates/${ticker}?period=quarter&limit=4&apikey=${k}`),
     safe(`${b}/income-statement/${ticker}?period=quarter&limit=6&apikey=${k}`),
-    safe(`${b}/grade/${ticker}?limit=5&apikey=${k}`),
-    safe(`${b}/price-target-consensus/${ticker}?apikey=${k}`),
     safe(`${b}/quote/${ticker}?apikey=${k}`),
   ]);
 
-  console.log(`[earnings-play] FMP: surprises=${surprises.length}, estimates=${estimates.length}, income=${income.length}, grades=${grades.length}, priceTarget=${Array.isArray(priceTarget) ? priceTarget.length : !!priceTarget}, quote=${quote.length}`);
-  return { surprises, estimates, income, grades, priceTarget, quote };
+  console.log(`[earnings-play] FMP: surprises=${surprises.length}, income=${income.length}, quote=${quote.length}`);
+  return { surprises, income, quote };
 }
 
 function mapFMPData(ticker, fmp) {
-  const { surprises, estimates, income, grades, priceTarget, quote } = fmp;
+  const { surprises, income, quote } = fmp;
 
   const q = Array.isArray(quote) && quote.length > 0 ? quote[0] : null;
-  const pt = Array.isArray(priceTarget) && priceTarget.length > 0 ? priceTarget[0] : (priceTarget && typeof priceTarget === 'object' ? priceTarget : null);
-  const est0 = Array.isArray(estimates) && estimates.length > 0 ? estimates[0] : null;
 
   const epsHistory = (Array.isArray(surprises) ? surprises : []).slice(0, 4).map(e => {
     const actual = e.actualEarningResult ?? null;
@@ -41,21 +36,7 @@ function mapFMPData(ticker, fmp) {
     netIncome: s.netIncome ?? null,
   }));
 
-  const recentChanges = (Array.isArray(grades) ? grades : []).map(g => ({
-    firm: g.gradingCompany ?? null,
-    from: g.previousGrade ?? null,
-    to: g.newGrade ?? null,
-    date: g.date ?? null,
-    action: g.action ?? null,
-  }));
-
-  // earningsDate: prefer quote.earningsAnnouncement, fallback to first future estimate date
-  let earningsDate = q?.earningsAnnouncement ? String(q.earningsAnnouncement).slice(0, 10) : null;
-  if (!earningsDate && Array.isArray(estimates) && estimates.length > 0) {
-    const today = new Date().toISOString().slice(0, 10);
-    const future = estimates.find(e => e.date > today);
-    earningsDate = future?.date ?? null;
-  }
+  const earningsDate = q?.earningsAnnouncement ? String(q.earningsAnnouncement).slice(0, 10) : null;
 
   return {
     ticker,
@@ -67,22 +48,8 @@ function mapFMPData(ticker, fmp) {
       floatShares: q?.sharesOutstanding ?? null,
     },
     epsHistory,
-    estimates: {
-      forwardEPS: est0?.estimatedEpsAvg ?? null,
-      forwardRevenue: est0?.estimatedRevenueAvg ?? null,
-      analystCount: est0?.numberAnalystEstimatedEps ?? null,
-      epsTrendCurrent: null,
-      epsTrend7d: null,
-      epsTrend30d: null,
-      earningsDate,
-    },
+    estimates: { earningsDate },
     revenueTrend,
-    analystSentiment: {
-      consensus: null,
-      targetPrice: pt?.targetConsensus ?? null,
-      currentPrice: q?.price ?? null,
-      recentChanges,
-    },
   };
 }
 
@@ -93,11 +60,8 @@ async function claudeInterpret(ticker, mapped) {
 
   const payload = JSON.stringify({
     epsHistory: mapped.epsHistory,
-    forwardEPS: mapped.estimates.forwardEPS,
-    analystCount: mapped.estimates.analystCount,
-    targetPrice: mapped.analystSentiment.targetPrice,
     currentPrice: mapped.currentPrice,
-    recentGrades: mapped.analystSentiment.recentChanges,
+    revenueTrend: mapped.revenueTrend.slice(0, 3),
   });
 
   try {
@@ -153,7 +117,7 @@ module.exports = async (req, res) => {
     const safe = {
       ...mapped,
       interpretation: ai.interpretation ?? null,
-      impliedMove: ai.impliedMove ?? null,
+      impliedMove: ai.impliedMove != null ? { percent: ai.impliedMove } : null,
     };
 
     cache.set(`earnings_play_${ticker}`, safe, 12 * 3600);
