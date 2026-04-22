@@ -147,9 +147,8 @@
       </div>
 
       <div class="period-row" id="period-row">
-        <button class="period-btn active" data-months="3" onclick="setPeriod(3)">3M</button>
-        <button class="period-btn" data-months="6" onclick="setPeriod(6)">6M</button>
-        <button class="period-btn" data-months="12" onclick="setPeriod(12)">12M</button>
+        <button class="period-btn active" data-months="1" onclick="setPeriod(1)">1M</button>
+        <button class="period-btn" data-months="3" onclick="setPeriod(3)">3M</button>
       </div>
 
       <button class="fetch-btn" id="fetch-btn" onclick="fetchHistorikk()">ANALYSER HISTORIKK →</button>
@@ -174,7 +173,7 @@
   </div>
 
   <script>
-    let selectedMonths = 3;
+    let selectedMonths = 1;
     let fetching = false;
 
     function esc(s) {

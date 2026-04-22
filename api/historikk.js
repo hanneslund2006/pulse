@@ -24,8 +24,8 @@ module.exports = async (req, res) => {
   }
 
   const months = parseInt(rawMonths) || 3;
-  if (![3, 6, 12].includes(months)) {
-    return res.status(400).json({ error: 'Ugyldig tidsperiode. Velg 3, 6 eller 12 måneder.' });
+  if (![1, 3, 6, 12].includes(months)) {
+    return res.status(400).json({ error: 'Ugyldig tidsperiode. Velg 1, 3, 6 eller 12 måneder.' });
   }
 
   const rl = rateCheck(req);
