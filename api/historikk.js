@@ -126,9 +126,22 @@ Return catalysts in chronological order, oldest first. sentiment must be exactly
       .join('\n')
       .trim();
 
-    const parsed = extractJSON(finalText);
+    const firstBrace = finalText.indexOf('{');
+    const lastBrace = finalText.lastIndexOf('}');
+    if (firstBrace === -1 || lastBrace === -1) {
+      console.error('[historikk] Ingen JSON funnet i råtekst');
+      return res.status(500).json({ error: 'Parsing feilet' });
+    }
+    const jsonString = finalText.substring(firstBrace, lastBrace + 1);
+    let parsed;
+    try {
+      parsed = JSON.parse(jsonString);
+    } catch (e) {
+      console.error('[historikk] JSON.parse feilet:', e.message);
+      return res.status(500).json({ error: 'JSON parse feilet' });
+    }
     if (!parsed || !Array.isArray(parsed.catalysts)) {
-      console.error('Historikk JSON-parsing feilet. Råtekst:', finalText);
+      console.error('[historikk] Mangler catalysts-array. parsed:', JSON.stringify(parsed));
       return res.status(500).json({ error: 'AI returnerte ugyldig format. Prøv igjen.' });
     }
 
