@@ -1,5 +1,6 @@
 const Anthropic = require('@anthropic-ai/sdk');
 const { check: rateCheck } = require('./_ratelimit');
+const cache = require('./_cache');
 
 const SYSTEM_PROMPT = `Du er en markedsanalytiker. Søk etter de største pre-market gap movers i USA i dag.
 
@@ -26,13 +27,20 @@ module.exports = async (req, res) => {
   const rl = rateCheck(req);
   if (rl) return res.status(429).json({ error: `Du har nådd grensen for analyser denne timen. Prøv igjen om ${rl.waitMinutes} minutter.` });
 
+  const cached = await cache.get('gappers_v1');
+  if (cached) {
+    console.log('[gappers] CACHE HIT');
+    return res.status(200).json(cached);
+  }
+  console.log('[gappers] CACHE MISS — calling Claude');
+
   const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
   try {
     const messages = [{ role: 'user', content: 'Finn de 5 største pre-market gap movers på US-børsene i dag. Returner JSON-array.' }];
 
     const response = await anthropic.messages.create({
-      model: 'claude-sonnet-4-6',
+      model: 'claude-haiku-4-5-20251001',
       max_tokens: 300,
       system: SYSTEM_PROMPT,
       tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: 2 }],
@@ -61,6 +69,7 @@ module.exports = async (req, res) => {
       return res.status(500).json({ error: 'AI returnerte ugyldig format.' });
     }
 
+    cache.set('gappers_v1', parsed, 60 * 60 * 4);
     return res.status(200).json(parsed);
 
   } catch (error) {

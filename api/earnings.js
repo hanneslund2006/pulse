@@ -1,5 +1,6 @@
 const Anthropic = require('@anthropic-ai/sdk');
 const { check: rateCheck } = require('./_ratelimit');
+const cache = require('./_cache');
 
 function getWeekRange() {
   const now = new Date();
@@ -36,6 +37,14 @@ module.exports = async (req, res) => {
   const watchlist = watchlistParam
     ? watchlistParam.split(',').map(s => s.trim().toUpperCase()).filter(Boolean)
     : [];
+
+  const cacheKey = `earnings_v1_${watchlistParam}`;
+  const cached = await cache.get(cacheKey);
+  if (cached) {
+    console.log('[earnings] CACHE HIT');
+    return res.status(200).json(cached);
+  }
+  console.log('[earnings] CACHE MISS — calling Claude');
 
   const { start, end } = getWeekRange();
   const watchlistHint = watchlist.length
@@ -97,6 +106,7 @@ Regler:
       return res.status(500).json({ error: 'Ugyldig format fra AI.' });
     }
 
+    cache.set(cacheKey, parsed, 60 * 60 * 6);
     return res.status(200).json(parsed);
 
   } catch (err) {
