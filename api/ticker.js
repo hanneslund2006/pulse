@@ -1,6 +1,8 @@
 const Anthropic = require('@anthropic-ai/sdk');
 const { check: rateCheck } = require('./_ratelimit');
 const cache = require('./_cache');
+const YahooFinance = require('yahoo-finance2').default;
+const yf = new YahooFinance({ suppressNotices: ['yahooSurvey'] });
 
 const SYSTEM_PROMPT = `Du er en aksjeanalytiker. Du får et ticker-symbol og søker etter fersk informasjon.
 
@@ -37,6 +39,49 @@ Regler:
 - Svar KUN med JSON-objektet, ingenting annet`;
 
 
+async function fetchTechnicals(ticker) {
+  try {
+    const end = new Date();
+    const start = new Date();
+    start.setDate(start.getDate() - 290);
+    const rows = await yf.historical(ticker, {
+      period1: start.toISOString().slice(0, 10),
+      period2: end.toISOString().slice(0, 10),
+      interval: '1d',
+    });
+    const closes = (rows || []).map(r => r.close).filter(c => typeof c === 'number');
+    if (closes.length < 10) return null;
+    const currentPrice = closes[closes.length - 1];
+    const smaData = closes.length >= 200 ? closes.slice(-200) : closes;
+    const sma200 = smaData.reduce((a, b) => a + b, 0) / smaData.length;
+    const k = 2 / 9;
+    let ema8 = closes[0];
+    for (let i = 1; i < closes.length; i++) ema8 = closes[i] * k + ema8 * (1 - k);
+    const recent = closes.slice(-60);
+    const swingHighs = [], swingLows = [];
+    for (let i = 1; i < recent.length - 1; i++) {
+      if (recent[i] > recent[i - 1] && recent[i] > recent[i + 1]) swingHighs.push(recent[i]);
+      if (recent[i] < recent[i - 1] && recent[i] < recent[i + 1]) swingLows.push(recent[i]);
+    }
+    const h = swingHighs.slice(-4), l = swingLows.slice(-4);
+    let trend = 'Mixed';
+    if (h.length >= 2 && l.length >= 2) {
+      if (h.every((v, i) => i === 0 || v > h[i - 1]) && l.every((v, i) => i === 0 || v > l[i - 1])) trend = 'Bullish';
+      else if (h.every((v, i) => i === 0 || v < h[i - 1]) && l.every((v, i) => i === 0 || v < l[i - 1])) trend = 'Bearish';
+    }
+    return {
+      sma200: parseFloat(sma200.toFixed(2)),
+      ema8: parseFloat(ema8.toFixed(2)),
+      trend,
+      above200sma: currentPrice > sma200,
+      priceVsSma200pct: parseFloat(((currentPrice - sma200) / sma200 * 100).toFixed(2)),
+    };
+  } catch (e) {
+    console.error('[ticker] fetchTechnicals feil:', e.message);
+    return null;
+  }
+}
+
 module.exports = async (req, res) => {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
@@ -71,13 +116,16 @@ module.exports = async (req, res) => {
       }
     ];
 
-    const response = await anthropic.messages.create({
-      model: 'claude-haiku-4-5-20251001',
-      max_tokens: 600,
-      system: SYSTEM_PROMPT,
-      tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: 2 }],
-      messages
-    });
+    const [response, technical] = await Promise.all([
+      anthropic.messages.create({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 600,
+        system: SYSTEM_PROMPT,
+        tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: 2 }],
+        messages,
+      }),
+      fetchTechnicals(raw),
+    ]);
 
     const finalText = response.content
       .filter(b => b.type === 'text')
@@ -104,6 +152,7 @@ module.exports = async (req, res) => {
       return res.status(500).json({ error: 'JSON parse feilet' });
     }
 
+    if (technical) parsed.technical = technical;
     cache.set(`ticker_${raw}`, parsed, 6 * 3600);
     return res.status(200).json(parsed);
 

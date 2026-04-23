@@ -103,6 +103,49 @@
     .wpill-warn { font-family: 'Space Mono', monospace; font-size: 8px; color: var(--amber); letter-spacing: 0.04em; margin-left: 2px; flex-shrink: 0; }
     .wpill-warn.urgent { color: var(--red); }
 
+    /* Technical card */
+    .technical-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-left: 3px solid var(--border); border-radius: 12px;
+      padding: 20px 24px; margin-bottom: 10px;
+      backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    }
+    .technical-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+    .technical-title { font-family: 'Space Mono', monospace; font-weight: 700; font-size: 11px; letter-spacing: 0.08em; }
+    .tech-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+    .tech-cell { display: flex; flex-direction: column; gap: 4px; }
+    .tech-label { font-family: 'Space Mono', monospace; font-size: 8px; color: var(--text-muted); letter-spacing: 0.1em; }
+    .tech-value { font-family: 'Space Mono', monospace; font-size: 13px; font-weight: 700; color: var(--text-data); }
+    .tech-value.up { color: var(--green); }
+    .tech-value.dn { color: var(--red); }
+    .tech-sub { font-family: 'Space Mono', monospace; font-size: 8px; letter-spacing: 0.06em; }
+    .tech-sub.up { color: var(--green); }
+    .tech-sub.dn { color: var(--red); }
+
+    /* R/R Calculator */
+    .rr-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 12px; padding: 20px 24px; margin-top: 10px;
+      backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    }
+    .rr-title { font-family: 'Space Mono', monospace; font-weight: 700; font-size: 11px; letter-spacing: 0.08em; margin-bottom: 14px; color: var(--text-muted); }
+    .rr-inputs { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+    .rr-field { display: flex; flex-direction: column; gap: 5px; }
+    .rr-label { font-family: 'Space Mono', monospace; font-size: 8px; color: var(--text-muted); letter-spacing: 0.1em; }
+    .rr-input {
+      background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+      border-radius: 6px; padding: 8px 10px;
+      font-family: 'Space Mono', monospace; font-size: 13px;
+      color: var(--text-primary); outline: none; width: 100%; box-sizing: border-box;
+      transition: border-color 200ms;
+    }
+    .rr-input:focus { border-color: var(--green-border); }
+    .rr-result { display: flex; gap: 16px; align-items: baseline; }
+    .rr-ratio { font-family: 'Space Mono', monospace; font-weight: 700; font-size: 22px; color: var(--text-data); }
+    .rr-ratio.good { color: var(--green); }
+    .rr-ratio.bad  { color: var(--red); }
+    .rr-be { font-family: 'Space Mono', monospace; font-size: 10px; color: var(--text-muted); }
+
     /* Search row + button */
     .search-row { display: flex; gap: 8px; align-items: stretch; }
     .search-row .search-input { flex: 1; }
@@ -164,7 +207,29 @@
         <div class="price-bar" id="price-bar"></div>
         <div class="result-ticker-badge" id="result-ticker-badge"></div>
       </div>
+      <div id="technical-card" style="display:none;"></div>
       <div id="layers-container"></div>
+      <div class="rr-card" id="rr-calc" style="display:none;">
+        <div class="rr-title">R/R KALKULATOR</div>
+        <div class="rr-inputs">
+          <div class="rr-field">
+            <div class="rr-label">ENTRY $</div>
+            <input class="rr-input" id="rr-entry" type="number" step="0.01" placeholder="0.00" oninput="calcRR()">
+          </div>
+          <div class="rr-field">
+            <div class="rr-label">STOP LOSS $</div>
+            <input class="rr-input" id="rr-stop" type="number" step="0.01" placeholder="0.00" oninput="calcRR()">
+          </div>
+          <div class="rr-field">
+            <div class="rr-label">TARGET $</div>
+            <input class="rr-input" id="rr-target" type="number" step="0.01" placeholder="0.00" oninput="calcRR()">
+          </div>
+        </div>
+        <div class="rr-result">
+          <div class="rr-ratio" id="rr-ratio">—</div>
+          <div class="rr-be" id="rr-be"></div>
+        </div>
+      </div>
     </div>
 
   </div>
@@ -401,6 +466,45 @@
         }, 0);
       });
 
+      // Render technical card
+      const techCard = document.getElementById('technical-card');
+      if (data.technical && techCard) {
+        const t = data.technical;
+        const trendCol = t.trend === 'Bullish' ? 'var(--green)' : t.trend === 'Bearish' ? 'var(--red)' : 'var(--text-muted)';
+        const trendBg  = t.trend === 'Bullish' ? 'rgba(29,184,126,0.10)' : t.trend === 'Bearish' ? 'rgba(229,75,74,0.10)' : 'rgba(74,81,102,0.12)';
+        const smaDir   = t.above200sma ? 'up' : 'dn';
+        const smaTxt   = t.above200sma ? '↑ OVER' : '↓ UNDER';
+        const pvs      = (t.priceVsSma200pct >= 0 ? '+' : '') + t.priceVsSma200pct + '%';
+        techCard.innerHTML = `<div class="technical-card" style="border-left-color: ${trendCol};">
+          <div class="technical-header">
+            <div class="technical-title">TEKNISK ANALYSE</div>
+            <div class="badge" style="color: ${trendCol}; background: ${trendBg};">${esc(t.trend.toUpperCase())}</div>
+          </div>
+          <div class="tech-grid">
+            <div class="tech-cell">
+              <div class="tech-label">200 SMA</div>
+              <div class="tech-value">$${t.sma200}</div>
+              <div class="tech-sub ${smaDir}">${smaTxt} · ${pvs}</div>
+            </div>
+            <div class="tech-cell">
+              <div class="tech-label">8 EMA</div>
+              <div class="tech-value">$${t.ema8}</div>
+            </div>
+            <div class="tech-cell">
+              <div class="tech-label">TREND</div>
+              <div class="tech-value ${smaDir}">${esc(t.trend.toUpperCase())}</div>
+            </div>
+          </div>
+        </div>`;
+        techCard.style.display = 'block';
+      } else if (techCard) {
+        techCard.style.display = 'none';
+      }
+
+      // Show R/R calculator
+      const rrCalc = document.getElementById('rr-calc');
+      if (rrCalc) rrCalc.style.display = 'block';
+
       setResult(true);
       animateLayers();
 
@@ -455,6 +559,29 @@
         stopLoading();
         setError('Klarte ikke hente data. Sjekk tilkoblingen og prøv igjen.');
       }
+    }
+
+    // ── R/R Calculator ────────────────────────────────────
+    function calcRR() {
+      const entry  = parseFloat(document.getElementById('rr-entry').value);
+      const stop   = parseFloat(document.getElementById('rr-stop').value);
+      const target = parseFloat(document.getElementById('rr-target').value);
+      const ratioEl = document.getElementById('rr-ratio');
+      const beEl    = document.getElementById('rr-be');
+      if (!ratioEl || !beEl) return;
+      if (isNaN(entry) || isNaN(stop) || isNaN(target) || entry === stop) {
+        ratioEl.textContent = '—';
+        ratioEl.className = 'rr-ratio';
+        beEl.textContent = '';
+        return;
+      }
+      const risk   = Math.abs(entry - stop);
+      const reward = Math.abs(target - entry);
+      const ratio  = reward / risk;
+      const be     = (risk / (risk + reward) * 100).toFixed(1);
+      ratioEl.textContent = '1:' + ratio.toFixed(2);
+      ratioEl.className = 'rr-ratio' + (ratio >= 2 ? ' good' : ' bad');
+      beEl.textContent = 'Break-even ' + be + '%';
     }
 
     // ── Init ───────────────────────────────────────────────────

@@ -1,6 +1,27 @@
 const Anthropic = require('@anthropic-ai/sdk');
 const { check: rateCheck } = require('./_ratelimit');
 const cache = require('./_cache');
+const YahooFinance = require('yahoo-finance2').default;
+const yf = new YahooFinance({ suppressNotices: ['yahooSurvey'] });
+
+async function enrichWithSma(ticker) {
+  try {
+    const end = new Date();
+    const start = new Date();
+    start.setDate(start.getDate() - 290);
+    const rows = await yf.historical(ticker, {
+      period1: start.toISOString().slice(0, 10),
+      period2: end.toISOString().slice(0, 10),
+      interval: '1d',
+    });
+    const closes = (rows || []).map(r => r.close).filter(c => typeof c === 'number');
+    if (closes.length < 10) return null;
+    const current = closes[closes.length - 1];
+    const smaData = closes.length >= 200 ? closes.slice(-200) : closes;
+    const sma200 = smaData.reduce((a, b) => a + b, 0) / smaData.length;
+    return current > sma200;
+  } catch (_) { return null; }
+}
 
 const SYSTEM_PROMPT = `Du er en markedsanalytiker. Søk etter de største pre-market gap movers i USA i dag.
 
@@ -69,8 +90,14 @@ module.exports = async (req, res) => {
       return res.status(500).json({ error: 'AI returnerte ugyldig format.' });
     }
 
-    cache.set('gappers_v1', parsed, 60 * 60 * 4);
-    return res.status(200).json(parsed);
+    const enriched = await Promise.all(
+      parsed.map(async g => {
+        const above200sma = await enrichWithSma(g.ticker).catch(() => null);
+        return { ...g, above200sma };
+      })
+    );
+    cache.set('gappers_v1', enriched, 60 * 60 * 4);
+    return res.status(200).json(enriched);
 
   } catch (error) {
     console.error('[gappers] API feil:', error);

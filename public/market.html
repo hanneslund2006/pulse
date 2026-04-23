@@ -192,6 +192,13 @@
       font-family: 'Space Mono', monospace;
       font-size: 9px; color: var(--text-muted); letter-spacing: 0.08em; padding: 4px 0;
     }
+    .gapper-sma {
+      font-family: 'Space Mono', monospace;
+      font-size: 8px; letter-spacing: 0.08em;
+      padding: 3px 6px; border-radius: 3px; flex-shrink: 0;
+    }
+    .gapper-sma.above { color: var(--green); background: var(--green-dim); }
+    .gapper-sma.below { color: var(--red); background: rgba(229,75,74,0.08); }
 
     /* Macro calendar */
     .macro-section { display: flex; flex-direction: column; gap: 8px; }
@@ -668,10 +675,16 @@
         const up   = r.gap >= 0;
         const sign = up ? '+' : '';
         const cls  = up ? 'up' : 'dn';
+        const smaBadge = r.above200sma === true
+          ? '<div class="gapper-sma above">200SMA ↑</div>'
+          : r.above200sma === false
+            ? '<div class="gapper-sma below">200SMA ↓</div>'
+            : '';
         return `<div class="gapper-row">
           <div class="gapper-ticker ${cls}">${esc(r.ticker)}</div>
           <div class="gapper-company">${esc(r.company)}</div>
           <div class="gapper-gap ${cls}">${sign}${parseFloat(r.gap).toFixed(1)}%</div>
+          ${smaBadge}
           <div class="gapper-vol">${esc(r.volume || '')}</div>
         </div>`;
       }).join('');
