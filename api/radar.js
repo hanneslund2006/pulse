@@ -18,14 +18,6 @@ Eksakt format:
 
 Maks 300 tokens. Svar KUN med JSON-arrayen.`;
 
-function extractJSON(text) {
-  try { return JSON.parse(text.trim()); } catch (_) {}
-  const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/);
-  if (fenced) { try { return JSON.parse(fenced[1].trim()); } catch (_) {} }
-  const arr = text.match(/\[[\s\S]*\]/);
-  if (arr) { try { return JSON.parse(arr[0]); } catch (_) {} }
-  return null;
-}
 
 module.exports = async (req, res) => {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
@@ -55,8 +47,22 @@ module.exports = async (req, res) => {
     const finalText = response.content.filter(b => b.type === 'text').map(b => b.text).join('\n').trim();
     if (!finalText) return res.status(500).json({ error: 'Ingen respons fra AI.' });
 
-    const parsed = extractJSON(finalText);
-    if (!parsed || !Array.isArray(parsed)) {
+    const firstBrace = finalText.indexOf('[');
+    const lastBrace = finalText.lastIndexOf(']');
+    if (firstBrace === -1 || lastBrace === -1) {
+      console.error('[radar] Ingen JSON funnet');
+      return res.status(500).json({ error: 'Parsing feilet' });
+    }
+    const jsonString = finalText.substring(firstBrace, lastBrace + 1);
+    let parsed;
+    try {
+      parsed = JSON.parse(jsonString);
+    } catch (e) {
+      console.error('[radar] JSON.parse feilet:', e.message);
+      return res.status(500).json({ error: 'JSON parse feilet' });
+    }
+    if (!Array.isArray(parsed)) {
+      console.error('[radar] Ikke gyldig array');
       return res.status(500).json({ error: 'AI returnerte ugyldig format.' });
     }
 
@@ -64,6 +70,7 @@ module.exports = async (req, res) => {
     return res.status(200).json(parsed);
 
   } catch (error) {
+    console.error('[radar] API feil:', error);
     const msg = error.status === 429 ? 'For mange forespørsler. Vent litt.' : 'Klarte ikke kjøre radar.';
     return res.status(500).json({ error: msg });
   }

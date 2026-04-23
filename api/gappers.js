@@ -17,14 +17,6 @@ gap: positiv for gap opp, negativ for gap ned. Sorter etter størst absolutt gap
 volume: formatert som "1.2M" eller "450K"
 Returner nøyaktig 5 entries. Svar KUN med JSON-arrayen.`;
 
-function extractJSON(text) {
-  try { return JSON.parse(text.trim()); } catch (_) {}
-  const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/);
-  if (fenced) { try { return JSON.parse(fenced[1].trim()); } catch (_) {} }
-  const arr = text.match(/\[[\s\S]*\]/);
-  if (arr) { try { return JSON.parse(arr[0]); } catch (_) {} }
-  return null;
-}
 
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -50,15 +42,29 @@ module.exports = async (req, res) => {
     const finalText = response.content.filter(b => b.type === 'text').map(b => b.text).join('\n').trim();
     if (!finalText) return res.status(500).json({ error: 'Ingen respons fra AI.' });
 
-    console.error('[gappers] Claude råtekst:', finalText);
-    const parsed = extractJSON(finalText);
-    if (!parsed || !Array.isArray(parsed)) {
+    const firstBrace = finalText.indexOf('[');
+    const lastBrace = finalText.lastIndexOf(']');
+    if (firstBrace === -1 || lastBrace === -1) {
+      console.error('[gappers] Ingen JSON funnet');
+      return res.status(500).json({ error: 'Parsing feilet' });
+    }
+    const jsonString = finalText.substring(firstBrace, lastBrace + 1);
+    let parsed;
+    try {
+      parsed = JSON.parse(jsonString);
+    } catch (e) {
+      console.error('[gappers] JSON.parse feilet:', e.message);
+      return res.status(500).json({ error: 'JSON parse feilet' });
+    }
+    if (!Array.isArray(parsed)) {
+      console.error('[gappers] Ikke gyldig array');
       return res.status(500).json({ error: 'AI returnerte ugyldig format.' });
     }
 
     return res.status(200).json(parsed);
 
   } catch (error) {
+    console.error('[gappers] API feil:', error);
     const msg = error.status === 429 ? 'For mange forespørsler. Vent litt.' : 'Klarte ikke hente gappers.';
     return res.status(500).json({ error: msg });
   }

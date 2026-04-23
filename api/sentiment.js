@@ -45,24 +45,6 @@ Regler:
 - score basert på helhetsvurdering av alle kategorier
 - Svar KUN med JSON-objektet, ingenting annet`;
 
-function extractJSON(text) {
-  // Direct parse
-  try { return JSON.parse(text.trim()); } catch (_) {}
-
-  // Strip markdown code fence
-  const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/);
-  if (fenced) {
-    try { return JSON.parse(fenced[1].trim()); } catch (_) {}
-  }
-
-  // Find first {...} block
-  const braceMatch = text.match(/\{[\s\S]*\}/);
-  if (braceMatch) {
-    try { return JSON.parse(braceMatch[0]); } catch (_) {}
-  }
-
-  return null;
-}
 
 module.exports = async (req, res) => {
   if (req.method !== 'POST') {
@@ -111,11 +93,19 @@ module.exports = async (req, res) => {
       return res.status(500).json({ error: 'Fikk ikke svar fra AI. Prøv igjen.' });
     }
 
-    console.error('[sentiment] Claude råtekst:', finalText);
-    const parsed = extractJSON(finalText);
-    if (!parsed) {
-      console.error('JSON-parsing feilet. Råtekst:', finalText);
-      return res.status(500).json({ error: 'AI returnerte ugyldig format. Prøv igjen.' });
+    const firstBrace = finalText.indexOf('{');
+    const lastBrace = finalText.lastIndexOf('}');
+    if (firstBrace === -1 || lastBrace === -1) {
+      console.error('[sentiment] Ingen JSON funnet');
+      return res.status(500).json({ error: 'Parsing feilet' });
+    }
+    const jsonString = finalText.substring(firstBrace, lastBrace + 1);
+    let parsed;
+    try {
+      parsed = JSON.parse(jsonString);
+    } catch (e) {
+      console.error('[sentiment] JSON.parse feilet:', e.message);
+      return res.status(500).json({ error: 'JSON parse feilet' });
     }
 
     cache.set('sentiment', parsed, cache.nextMidnightTTL());

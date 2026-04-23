@@ -36,14 +36,6 @@ Regler:
 - Alltid nøyaktig 5 lag i layers-arrayet i rekkefølgen over
 - Svar KUN med JSON-objektet, ingenting annet`;
 
-function extractJSON(text) {
-  try { return JSON.parse(text.trim()); } catch (_) {}
-  const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/);
-  if (fenced) { try { return JSON.parse(fenced[1].trim()); } catch (_) {} }
-  const braceMatch = text.match(/\{[\s\S]*\}/);
-  if (braceMatch) { try { return JSON.parse(braceMatch[0]); } catch (_) {} }
-  return null;
-}
 
 module.exports = async (req, res) => {
   if (req.method !== 'POST') {
@@ -97,15 +89,19 @@ module.exports = async (req, res) => {
       return res.status(500).json({ error: 'Fikk ikke svar fra AI. Prøv igjen.' });
     }
 
-    const parsed = extractJSON(finalText);
-    if (!parsed) {
-      console.error('Ticker JSON-parsing feilet. Råtekst:', finalText);
-      return res.status(200).json({
-        ticker: raw,
-        company: '',
-        found: false,
-        error: 'AI returnerte ugyldig format. Prøv igjen.'
-      });
+    const firstBrace = finalText.indexOf('{');
+    const lastBrace = finalText.lastIndexOf('}');
+    if (firstBrace === -1 || lastBrace === -1) {
+      console.error('[ticker] Ingen JSON funnet');
+      return res.status(500).json({ error: 'Parsing feilet' });
+    }
+    const jsonString = finalText.substring(firstBrace, lastBrace + 1);
+    let parsed;
+    try {
+      parsed = JSON.parse(jsonString);
+    } catch (e) {
+      console.error('[ticker] JSON.parse feilet:', e.message);
+      return res.status(500).json({ error: 'JSON parse feilet' });
     }
 
     cache.set(`ticker_${raw}`, parsed, 6 * 3600);
