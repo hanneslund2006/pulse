@@ -121,7 +121,7 @@ module.exports = async (req, res) => {
         model: 'claude-haiku-4-5-20251001',
         max_tokens: 600,
         system: SYSTEM_PROMPT,
-        tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: 2 }],
+        tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: 1 }],
         messages,
       }),
       fetchTechnicals(raw),
