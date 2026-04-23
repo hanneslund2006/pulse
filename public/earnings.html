@@ -498,12 +498,22 @@
         </div>`;
     }
 
+    function renderInterpretation(d) {
+      if (!d.interpretation) return '';
+      return `
+        <div class="ep-card" style="animation-delay:360ms;">
+          <div class="section-label">CLAUDE-ANALYSE</div>
+          <p style="font-size:13px; color:var(--text-secondary); line-height:1.7; margin:0;">${esc(d.interpretation)}</p>
+        </div>`;
+    }
+
     function renderAll(d) {
       const html =
         renderKeyStats(d) +
         renderEpsHistory(d) +
         renderRevenueTrend(d) +
-        renderImpliedMove(d);
+        renderImpliedMove(d) +
+        renderInterpretation(d);
 
       document.getElementById('results').innerHTML = html;
       document.getElementById('results').style.display = 'block';
