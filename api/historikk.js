@@ -86,11 +86,14 @@ module.exports = async (req, res) => {
   const articleText = articles
     .slice()
     .reverse()
-    .map(a => `[${(a.created_at || '').slice(0, 10)}] ${a.headline}${a.summary ? ': ' + a.summary : ''}`)
+    .map(a => {
+      const full = `[${(a.created_at || '').slice(0, 10)}] ${a.headline}${a.summary ? ': ' + a.summary : ''}`;
+      return full.slice(0, 800);
+    })
     .join('\n');
 
-  const systemPrompt = `List the 5-8 most important stock-moving catalysts for ${ticker} from the provided news. Return ONLY valid JSON, no preamble, no markdown:
-{"ticker":"${ticker}","catalysts":[{"date":"YYYY-MM-DD","headline":"max 8 words","explanation":"1-2 sentences on what happened and why it moved the stock.","sentiment":"positive"}]}
+  const systemPrompt = `List the 5 most important stock-moving catalysts for ${ticker} from the provided news. Return ONLY valid JSON, no preamble, no markdown:
+{"ticker":"${ticker}","catalysts":[{"date":"YYYY-MM-DD","headline":"max 8 words","explanation":"max 1 sentence, 20 words","sentiment":"positive"}]}
 Rules: chronological order oldest first. sentiment: exactly "positive", "negative", or "neutral".`;
 
   const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
@@ -103,7 +106,7 @@ Rules: chronological order oldest first. sentiment: exactly "positive", "negativ
       messages: [
         {
           role: 'user',
-          content: `Here are ${articles.length} news articles for ${ticker} from the last ${months} months:\n\n${articleText}\n\nIdentify the 5-8 most important catalysts.`
+          content: `Here are ${articles.length} news articles for ${ticker} from the last ${months} months:\n\n${articleText}\n\nIdentify the 5 most important catalysts.`
         }
       ]
     });

@@ -31,7 +31,7 @@ Hvis ticker ikke eksisterer eller ikke er en kjent aksje, returner:
 {"ticker": "XYZ", "company": "", "found": false}
 
 Regler:
-- Each layer summary: MAXIMUM 2 sentences and 30 words. Cut ruthlessly.
+- Each layer summary: MAXIMUM 1 sentence and 20 words. Cut ruthlessly.
 - sentiment er nøyaktig en av: "Bullish", "Bearish", "Nøytral"
 - Alltid nøyaktig 5 lag i layers-arrayet i rekkefølgen over
 - Svar KUN med JSON-objektet, ingenting annet`;
@@ -72,10 +72,10 @@ module.exports = async (req, res) => {
     ];
 
     const response = await anthropic.messages.create({
-      model: 'claude-sonnet-4-6',
+      model: 'claude-haiku-4-5-20251001',
       max_tokens: 600,
       system: SYSTEM_PROMPT,
-      tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: 3 }],
+      tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: 2 }],
       messages
     });
 
