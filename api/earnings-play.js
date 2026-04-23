@@ -137,7 +137,7 @@ module.exports = async (req, res) => {
   const rl = rateCheck(req);
   if (rl) return res.status(429).json({ error: `Du har nådd grensen for analyser denne timen. Prøv igjen om ${rl.waitMinutes} minutter.` });
 
-  const cached = await cache.get(`earnings_play_${ticker}`);
+  const cached = await cache.get(`earnings_play2_${ticker}`);
   if (cached) {
     console.log(`[earnings-play] CACHE HIT: ${ticker}`);
     return res.status(200).json(cached);
@@ -155,7 +155,7 @@ module.exports = async (req, res) => {
       impliedMove: ai.impliedMove != null ? { percent: ai.impliedMove } : null,
     };
 
-    cache.set(`earnings_play_${ticker}`, safe, 12 * 3600);
+    cache.set(`earnings_play2_${ticker}`, safe, 12 * 3600);
     return res.status(200).json(safe);
 
   } catch (error) {
