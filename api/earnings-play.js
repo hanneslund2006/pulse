@@ -103,6 +103,7 @@ async function claudeInterpret(ticker, mapped) {
   });
 
   try {
+    console.log('[earnings-play] Claude kall starter');
     const response = await anthropic.messages.create({
       model: 'claude-sonnet-4-6',
       max_tokens: 200,
@@ -148,6 +149,7 @@ module.exports = async (req, res) => {
     const raw = await fetchYahoo(ticker);
     const mapped = mapYahooData(ticker, raw);
     const ai = await claudeInterpret(ticker, mapped);
+    console.log('[earnings-play] Claude svar:', JSON.stringify(ai));
 
     const safe = {
       ...mapped,
