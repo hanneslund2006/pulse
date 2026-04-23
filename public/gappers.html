@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PULSE — Gappers</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body { padding: 32px 20px 64px; }
+    .container { max-width: 560px; margin: 0 auto; }
+
+    /* Gapper rows */
+    .gapper-list { display: flex; flex-direction: column; gap: 8px; }
+    .gapper-row {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 10px; padding: 14px 18px;
+      display: flex; align-items: center; gap: 12px;
+      backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+      opacity: 0; animation: fadeUp 0.4s ease forwards;
+      transition: border-color 200ms;
+    }
+    .gapper-row:hover { border-color: var(--border-light); }
+    .gapper-ticker {
+      font-family: 'Space Mono', monospace; font-size: 10px;
+      letter-spacing: 0.08em; min-width: 60px; border-radius: 4px;
+      padding: 4px 10px; text-align: center; flex-shrink: 0;
+    }
+    .gapper-ticker.up { color: var(--green); border: 1px solid var(--green-border); background: var(--green-dim); }
+    .gapper-ticker.dn { color: var(--red); border: 1px solid rgba(229,75,74,0.30); background: rgba(229,75,74,0.06); }
+    .gapper-company {
+      font-size: 13px; color: var(--text-primary); flex: 1;
+      min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .gapper-gap { font-family: 'Space Mono', monospace; font-size: 13px; font-weight: 700; flex-shrink: 0; }
+    .gapper-gap.up { color: var(--green); }
+    .gapper-gap.dn { color: var(--red); }
+    .gapper-sma {
+      font-family: 'Space Mono', monospace; font-size: 8px;
+      letter-spacing: 0.08em; padding: 3px 6px; border-radius: 3px; flex-shrink: 0;
+    }
+    .gapper-sma.above { color: var(--green); background: var(--green-dim); }
+    .gapper-sma.below { color: var(--red); background: rgba(229,75,74,0.08); }
+    .gapper-vol {
+      font-family: 'Space Mono', monospace; font-size: 9px;
+      color: var(--text-muted); letter-spacing: 0.06em; flex-shrink: 0;
+    }
+
+    /* Window closed */
+    .window-closed {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 12px; padding: 36px 28px;
+      backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    }
+    .window-closed-label {
+      font-family: 'Space Mono', monospace; font-size: 9px;
+      color: var(--text-muted); letter-spacing: 0.16em; margin-bottom: 10px;
+    }
+    .window-closed-title {
+      font-family: 'Cormorant Garamond', serif; font-weight: 600;
+      font-size: 22px; color: var(--text-primary); margin-bottom: 8px;
+    }
+    .window-closed-desc { font-size: 13px; color: var(--text-secondary); line-height: 1.65; }
+    .et-time { font-family: 'Space Mono', monospace; color: var(--text-data); }
+
+    /* Loading row */
+    .load-row {
+      display: flex; align-items: center; gap: 10px; padding: 28px 0;
+    }
+    .load-dot {
+      width: 4px; height: 4px; border-radius: 50%;
+      background: var(--green); flex-shrink: 0;
+      animation: pulse-dot 1.2s ease-in-out infinite;
+    }
+    .load-text {
+      font-family: 'Space Mono', monospace; font-size: 10px;
+      color: var(--text-muted); letter-spacing: 0.1em;
+    }
+
+    /* Cache badge */
+    .cache-note {
+      font-family: 'Space Mono', monospace; font-size: 9px;
+      color: var(--text-muted); letter-spacing: 0.08em;
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <a href="index.html" class="back anim" style="animation-delay:0ms;">← TILBAKE</a>
+
+    <div class="page-title anim" style="animation-delay:40ms;">GAPPERS</div>
+    <div class="page-subtitle anim" style="animation-delay:80ms;">Pre-market gap movers med 200 SMA-filter. Relevant 04:00–10:30 ET.</div>
+
+    <div id="status" class="anim" style="animation-delay:120ms;"></div>
+
+    <div id="list-wrap" style="display:none;">
+      <div class="cache-note" id="cache-note"></div>
+      <div class="section-title" style="margin-bottom:10px;">PRE-MARKET GAPPERS</div>
+      <div class="gapper-list" id="gapper-list"></div>
+      <div style="margin-top:14px;">
+        <button class="btn" onclick="refresh()">OPPDATER →</button>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    const GAPPERS_KEY = () => 'pulse_gappers_' + Math.floor(Date.now() / (15 * 60 * 1000));
+
+    function isGappersWindow() {
+      const et  = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/New_York' }));
+      const day  = et.getDay();
+      const mins = et.getHours() * 60 + et.getMinutes();
+      return day >= 1 && day <= 5 && mins < 630;
+    }
+
+    function etTimeStr() {
+      return new Date().toLocaleTimeString('en-US', {
+        hour: '2-digit', minute: '2-digit', timeZone: 'America/New_York'
+      });
+    }
+
+    function esc(s) {
+      return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    function render(rows, fromCache) {
+      const list = document.getElementById('gapper-list');
+      list.innerHTML = rows.map((r, i) => {
+        const up   = r.gap >= 0;
+        const cls  = up ? 'up' : 'dn';
+        const sign = up ? '+' : '';
+        const smaBadge = r.above200sma === true
+          ? '<div class="gapper-sma above">200SMA ↑</div>'
+          : r.above200sma === false
+            ? '<div class="gapper-sma below">200SMA ↓</div>'
+            : '';
+        return `<div class="gapper-row" style="animation-delay:${i * 70}ms;">
+          <div class="gapper-ticker ${cls}">${esc(r.ticker)}</div>
+          <div class="gapper-company">${esc(r.company)}</div>
+          <div class="gapper-gap ${cls}">${sign}${parseFloat(r.gap).toFixed(1)}%</div>
+          ${smaBadge}
+          <div class="gapper-vol">${esc(r.volume || '')}</div>
+        </div>`;
+      }).join('');
+
+      document.getElementById('cache-note').textContent = fromCache ? 'CACHET · OPPDATERER HVERT 15 MIN' : '';
+      document.getElementById('status').style.display = 'none';
+      document.getElementById('list-wrap').style.display = 'block';
+    }
+
+    function showClosed() {
+      document.getElementById('status').innerHTML = `
+        <div class="window-closed">
+          <div class="window-closed-label">UTENFOR GAPPERS-VINDUET</div>
+          <div class="window-closed-title">Markedet er åpent</div>
+          <div class="window-closed-desc">
+            Pre-market gap-data er relevant mellom 04:00 og 10:30 ET.
+            Klokken er nå <span class="et-time">${etTimeStr()} ET</span>.
+            Kom tilbake før markedsåpning for å se dagens gap movers.
+          </div>
+        </div>`;
+    }
+
+    function showLoading() {
+      document.getElementById('status').innerHTML = `
+        <div class="load-row">
+          <div class="load-dot"></div>
+          <span class="load-text">HENTER GAP MOVERS...</span>
+        </div>`;
+    }
+
+    function showError(msg) {
+      document.getElementById('status').innerHTML = `
+        <div style="font-family:'Space Mono',monospace; font-size:10px; color:var(--red); letter-spacing:0.08em; padding:16px 0;">${esc(msg)}</div>
+        <div style="margin-top:12px;"><button class="btn" onclick="refresh()">PRØV IGJEN →</button></div>`;
+    }
+
+    async function fetchGappers() {
+      const key = GAPPERS_KEY();
+      try {
+        const cached = JSON.parse(localStorage.getItem(key) || 'null');
+        if (cached && Array.isArray(cached)) { render(cached, true); return; }
+      } catch (_) {}
+
+      if (!isGappersWindow()) { showClosed(); return; }
+
+      showLoading();
+      try {
+        const res = await fetch('/api/gappers');
+        if (!res.ok) throw new Error('Serverfeil ' + res.status);
+        const data = await res.json();
+        if (data.error) throw new Error(data.error);
+        localStorage.setItem(key, JSON.stringify(data));
+        render(data, false);
+      } catch (e) {
+        showError('Klarte ikke hente gap movers: ' + e.message);
+      }
+    }
+
+    function refresh() {
+      localStorage.removeItem(GAPPERS_KEY());
+      document.getElementById('list-wrap').style.display = 'none';
+      document.getElementById('status').style.display = 'block';
+      fetchGappers();
+    }
+
+    fetchGappers();
+  </script>
+  <script src="bg.js"></script>
+  <script src="live.js"></script>
+</body>
+</html>
