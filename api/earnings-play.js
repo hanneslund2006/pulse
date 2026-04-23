@@ -2,54 +2,90 @@ const Anthropic = require('@anthropic-ai/sdk');
 const { check: rateCheck } = require('./_ratelimit');
 const cache = require('./_cache');
 
-async function fetchFMP(ticker) {
-  const k = process.env.FMP_API_KEY;
-  const b = 'https://financialmodelingprep.com/api/v3';
-  const safe = url => fetch(url).then(r => r.ok ? r.json() : []).catch(() => []);
+const YahooFinance = require('yahoo-finance2').default;
+const yf = new YahooFinance({ suppressNotices: ['yahooSurvey'] });
 
-  const [surprises, income, quote] = await Promise.all([
-    safe(`${b}/earnings-surprises/${ticker}?apikey=${k}`),
-    safe(`${b}/income-statement/${ticker}?period=quarter&limit=6&apikey=${k}`),
-    safe(`${b}/quote/${ticker}?apikey=${k}`),
+async function fetchYahoo(ticker) {
+  const [quoteData, summaryData] = await Promise.all([
+    yf.quote(ticker).catch(() => null),
+    yf.quoteSummary(ticker, {
+      modules: ['earnings', 'earningsTrend', 'financialData', 'incomeStatementHistoryQuarterly'],
+    }).catch(() => ({})),
   ]);
 
-  console.log(`[earnings-play] FMP: surprises=${surprises.length}, income=${income.length}, quote=${quote.length}`);
-  return { surprises, income, quote };
+  console.log(`[earnings-play] Yahoo: quote=${!!quoteData}, earnings=${!!summaryData.earnings}, trend=${!!summaryData.earningsTrend}, income=${!!(summaryData.incomeStatementHistoryQuarterly)}`);
+  return { quoteData, summaryData };
 }
 
-function mapFMPData(ticker, fmp) {
-  const { surprises, income, quote } = fmp;
+function mapYahooData(ticker, { quoteData, summaryData }) {
+  const q = quoteData || {};
+  const s = summaryData || {};
 
-  const q = Array.isArray(quote) && quote.length > 0 ? quote[0] : null;
-
-  const epsHistory = (Array.isArray(surprises) ? surprises : []).slice(0, 4).map(e => {
-    const actual = e.actualEarningResult ?? null;
-    const estimate = e.estimatedEarning ?? null;
-    const surprise = (actual !== null && estimate !== null) ? actual - estimate : null;
-    const surprisePct = (surprise !== null && estimate !== null && estimate !== 0) ? surprise / Math.abs(estimate) : null;
-    return { quarter: e.date ?? null, actual, estimate, surprise, surprisePct };
+  // EPS history from earnings.earningsChart.quarterly — most recent first
+  const epsRaw = s.earnings?.earningsChart?.quarterly || [];
+  const epsHistory = epsRaw.slice(0, 4).map(e => {
+    const actual = e.actual ?? null;
+    const estimate = e.estimate ?? null;
+    const surprise = e.difference != null ? parseFloat(e.difference) : null;
+    // Yahoo surprisePct is a percentage string "1.69" → convert to decimal 0.0169
+    const surprisePct = e.surprisePct != null ? parseFloat(e.surprisePct) / 100 : null;
+    const quarter = e.periodEndDate
+      ? new Date(e.periodEndDate * 1000).toISOString().slice(0, 10)
+      : (e.date ?? null);
+    return { quarter, actual, estimate, surprise, surprisePct };
   });
 
-  const revenueTrend = (Array.isArray(income) ? income : []).slice(0, 6).map(s => ({
-    date: s.date ?? null,
-    revenue: s.revenue ?? null,
-    netIncome: s.netIncome ?? null,
+  // Revenue trend — oldest first from Yahoo, keep as-is (most recent first)
+  const incomeRaw = s.incomeStatementHistoryQuarterly?.incomeStatementHistory || [];
+  const revenueTrend = incomeRaw.slice(0, 6).map(i => ({
+    date: i.endDate ? new Date(i.endDate).toISOString().slice(0, 10) : null,
+    revenue: i.totalRevenue ?? null,
+    netIncome: i.netIncome ?? null,
   }));
 
-  const earningsDate = q?.earningsAnnouncement ? String(q.earningsAnnouncement).slice(0, 10) : null;
+  // Estimates from earningsTrend (current quarter = trend[0] with period "0q")
+  const trend0 = s.earningsTrend?.trend?.find(t => t.period === '0q') || s.earningsTrend?.trend?.[0] || {};
+  const forwardEPS = trend0.earningsEstimate?.avg ?? null;
+  const forwardRevenue = trend0.revenueEstimate?.avg ?? null;
+  const analystCount = trend0.earningsEstimate?.numberOfAnalysts ?? null;
+
+  // earningsDate from quote.earningsTimestamp
+  const earningsDate = q.earningsTimestamp
+    ? new Date(q.earningsTimestamp).toISOString().slice(0, 10)
+    : null;
+
+  // Analyst sentiment from financialData
+  const fd = s.financialData || {};
+  const targetPrice = fd.targetMeanPrice ?? null;
+  const consensus = fd.recommendationKey ?? null;
+  const currentPrice = q.regularMarketPrice ?? null;
 
   return {
     ticker,
-    currentPrice: q?.price ?? null,
+    currentPrice,
     keyStats: {
       shortFloat: null,
-      forwardPE: q?.pe ?? null,
+      forwardPE: q.forwardPE ?? null,
       insiderOwnership: null,
-      floatShares: q?.sharesOutstanding ?? null,
+      floatShares: q.sharesOutstanding ?? null,
     },
     epsHistory,
-    estimates: { earningsDate },
+    estimates: {
+      forwardEPS,
+      forwardRevenue,
+      analystCount,
+      epsTrendCurrent: null,
+      epsTrend7d: null,
+      epsTrend30d: null,
+      earningsDate,
+    },
     revenueTrend,
+    analystSentiment: {
+      consensus,
+      targetPrice,
+      currentPrice,
+      recentChanges: [],
+    },
   };
 }
 
@@ -60,8 +96,10 @@ async function claudeInterpret(ticker, mapped) {
 
   const payload = JSON.stringify({
     epsHistory: mapped.epsHistory,
+    forwardEPS: mapped.estimates.forwardEPS,
+    analystCount: mapped.estimates.analystCount,
+    targetPrice: mapped.analystSentiment.targetPrice,
     currentPrice: mapped.currentPrice,
-    revenueTrend: mapped.revenueTrend.slice(0, 3),
   });
 
   try {
@@ -95,9 +133,6 @@ module.exports = async (req, res) => {
   if (!process.env.ANTHROPIC_API_KEY) {
     return res.status(500).json({ error: 'ANTHROPIC_API_KEY mangler.' });
   }
-  if (!process.env.FMP_API_KEY) {
-    return res.status(500).json({ error: 'FMP_API_KEY mangler.' });
-  }
 
   const rl = rateCheck(req);
   if (rl) return res.status(429).json({ error: `Du har nådd grensen for analyser denne timen. Prøv igjen om ${rl.waitMinutes} minutter.` });
@@ -107,11 +142,11 @@ module.exports = async (req, res) => {
     console.log(`[earnings-play] CACHE HIT: ${ticker}`);
     return res.status(200).json(cached);
   }
-  console.log(`[earnings-play] CACHE MISS: ${ticker} — fetching FMP`);
+  console.log(`[earnings-play] CACHE MISS: ${ticker} — fetching Yahoo Finance`);
 
   try {
-    const fmpRaw = await fetchFMP(ticker);
-    const mapped = mapFMPData(ticker, fmpRaw);
+    const raw = await fetchYahoo(ticker);
+    const mapped = mapYahooData(ticker, raw);
     const ai = await claudeInterpret(ticker, mapped);
 
     const safe = {
