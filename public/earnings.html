@@ -542,17 +542,6 @@
       document.getElementById('results').style.display = 'none';
       document.getElementById('earnings-hint').textContent = '';
 
-      const TODAY = new Date().toISOString().slice(0, 10);
-      const CACHE_KEY = 'pulse_ep_' + raw + '_' + TODAY;
-
-      try {
-        const cached = JSON.parse(localStorage.getItem(CACHE_KEY) || 'null');
-        if (cached && cached.ticker === raw) {
-          renderAll(cached);
-          return;
-        }
-      } catch (_) {}
-
       fetching = true;
       const btn = document.getElementById('analyse-btn');
       btn.disabled = true;
@@ -563,7 +552,6 @@
         if (!res.ok) throw new Error('Serverfeil ' + res.status);
         const data = await res.json();
         if (data.error) throw new Error(data.error);
-        localStorage.setItem(CACHE_KEY, JSON.stringify(data));
         showSkeletons(false);
         renderAll(data);
       } catch (e) {
