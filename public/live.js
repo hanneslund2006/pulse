@@ -152,7 +152,7 @@
       track.innerHTML = html + html; // duplicate for seamless loop
       const dur = Math.max(data.length * 4, 24);
       track.style.animationDuration = dur + 's';
-    } catch (_) { /* fail silently — placeholder stays */ }
+    } catch (e) { console.error('[live] quotes:', e.message); }
   }
 
   loadTicker();

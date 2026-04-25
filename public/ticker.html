@@ -146,6 +146,11 @@
     .rr-ratio.bad  { color: var(--red); }
     .rr-be { font-family: 'Space Mono', monospace; font-size: 10px; color: var(--text-muted); }
 
+    @media (max-width: 480px) {
+      .rr-inputs { grid-template-columns: 1fr; }
+      .tech-grid  { grid-template-columns: 1fr 1fr; }
+    }
+
     /* Search row + button */
     .search-row { display: flex; gap: 8px; align-items: stretch; }
     .search-row .search-input { flex: 1; }
@@ -232,6 +237,7 @@
       </div>
     </div>
 
+    <div style="text-align:center;padding:32px 0 0;font-family:'Space Mono',monospace;font-size:9px;color:var(--text-muted);letter-spacing:0.14em;">IKKE FINANSIELL RÅDGIVNING</div>
   </div>
 
   <script>
@@ -520,8 +526,13 @@
     // ── State helpers ──────────────────────────────────────────
     function setError(msg) {
       const el = document.getElementById('error-msg');
-      if (msg) { el.textContent = msg; el.classList.add('visible'); }
+      if (msg) { el.innerHTML = esc(msg); el.classList.add('visible'); }
       else el.classList.remove('visible');
+    }
+    function setTimeoutError(ticker) {
+      const el = document.getElementById('error-msg');
+      el.innerHTML = 'Forespørselen tok for lang tid. <button onclick="runSearch(\'' + esc(ticker) + '\')" style="background:none;border:1px solid var(--green);color:var(--green);font-family:\'Space Mono\',monospace;font-size:9px;letter-spacing:0.08em;cursor:pointer;padding:3px 9px;border-radius:3px;margin-left:8px;">PRØV IGJEN</button>';
+      el.classList.add('visible');
     }
 
     function setResult(show) {
@@ -541,13 +552,22 @@
       lastFoundTicker = null;
       document.getElementById('add-btn').disabled = true;
 
+      const ctrl = new AbortController();
+      const abortTimer = setTimeout(() => ctrl.abort(), 30000);
+
       try {
         const res = await fetch('/api/ticker', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ticker })
+          body: JSON.stringify({ ticker }),
+          signal: ctrl.signal
         });
-        if (!res.ok) throw new Error('Serverfeil ' + res.status);
+        clearTimeout(abortTimer);
+        if (res.status === 429) {
+          const d = await res.json().catch(() => ({}));
+          throw new Error(d.error || 'For mange forespørsler. Prøv igjen litt senere.');
+        }
+        if (!res.ok) throw new Error('Analysefeil. Prøv igjen.');
         const data = await res.json();
 
         stopLoading();
@@ -556,8 +576,13 @@
 
         renderTicker(data);
       } catch (e) {
+        clearTimeout(abortTimer);
         stopLoading();
-        setError('Klarte ikke hente data. Sjekk tilkoblingen og prøv igjen.');
+        if (e.name === 'AbortError') {
+          setTimeoutError(ticker);
+        } else {
+          setError(e.message || 'Klarte ikke hente data. Prøv igjen.');
+        }
       }
     }
 

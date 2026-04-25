@@ -69,6 +69,8 @@
       </div>
     </div>
 
+    <div class="error-msg" id="error-msg"></div>
+
     <div class="sector-list" id="sector-list"></div>
 
     <div id="refresh-wrap" style="display:none; margin-top:14px;">
@@ -131,7 +133,9 @@
         document.getElementById('load-wrap').classList.remove('visible');
         document.getElementById('empty-state').style.display = 'block';
         if (btn) btn.disabled = false;
-        alert('Feil: ' + e.message);
+        const errEl = document.getElementById('error-msg');
+        errEl.textContent = e.message || 'Klarte ikke hente sektordata. Prøv igjen.';
+        errEl.classList.add('visible');
       } finally {
         fetching = false;
       }

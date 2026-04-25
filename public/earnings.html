@@ -220,6 +220,7 @@
     <!-- Results -->
     <div id="results" style="display:none;"></div>
 
+    <div style="text-align:center;padding:32px 0 0;font-family:'Space Mono',monospace;font-size:9px;color:var(--text-muted);letter-spacing:0.14em;">IKKE FINANSIELL RÅDGIVNING</div>
   </div>
 
   <script>
@@ -532,10 +533,14 @@
 
     function showError(msg) {
       const el = document.getElementById('error-msg');
-      el.textContent = msg;
+      el.innerHTML = esc(msg);
       el.classList.add('visible');
     }
-
+    function showTimeoutError() {
+      const el = document.getElementById('error-msg');
+      el.innerHTML = 'Forespørselen tok for lang tid. <button onclick="runAnalysis()" style="background:none;border:1px solid var(--green);color:var(--green);font-family:\'Space Mono\',monospace;font-size:9px;letter-spacing:0.08em;cursor:pointer;padding:3px 9px;border-radius:3px;margin-left:8px;">PRØV IGJEN</button>';
+      el.classList.add('visible');
+    }
     function clearError() {
       document.getElementById('error-msg').classList.remove('visible');
     }
@@ -557,16 +562,29 @@
       btn.disabled = true;
       showSkeletons(true);
 
+      const ctrl = new AbortController();
+      const abortTimer = setTimeout(() => ctrl.abort(), 30000);
+
       try {
-        const res = await fetch('/api/earnings-play?ticker=' + encodeURIComponent(raw));
-        if (!res.ok) throw new Error('Serverfeil ' + res.status);
+        const res = await fetch('/api/earnings-play?ticker=' + encodeURIComponent(raw), { signal: ctrl.signal });
+        clearTimeout(abortTimer);
+        if (res.status === 429) {
+          const d = await res.json().catch(() => ({}));
+          throw new Error(d.error || 'For mange forespørsler. Prøv igjen litt senere.');
+        }
+        if (!res.ok) throw new Error('Analysefeil. Prøv igjen.');
         const data = await res.json();
         if (data.error) throw new Error(data.error);
         showSkeletons(false);
         renderAll(data);
       } catch (e) {
+        clearTimeout(abortTimer);
         showSkeletons(false);
-        showError('FEIL: ' + e.message);
+        if (e.name === 'AbortError') {
+          showTimeoutError();
+        } else {
+          showError(e.message || 'Ukjent feil. Prøv igjen.');
+        }
       } finally {
         fetching = false;
         btn.disabled = false;
