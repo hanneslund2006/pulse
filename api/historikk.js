@@ -92,9 +92,9 @@ module.exports = async (req, res) => {
     })
     .join('\n');
 
-  const systemPrompt = `List the 5 most important stock-moving catalysts for ${ticker} from the provided news. Return ONLY valid JSON, no preamble, no markdown:
+  const systemPrompt = `List the 5 most important stock-moving catalysts for ${ticker} from the provided news. Today is ${new Date().toISOString().slice(0, 10)}. Return ONLY valid JSON, no preamble, no markdown:
 {"ticker":"${ticker}","catalysts":[{"date":"YYYY-MM-DD","headline":"max 8 words","explanation":"max 1 sentence, 20 words","sentiment":"positive"}]}
-Rules: chronological order oldest first. sentiment: exactly "positive", "negative", or "neutral".`;
+Rules: chronological order oldest first. sentiment: exactly "positive", "negative", or "neutral". CRITICAL: copy dates VERBATIM from the [YYYY-MM-DD] prefix in each article — never use dates from training data.`;
 
   const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
