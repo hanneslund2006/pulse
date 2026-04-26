@@ -138,12 +138,14 @@ module.exports = async (req, res) => {
   const rl = rateCheck(req);
   if (rl) return res.status(429).json({ error: `Du har nådd grensen for analyser denne timen. Prøv igjen om ${rl.waitMinutes} minutter.` });
 
-  const cached = await cache.get(`earnings_play3_${ticker}`);
+  const today = new Date().toISOString().slice(0, 10);
+  const CACHE_KEY = `earnings:${ticker}:${today}`;
+  const cached = await cache.get(CACHE_KEY);
   if (cached) {
-    console.log(`[earnings-play] CACHE HIT: ${ticker}`);
+    console.log(`[earnings-play] CACHE HIT: ${ticker}:${today}`);
     return res.status(200).json(cached);
   }
-  console.log(`[earnings-play] CACHE MISS: ${ticker} — fetching Yahoo Finance`);
+  console.log(`[earnings-play] CACHE MISS: ${ticker}:${today} — fetching Yahoo Finance`);
 
   try {
     const raw = await fetchYahoo(ticker);
@@ -157,7 +159,7 @@ module.exports = async (req, res) => {
       impliedMove: ai.impliedMove != null ? { percent: ai.impliedMove } : null,
     };
 
-    cache.set(`earnings_play3_${ticker}`, safe, 12 * 3600);
+    cache.set(CACHE_KEY, safe, 6 * 3600);
     return res.status(200).json(safe);
 
   } catch (error) {

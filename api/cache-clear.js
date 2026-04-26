@@ -8,7 +8,8 @@ module.exports = async (req, res) => {
     return res.status(400).json({ error: 'Ugyldig ticker-parameter' });
   }
 
-  const key = `earnings_play2_${ticker}`;
+  const today = new Date().toISOString().slice(0, 10);
+  const key = `earnings:${ticker}:${today}`;
 
   if (!process.env.KV_REST_API_URL || !process.env.KV_REST_API_TOKEN) {
     return res.status(500).json({ error: 'Redis-miljøvariabler mangler.' });
