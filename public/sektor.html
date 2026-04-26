@@ -43,6 +43,36 @@
     .sector-bar { height: 100%; border-radius: 2px; }
     .sector-bar.up { background: var(--green); }
     .sector-bar.dn { background: var(--red); }
+
+    /* Klikk-inn panel */
+    .sector-row { cursor: pointer; }
+    .sector-row.active {
+      border-bottom-left-radius: 0;
+      border-bottom-right-radius: 0;
+    }
+    .sector-panel {
+      display: none;
+      background: rgba(255,255,255,0.02);
+      border: 1px solid var(--border);
+      border-top: none;
+      border-radius: 0 0 10px 10px;
+      padding: 14px 18px 14px 32px;
+      margin-top: -4px;
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.65;
+    }
+    .sector-panel.visible { display: block; }
+    .panel-loading {
+      display: flex; align-items: center; gap: 8px;
+      font-family: 'Space Mono', monospace;
+      font-size: 9px; color: var(--text-muted); letter-spacing: 0.1em;
+    }
+    .panel-ticker {
+      font-family: 'Space Mono', monospace; font-size: 9px;
+      color: var(--green); letter-spacing: 0.12em; margin-bottom: 7px;
+    }
+    .panel-error { color: var(--red); font-size: 11px; }
   </style>
 </head>
 <body>
@@ -77,6 +107,7 @@
       <button class="btn" onclick="clearAndRefetch()">HENT NY DATA</button>
     </div>
 
+    <div style="text-align:center;padding:32px 0 0;font-family:'Space Mono',monospace;font-size:9px;color:var(--text-muted);letter-spacing:0.14em;">IKKE FINANSIELL RÅDGIVNING</div>
   </div>
 
   <script>
@@ -97,13 +128,16 @@
         const sign = up ? '+' : '';
         const barW = Math.min(Math.abs(s.weeklyChange) / maxAbs * 100, 100);
         const color = up ? '#1D9E75' : '#E24B4A';
-        return `<div class="sector-row" style="border-left-color:${color}; animation-delay:${i * 50}ms;">
+        return `<div class="sector-row" id="row-${esc(s.symbol)}"
+          onclick="togglePanel('${esc(s.symbol)}','${esc(s.name)}')"
+          style="border-left-color:${color}; animation-delay:${i * 50}ms;">
           <div class="sector-rank">${i + 1}</div>
           <div class="sector-name">${esc(s.name)}</div>
           <div class="sector-symbol">${esc(s.symbol)}</div>
           <div class="sector-bar-wrap"><div class="sector-bar ${cls}" style="width:${barW}%"></div></div>
           <div class="sector-chg ${cls}">${sign}${s.weeklyChange.toFixed(2)}%</div>
-        </div>`;
+        </div>
+        <div class="sector-panel" id="panel-${esc(s.symbol)}"></div>`;
       }).join('');
 
       document.getElementById('empty-state').style.display = 'none';
@@ -146,6 +180,58 @@
       document.getElementById('sector-list').classList.remove('visible');
       document.getElementById('refresh-wrap').style.display = 'none';
       fetchSectors();
+    }
+
+    // ── Klikk-inn panel ───────────────────────────────────────
+    let activePanel = null;
+
+    function sektorCacheKey(symbol) {
+      const hr = new Date().toISOString().slice(0, 13).replace('T', '-');
+      return `sektor:${symbol}:${hr}`;
+    }
+
+    function togglePanel(symbol, name) {
+      const panel = document.getElementById('panel-' + symbol);
+      const row   = document.getElementById('row-'   + symbol);
+      if (!panel || !row) return;
+
+      if (activePanel === symbol) {
+        panel.classList.remove('visible');
+        row.classList.remove('active');
+        activePanel = null;
+        return;
+      }
+
+      if (activePanel) {
+        const prevPanel = document.getElementById('panel-' + activePanel);
+        const prevRow   = document.getElementById('row-'   + activePanel);
+        if (prevPanel) prevPanel.classList.remove('visible');
+        if (prevRow)   prevRow.classList.remove('active');
+      }
+
+      activePanel = symbol;
+      row.classList.add('active');
+      panel.classList.add('visible');
+
+      const key = sektorCacheKey(symbol);
+      try {
+        const hit = localStorage.getItem(key);
+        if (hit) { panel.innerHTML = JSON.parse(hit).html; return; }
+      } catch (_) {}
+
+      panel.innerHTML = `<div class="panel-loading"><div class="ls-dot"></div>ANALYSERER ${esc(symbol)}…</div>`;
+
+      fetch(`/api/sektor?ticker=${encodeURIComponent(symbol)}&navn=${encodeURIComponent(name)}`)
+        .then(r => r.json())
+        .then(d => {
+          if (d.error) throw new Error(d.error);
+          const html = `<div class="panel-ticker">${esc(symbol)} — ${esc(name)}</div><div>${esc(d.analyse)}</div>`;
+          panel.innerHTML = html;
+          try { localStorage.setItem(key, JSON.stringify({ html })); } catch (_) {}
+        })
+        .catch(e => {
+          panel.innerHTML = `<div class="panel-error">${esc(e.message || 'Klarte ikke hente analyse.')}</div>`;
+        });
     }
 
     // Load from cache on init
