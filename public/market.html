@@ -474,6 +474,10 @@
 
     // ── Render report ────────────────────────────────────────
     function renderData(data) {
+      if (!data || !Array.isArray(data.categories) || !data.categories.length) {
+        console.warn('[market] renderData: ugyldig eller ufullstendig data-struktur');
+        return;
+      }
       lastClaudeKeydata = data.keydata || [];
 
       const col = scoreColor(data.score ?? 50);
@@ -501,7 +505,7 @@
             <div class="cat-header">
               <div class="cat-name">${esc(cat.name)}</div>
               <div class="badge" style="color: ${color}; background: ${color}18;">
-                ${esc(cat.sentiment.toUpperCase())}
+                ${esc((cat.sentiment || '').toUpperCase())}
               </div>
             </div>
             <div class="cat-summary">${esc(cat.summary)}</div>
@@ -579,13 +583,24 @@
       .toLocaleDateString('no-NO', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
       .toUpperCase();
 
-    // Load from cache on init; auto-fetch if no cache
+    // Auto-fetch only on weekdays 08:00–22:00 Oslo time
+    function isMarketHours() {
+      const oslo = new Date().toLocaleString('en-US', { timeZone: 'Europe/Oslo' });
+      const d = new Date(oslo);
+      const day = d.getDay(); // 0=Sun, 6=Sat
+      const hour = d.getHours();
+      return day >= 1 && day <= 5 && hour >= 8 && hour < 22;
+    }
+
+    // Load from cache on init; auto-fetch only during market hours
     try {
       const cached = JSON.parse(localStorage.getItem(CACHE_KEY) || 'null');
       if (cached) renderData(cached);
-      else fetchReport();
+      else if (isMarketHours()) fetchReport();
+      else fetchAndInjectRealPrices();
     } catch (e) {
-      fetchReport();
+      if (isMarketHours()) fetchReport();
+      else fetchAndInjectRealPrices();
     }
 
     // ── Regime indicator ─────────────────────────────────────

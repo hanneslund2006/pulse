@@ -244,6 +244,10 @@
         showError('Skriv inn et ticker-symbol.');
         return;
       }
+      if (!/^[A-Z]{1,6}$/.test(raw)) {
+        showError('Ugyldig ticker. Bruk kun bokstaver, maks 6 tegn (f.eks. AAPL).');
+        return;
+      }
       if (fetching) return;
 
       clearError();

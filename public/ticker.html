@@ -555,6 +555,10 @@
       ticker = ticker.trim().toUpperCase();
       if (!ticker) return;
 
+      // Reset multi-model section from previous search
+      const mmSection = document.getElementById('multi-model-section');
+      if (mmSection) mmSection.style.display = 'none';
+
       input.value = ticker;
       setError(null);
       setResult(false);
@@ -586,7 +590,7 @@
         if (!data.found) { setError(`Fant ikke ticker "${ticker}". Sjekk symbolet og prøv igjen.`); return; }
 
         renderTicker(data);
-        fetchMultiModel(data.ticker, data.layers || []);
+        if (data.layers && data.layers.length > 0) fetchMultiModel(data.ticker, data.layers);
       } catch (e) {
         clearTimeout(abortTimer);
         stopLoading();
