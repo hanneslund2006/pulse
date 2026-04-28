@@ -1,7 +1,18 @@
 # PULSE — Handoff
 
-**Dato:** 2026-04-26  
+**Dato:** 2026-04-28  
 **Status:** Fase 1 — 100% komplett
+
+---
+
+## Siste sesjon — 2026-04-28
+
+**Forside konsolidert (9 → 7 kort):**
+- Fjernet: Earnings-kortet og Gappers-kortet fra forsiden
+- Beholdt: Historikk som eget dedikert kort
+- `earnings-play.html` href rettet (var feil lenke)
+- Radar-kortets beskrivelse oppdatert
+- Commit: `beec13f feat: konsolider forsiden til 7 kort`
 
 ---
 
