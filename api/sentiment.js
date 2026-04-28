@@ -78,9 +78,8 @@ module.exports = async (req, res) => {
     const response = await anthropic.messages.create({
       model: 'claude-haiku-4-5-20251001',
       max_tokens: 700,
-      betas: ['web-search-2025-03-05'],
       system: SYSTEM_PROMPT,
-      tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: 3 }],
+      tools: [{ type: 'web_search_20250305', name: 'web_search' }],
       messages
     });
 
