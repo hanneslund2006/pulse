@@ -1,11 +1,43 @@
 # PULSE — Handoff
 
 **Dato:** 2026-04-28  
-**Status:** Fase 1 — 100% komplett
+**Status:** Fase 2 — 100% komplett (multi-modell venter på OPENROUTER_API_KEY)
 
 ---
 
 ## Siste sesjon — 2026-04-28
+
+### Fase 1B — sentiment.js fikset
+- **Rotårsak:** `betas: ['web-search-2025-03-05']` er ikke et gyldig parameter i `messages.create()` i SDK 0.40. Web search er nå en first-class tool uten beta-header.
+- **Fix:** Fjernet `betas`-parameteret og `max_uses: 3` fra tool-definisjonen.
+- Verifisert: `POST /api/sentiment` → **200 OK** med gyldig JSON.
+- Samme fix gjort i `api/radar.js` (hadde `max_uses: 3`).
+- Commit: `ef25924`
+
+### Fase 2 — AI-drevet innsikt (komplett)
+Commit: `56c67f7`
+
+**1. Morgenbrief (market.html)**
+- Auto-fetcher rapport på load — ingen klikk nødvendig hvis ingen cache
+- CTA-kortet vises fortsatt (fetchReport trigges automatisk)
+
+**2. Radar-logg (radar.html)**
+- Lagrer daglige radar-picks i `pulse_radar_log` localStorage med dato og pris
+- Viser historikk under resultater: dato + picks + % endring fra radar-pris
+- Grønn ✓ markerer picks som gikk riktig vei
+
+**3. Earnings play-ranker**
+- `api/earnings-ranker.js`: ukentlig auto-ranking via Haiku + web_search. Cache til søndag.
+- `public/earnings-play.html`: rename fra earnings.html + ranker-seksjon øverst. Klikk på kandidat for å pre-fille ticker.
+
+**4. Multi-modell analyse**
+- `api/ticker-multimodel.js`: OpenRouter endpoint (GPT-4o Mini + Gemini Flash). Krever `OPENROUTER_API_KEY` i Vercel env.
+- `ticker.html`: "ANDRE MODELLER"-seksjon vises automatisk etter analyse. Skjules gracefully ved 503 (nøkkel ikke satt).
+- **Handling nødvendig:** Legg til `OPENROUTER_API_KEY` i Vercel → Settings → Environment Variables.
+
+---
+
+## Siste sesjon — 2026-04-28 (tidligere)
 
 **Forside konsolidert (9 → 7 kort):**
 - Fjernet: Earnings-kortet og Gappers-kortet fra forsiden
