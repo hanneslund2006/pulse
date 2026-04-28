@@ -26,7 +26,7 @@
     @keyframes fadeUp2 { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
     .sector-row {
       background: var(--surface); border: 1px solid var(--border);
-      border-left: 3px solid var(--border); border-radius: 10px;
+      border-radius: 10px;
       padding: 14px 18px; display: flex; align-items: center; gap: 14px;
       backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
       transition: border-color 200ms ease, box-shadow 200ms ease;
@@ -130,7 +130,7 @@
         const color = up ? '#1D9E75' : '#E24B4A';
         return `<div class="sector-row" id="row-${esc(s.symbol)}"
           onclick="togglePanel('${esc(s.symbol)}','${esc(s.name)}')"
-          style="border-left-color:${color}; animation-delay:${i * 50}ms;">
+          style="border-color:${color}40;background:${color}08;animation-delay:${i * 50}ms;">
           <div class="sector-rank">${i + 1}</div>
           <div class="sector-name">${esc(s.name)}</div>
           <div class="sector-symbol">${esc(s.symbol)}</div>

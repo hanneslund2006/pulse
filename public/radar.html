@@ -51,7 +51,7 @@
     .radar-list.visible { display: flex; }
     .radar-card {
       background: var(--surface); border: 1px solid var(--border);
-      border-left: 3px solid var(--green); border-radius: 12px;
+      border-radius: 12px;
       padding: 20px 24px;
       opacity: 0; animation: fadeUp 0.4s ease forwards;
       backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
@@ -142,7 +142,7 @@
         const dir   = r.direction || 'Bullish';
         const color = COLORS[dir] || '#BA7517';
         const bg    = BG[dir]    || 'rgba(186,117,23,0.1)';
-        return `<div class="radar-card" style="border-left-color:${color}; animation-delay:${i * 80}ms;">
+        return `<div class="radar-card" style="border-color:${color}40;background:${color}08;animation-delay:${i * 80}ms;">
           <div class="radar-header">
             <div class="radar-ticker">${esc(r.ticker)}</div>
             <div class="radar-badge" style="color:${color}; background:${bg};">${esc(dir.toUpperCase())}</div>

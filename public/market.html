@@ -20,8 +20,7 @@
     /* Verdict card */
     .verdict-card {
       background: var(--surface);
-      border: 1px solid var(--border);
-      border-left: 3px solid var(--green);
+      border: 1px solid var(--green-border);
       border-radius: 12px;
       padding: 20px 24px;
       display: flex;
@@ -81,7 +80,6 @@
     .cat-card {
       background: var(--surface);
       border: 1px solid var(--border);
-      border-left: 3px solid var(--green);
       border-radius: 12px; padding: 20px 24px;
       backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
       transition: border-color 200ms ease, box-shadow 200ms ease;
@@ -100,8 +98,7 @@
     /* Regime banner */
     .regime-banner {
       background: var(--surface);
-      border: 1px solid var(--border);
-      border-left: 3px solid var(--green);
+      border: 1px solid var(--green-border);
       border-radius: 12px; padding: 14px 24px;
       display: flex; align-items: center;
       justify-content: space-between; gap: 16px;
@@ -501,7 +498,7 @@
       grid.innerHTML = (data.categories || []).map(cat => {
         const color = SENTIMENT_COLORS[cat.sentiment] || '#444';
         return `
-          <div class="cat-card" style="border-left-color: ${color}">
+          <div class="cat-card" style="border-color:${color}40;background:${color}08;">
             <div class="cat-header">
               <div class="cat-name">${esc(cat.name)}</div>
               <div class="badge" style="color: ${color}; background: ${color}18;">

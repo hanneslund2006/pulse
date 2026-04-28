@@ -97,13 +97,13 @@
     .trade-list { display: flex; flex-direction: column; gap: 8px; }
     .trade-card {
       background: var(--surface); border: 1px solid var(--border);
-      border-left: 3px solid var(--border); border-radius: 10px; padding: 14px 18px;
+      border-radius: 10px; padding: 14px 18px;
       animation: fadeUp 0.35s ease forwards; opacity: 0;
       backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
     }
-    .trade-card.win  { border-left-color: var(--green); }
-    .trade-card.loss { border-left-color: var(--red); }
-    .trade-card.open { border-left-color: var(--amber); }
+    .trade-card.win  { border-color: var(--green-border);   background: rgba(29,184,126,0.05); }
+    .trade-card.loss { border-color: rgba(229,75,74,0.30);  background: rgba(229,75,74,0.05); }
+    .trade-card.open { border-color: rgba(196,130,26,0.30); background: rgba(196,130,26,0.05); }
 
     .trade-top { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
     .trade-ticker { font-family: 'Space Mono', monospace; font-weight: 700; font-size: 14px; letter-spacing: 0.08em; }

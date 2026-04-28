@@ -74,7 +74,7 @@
     /* Layer cards */
     .layer-card {
       background: var(--surface); border: 1px solid var(--border);
-      border-left: 3px solid var(--border); border-radius: 12px;
+      border-radius: 12px;
       padding: 20px 24px; margin-bottom: 10px;
       backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
       transition: border-color 200ms ease, box-shadow 200ms ease;
@@ -106,7 +106,7 @@
     /* Technical card */
     .technical-card {
       background: var(--surface); border: 1px solid var(--border);
-      border-left: 3px solid var(--border); border-radius: 12px;
+      border-radius: 12px;
       padding: 20px 24px; margin-bottom: 10px;
       backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
     }
@@ -216,7 +216,7 @@
       <div id="layers-container"></div>
       <!-- Multi-model section -->
       <div id="multi-model-section" style="display:none; margin-bottom:10px;">
-        <div class="layer-card" style="border-left-color: #7F77DD;">
+        <div class="layer-card" style="border-color:#7F77DD40;background:#7F77DD08;">
           <div class="layer-header">
             <div class="layer-name">ANDRE MODELLER</div>
             <div id="multi-model-status" style="font-family:'Space Mono',monospace;font-size:9px;color:var(--text-muted);letter-spacing:0.08em;">LASTER...</div>
@@ -460,7 +460,7 @@
         const borderColor = SENTIMENT_COLORS[layer.sentiment]  || '#3A3A3A';
         const badgeColor  = BADGE_TEXT_COLORS[layer.sentiment] || '#555';
         const badgeBg     = BADGE_BG[layer.sentiment]          || '#1e1e1e';
-        return `<div class="layer-card" style="border-left-color: ${borderColor};">
+        return `<div class="layer-card" style="border-color:${borderColor}40;background:${borderColor}08;">
           <div class="layer-header">
             <div class="layer-name">${esc(layer.name.toUpperCase())}</div>
             <div class="badge" style="color: ${badgeColor}; background: ${badgeBg};">
@@ -487,15 +487,15 @@
       const techCard = document.getElementById('technical-card');
       if (data.technical && techCard) {
         const t = data.technical;
-        const trendCol = t.trend === 'Bullish' ? 'var(--green)' : t.trend === 'Bearish' ? 'var(--red)' : 'var(--text-muted)';
+        const trendHex = t.trend === 'Bullish' ? '#1D9E75' : t.trend === 'Bearish' ? '#E24B4A' : '#4A5166';
         const trendBg  = t.trend === 'Bullish' ? 'rgba(29,184,126,0.10)' : t.trend === 'Bearish' ? 'rgba(229,75,74,0.10)' : 'rgba(74,81,102,0.12)';
         const smaDir   = t.above200sma ? 'up' : 'dn';
         const smaTxt   = t.above200sma ? '↑ OVER' : '↓ UNDER';
         const pvs      = (t.priceVsSma200pct >= 0 ? '+' : '') + t.priceVsSma200pct + '%';
-        techCard.innerHTML = `<div class="technical-card" style="border-left-color: ${trendCol};">
+        techCard.innerHTML = `<div class="technical-card" style="border-color:${trendHex}40;background:${trendHex}08;">
           <div class="technical-header">
             <div class="technical-title">TEKNISK ANALYSE</div>
-            <div class="badge" style="color: ${trendCol}; background: ${trendBg};">${esc(t.trend.toUpperCase())}</div>
+            <div class="badge" style="color: ${trendHex}; background: ${trendBg};">${esc(t.trend.toUpperCase())}</div>
           </div>
           <div class="tech-grid">
             <div class="tech-cell">
