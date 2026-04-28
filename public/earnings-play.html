@@ -629,7 +629,7 @@
         const scorePct = Math.min(100, Math.max(0, r.score || 0));
         return `<div
           style="background:var(--surface);border:1px solid var(--border);border-left:3px solid ${color};border-radius:10px;padding:12px 16px;cursor:pointer;transition:border-color 150ms;"
-          onclick="document.getElementById('ticker-input').value='${esc(r.ticker)}';document.getElementById('ticker-input').scrollIntoView({behavior:'smooth'});"
+          data-ticker="${esc(r.ticker)}" onclick="pickRankerTicker(this)"
           onmouseenter="this.style.borderColor='${color}'" onmouseleave="this.style.borderLeftColor='${color}';this.style.borderColor='var(--border)';this.style.borderLeftColor='${color}';"
         >
           <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
@@ -644,6 +644,11 @@
           </div>
         </div>`;
       }).join('');
+    }
+
+    function pickRankerTicker(el) {
+      document.getElementById('ticker-input').value = el.dataset.ticker;
+      document.getElementById('ticker-input').scrollIntoView({ behavior: 'smooth' });
     }
 
     async function loadRanker() {

@@ -1,3 +1,4 @@
+const { check: rateCheck } = require('./_ratelimit');
 const cache = require('./_cache');
 
 const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
@@ -9,9 +10,15 @@ module.exports = async (req, res) => {
     return res.status(503).json({ error: 'OPENROUTER_API_KEY ikke konfigurert.' });
   }
 
+  const rl = rateCheck(req);
+  if (rl) return res.status(429).json({ error: `Du har nådd grensen for analyser denne timen. Prøv igjen om ${rl.waitMinutes} minutter.` });
+
   const { ticker, layers } = req.body || {};
   if (!ticker || !Array.isArray(layers)) {
     return res.status(400).json({ error: 'ticker og layers kreves' });
+  }
+  if (!/^[A-Z]{1,6}$/.test(ticker)) {
+    return res.status(400).json({ error: 'Ugyldig ticker-format.' });
   }
 
   const today = new Date().toISOString().slice(0, 10);

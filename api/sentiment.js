@@ -108,6 +108,11 @@ module.exports = async (req, res) => {
       return res.status(500).json({ error: 'JSON parse feilet' });
     }
 
+    if (!parsed.verdict || !Array.isArray(parsed.categories) || parsed.categories.length === 0) {
+      console.error('[sentiment] Parsed JSON mangler required fields:', JSON.stringify(parsed).slice(0, 200));
+      return res.status(500).json({ error: 'AI returnerte ufullstendig rapport. Prøv igjen.' });
+    }
+
     cache.set('sentiment', parsed, cache.nextMidnightTTL());
     return res.status(200).json(parsed);
 
