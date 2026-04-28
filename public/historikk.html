@@ -30,8 +30,8 @@
     .period-btn {
       flex: 1; padding: 10px; background: var(--surface);
       border: 1px solid var(--border); border-radius: 7px;
-      color: var(--text-muted); font-family: 'Space Mono', monospace;
-      font-size: 10px; letter-spacing: 0.12em; cursor: pointer;
+      color: var(--text-muted); font-family: 'DM Sans', sans-serif;
+      font-size: 11px; letter-spacing: 0.04em; cursor: pointer;
       transition: all 150ms;
       backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
     }
@@ -45,8 +45,8 @@
     .fetch-btn {
       width: 100%; padding: 13px 24px; background: transparent;
       border: 1px solid var(--green); border-radius: 8px;
-      color: var(--green); font-family: 'Space Mono', monospace;
-      font-size: 11px; font-weight: 700; letter-spacing: 0.16em;
+      color: var(--green); font-family: 'DM Sans', sans-serif;
+      font-size: 12px; font-weight: 700; letter-spacing: 0.08em;
       cursor: pointer; transition: background 140ms;
       margin-bottom: 28px;
     }
@@ -62,8 +62,8 @@
       animation: pulse-dot 1.2s ease-in-out infinite;
     }
     .load-text {
-      font-family: 'Space Mono', monospace; font-size: 10px;
-      color: var(--text-muted); letter-spacing: 0.14em;
+      font-family: 'DM Sans', sans-serif; font-size: 11px;
+      color: var(--text-muted); letter-spacing: 0.06em;
     }
 
     /* Timeline */
@@ -170,7 +170,7 @@
       </div>
     </div>
 
-    <div style="text-align:center;padding:32px 0 0;font-family:'Space Mono',monospace;font-size:9px;color:var(--text-muted);letter-spacing:0.14em;">IKKE FINANSIELL RÅDGIVNING</div>
+    <div style="text-align:center;padding:32px 0 0;font-family:'DM Sans',sans-serif;font-size:11px;color:var(--text-muted);letter-spacing:0.08em;">IKKE FINANSIELL RÅDGIVNING</div>
   </div>
 
   <script>
@@ -196,7 +196,7 @@
     }
     function showTimeoutError() {
       const el = document.getElementById('error-msg');
-      el.innerHTML = 'Forespørselen tok for lang tid. <button onclick="fetchHistorikk()" style="background:none;border:1px solid var(--green);color:var(--green);font-family:\'Space Mono\',monospace;font-size:9px;letter-spacing:0.08em;cursor:pointer;padding:3px 9px;border-radius:3px;margin-left:8px;">PRØV IGJEN</button>';
+      el.innerHTML = 'Forespørselen tok for lang tid. <button onclick="fetchHistorikk()" style="background:none;border:1px solid var(--green);color:var(--green);font-family:\'DM Sans\',sans-serif;font-size:11px;letter-spacing:0.04em;cursor:pointer;padding:4px 10px;border-radius:3px;margin-left:8px;">PRØV IGJEN</button>';
       el.classList.add('visible');
     }
     function clearError() {
