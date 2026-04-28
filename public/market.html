@@ -579,13 +579,13 @@
       .toLocaleDateString('no-NO', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
       .toUpperCase();
 
-    // Load from cache on init; always fetch live prices
+    // Load from cache on init; auto-fetch if no cache
     try {
       const cached = JSON.parse(localStorage.getItem(CACHE_KEY) || 'null');
       if (cached) renderData(cached);
-      else fetchAndInjectRealPrices();
+      else fetchReport();
     } catch (e) {
-      fetchAndInjectRealPrices();
+      fetchReport();
     }
 
     // ── Regime indicator ─────────────────────────────────────

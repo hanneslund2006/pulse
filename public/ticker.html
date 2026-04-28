@@ -214,6 +214,17 @@
       </div>
       <div id="technical-card" style="display:none;"></div>
       <div id="layers-container"></div>
+      <!-- Multi-model section -->
+      <div id="multi-model-section" style="display:none; margin-bottom:10px;">
+        <div class="layer-card" style="border-left-color: #7F77DD;">
+          <div class="layer-header">
+            <div class="layer-name">ANDRE MODELLER</div>
+            <div id="multi-model-status" style="font-family:'Space Mono',monospace;font-size:9px;color:var(--text-muted);letter-spacing:0.08em;">LASTER...</div>
+          </div>
+          <div id="multi-model-content"></div>
+        </div>
+      </div>
+
       <div class="rr-card" id="rr-calc" style="display:none;">
         <div class="rr-title">R/R KALKULATOR</div>
         <div class="rr-inputs">
@@ -575,6 +586,7 @@
         if (!data.found) { setError(`Fant ikke ticker "${ticker}". Sjekk symbolet og prøv igjen.`); return; }
 
         renderTicker(data);
+        fetchMultiModel(data.ticker, data.layers || []);
       } catch (e) {
         clearTimeout(abortTimer);
         stopLoading();
@@ -583,6 +595,49 @@
         } else {
           setError(e.message || 'Klarte ikke hente data. Prøv igjen.');
         }
+      }
+    }
+
+    // ── Multi-model second opinion ────────────────────────────
+    async function fetchMultiModel(ticker, layers) {
+      const section = document.getElementById('multi-model-section');
+      const content = document.getElementById('multi-model-content');
+      const status  = document.getElementById('multi-model-status');
+      if (!section || !content || !status) return;
+
+      section.style.display = 'block';
+
+      try {
+        const res = await fetch('/api/ticker-multimodel', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ticker, layers }),
+        });
+
+        if (res.status === 503) { section.style.display = 'none'; return; }
+        if (!res.ok) { section.style.display = 'none'; return; }
+
+        const data = await res.json();
+        if (data.error || !data.opinions) { section.style.display = 'none'; return; }
+
+        const COLORS = { 'Bullish': '#1DB87E', 'Bearish': '#E54B4A', 'Nøytral': '#4A5166' };
+        const valid = (data.opinions || []).filter(o => o.verdict);
+
+        if (!valid.length) { section.style.display = 'none'; return; }
+
+        status.textContent = 'FULLFØRT';
+        content.innerHTML = valid.map(o => {
+          const color = COLORS[o.verdict] || '#4A5166';
+          return `<div style="display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-top:1px solid var(--border);">
+            <div style="font-family:'Space Mono',monospace;font-size:9px;color:var(--text-muted);letter-spacing:0.06em;min-width:96px;flex-shrink:0;">${esc(o.model)}</div>
+            <div style="flex:1;">
+              <span style="font-family:'Space Mono',monospace;font-size:9px;color:${color};background:${color}18;padding:2px 6px;border-radius:3px;margin-right:8px;">${esc(o.verdict.toUpperCase())}</span>
+              <span style="font-size:12px;color:var(--text-secondary);">${esc(o.reason || '')}</span>
+            </div>
+          </div>`;
+        }).join('');
+      } catch (_) {
+        section.style.display = 'none';
       }
     }
 
