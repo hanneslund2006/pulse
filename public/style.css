@@ -39,24 +39,12 @@
 html { scroll-behavior: smooth; }
 
 body {
-  background: linear-gradient(135deg, #091520 0%, #0e2240 45%, #0b1623 100%);
+  background: #080c10;
   color: var(--text-primary);
   font-family: 'DM Sans', sans-serif;
   font-weight: 400;
   min-height: 100vh;
   overflow-x: hidden;
-}
-
-body::after {
-  content: '';
-  position: fixed;
-  bottom: -150px;
-  right: -120px;
-  width: 650px;
-  height: 650px;
-  background: radial-gradient(ellipse at center, rgba(74,144,217,0.10) 0%, transparent 65%);
-  pointer-events: none;
-  z-index: 0;
 }
 
 /* ─── ANIMATIONS ─────────────────────────────────────────────────────────── */
@@ -244,8 +232,6 @@ body::after {
   border: 1px solid var(--border);
   border-radius: 12px;
   padding: 32px 28px;
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
 }
 
 .cta-label {
