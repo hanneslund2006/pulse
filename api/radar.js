@@ -16,7 +16,7 @@ Eksakt format:
   {"ticker": "YYYY", "direction": "Bearish", "reason": "Kort begrunnelse maks 20 ord"}
 ]
 
-Maks 300 tokens. Svar KUN med JSON-arrayen.`;
+Svar KUN med JSON-arrayen.`;
 
 
 module.exports = async (req, res) => {
@@ -26,7 +26,9 @@ module.exports = async (req, res) => {
   const rl = rateCheck(req);
   if (rl) return res.status(429).json({ error: `Du har nådd grensen for analyser denne timen. Prøv igjen om ${rl.waitMinutes} minutter.` });
 
-  const cached = await cache.get('radar');
+  const today = new Date().toISOString().slice(0, 10);
+  const CACHE_KEY = 'radar:' + today;
+  const cached = await cache.get(CACHE_KEY);
   if (cached) {
     console.log('[radar] CACHE HIT');
     return res.status(200).json(cached);
@@ -38,7 +40,7 @@ module.exports = async (req, res) => {
   try {
     const response = await anthropic.messages.create({
       model: 'claude-haiku-4-5-20251001',
-      max_tokens: 400,
+      max_tokens: 600,
       system: SYSTEM_PROMPT,
       tools: [{ type: 'web_search_20250305', name: 'web_search' }],
       messages: [{ role: 'user', content: 'Finn de beste swing trading-kandidatene akkurat nå basert på høy short float, positiv momentum og katalysator. Returner JSON-array.' }],
@@ -66,8 +68,14 @@ module.exports = async (req, res) => {
       return res.status(500).json({ error: 'AI returnerte ugyldig format.' });
     }
 
-    cache.set('radar', parsed, cache.nextMidnightTTL());
-    return res.status(200).json(parsed);
+    const valid = parsed.filter(item => item.ticker && item.direction && item.reason);
+    if (!valid.length) {
+      console.error('[radar] Ingen gyldige items i array');
+      return res.status(500).json({ error: 'AI returnerte ingen gyldige kandidater.' });
+    }
+
+    cache.set(CACHE_KEY, valid, cache.nextMidnightTTL());
+    return res.status(200).json(valid);
 
   } catch (error) {
     console.error('[radar] API feil:', error);

@@ -76,7 +76,7 @@ module.exports = async (req, res) => {
   try {
     const response = await anthropic.messages.create({
       model: 'claude-haiku-4-5-20251001',
-      max_tokens: 700,
+      max_tokens: 900,
       system: SYSTEM_PROMPT,
       tools: [{ type: 'web_search_20250305', name: 'web_search' }],
       messages: [{ role: 'user', content: `Today is ${today}. Finn alle viktige earnings denne uken og ranger dem etter trading-potensial. Returner JSON-array.` }],
@@ -100,8 +100,14 @@ module.exports = async (req, res) => {
     }
     if (!Array.isArray(parsed)) return res.status(500).json({ error: 'Ugyldig format' });
 
-    cache.set('earnings-ranker:' + week, parsed, endOfWeekTTL());
-    return res.status(200).json(parsed);
+    const valid = parsed.filter(item => item.ticker && item.earningsDate && item.direction);
+    if (!valid.length) {
+      console.error('[earnings-ranker] Ingen gyldige items');
+      return res.status(500).json({ error: 'AI returnerte ingen gyldige earnings-kandidater.' });
+    }
+
+    cache.set('earnings-ranker:' + week, valid, endOfWeekTTL());
+    return res.status(200).json(valid);
   } catch (error) {
     console.error('[earnings-ranker] feil:', error);
     const msg = error.status === 429 ? 'For mange forespørsler. Vent litt.' : 'Klarte ikke hente earnings-ranker.';

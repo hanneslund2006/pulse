@@ -58,7 +58,9 @@ module.exports = async (req, res) => {
   const rl = rateCheck(req);
   if (rl) return res.status(429).json({ error: `Du har nådd grensen for analyser denne timen. Prøv igjen om ${rl.waitMinutes} minutter.` });
 
-  const cached = await cache.get('sentiment');
+  const today = new Date().toISOString().slice(0, 10);
+  const CACHE_KEY = 'sentiment:' + today;
+  const cached = await cache.get(CACHE_KEY);
   if (cached) {
     console.log('[sentiment] CACHE HIT');
     return res.status(200).json(cached);
@@ -77,7 +79,7 @@ module.exports = async (req, res) => {
 
     const response = await anthropic.messages.create({
       model: 'claude-haiku-4-5-20251001',
-      max_tokens: 700,
+      max_tokens: 900,
       system: SYSTEM_PROMPT,
       tools: [{ type: 'web_search_20250305', name: 'web_search' }],
       messages
@@ -113,7 +115,7 @@ module.exports = async (req, res) => {
       return res.status(500).json({ error: 'AI returnerte ufullstendig rapport. Prøv igjen.' });
     }
 
-    cache.set('sentiment', parsed, cache.nextMidnightTTL());
+    cache.set(CACHE_KEY, parsed, cache.nextMidnightTTL());
     return res.status(200).json(parsed);
 
   } catch (error) {
@@ -123,7 +125,9 @@ module.exports = async (req, res) => {
       ? 'Ugyldig API-nøkkel.'
       : error.status === 429
         ? 'For mange forespørsler. Vent litt og prøv igjen.'
-        : 'Klarte ikke hente sentiment. Prøv igjen.';
+        : error.status === 529
+          ? 'Anthropic er overbelastet akkurat nå. Prøv igjen om 30 sekunder.'
+          : 'Klarte ikke hente sentiment. Prøv igjen.';
 
     return res.status(500).json({ error: message });
   }
