@@ -94,6 +94,17 @@ body::after {
 .a5 { animation: fadeUp 0.55s cubic-bezier(0.16,1,0.3,1) 0.40s  forwards; opacity: 0; }
 .a6 { animation: fadeUp 0.55s cubic-bezier(0.16,1,0.3,1) 0.48s  forwards; opacity: 0; }
 
+@media (prefers-reduced-motion: reduce) {
+  .anim, .a0, .a1, .a2, .a3, .a4, .a5, .a6 {
+    animation: none;
+    opacity: 1;
+  }
+  .card, .card::before, .card-cta, .hero-kicker::before,
+  .hero-kicker::after, .card:hover .card-cta {
+    transition: none;
+  }
+}
+
 /* ─── NAVIGATION / BACK ──────────────────────────────────────────────────── */
 
 .back {
