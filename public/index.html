@@ -351,17 +351,27 @@
     .card-cta {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
       font-family: 'DM Sans', sans-serif;
-      font-size: 10px;
-      letter-spacing: 0.1em;
-      color: var(--green);
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      color: var(--text-secondary);
       border-top: 1px solid var(--border);
-      padding-top: 12px;
+      padding-top: 16px;
       margin-top: auto;
-      transition: gap 180ms ease;
+      transition: gap 200ms ease, color 200ms ease;
     }
-    .card:hover .card-cta { gap: 14px; }
+    .card:hover .card-cta { gap: 10px; color: var(--green); }
+
+    /* ─── CARD CHIP (data source) ─── */
+    .card-chip {
+      font-family: 'Space Mono', monospace;
+      font-size: 8px;
+      letter-spacing: 0.14em;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+      opacity: 0.6;
+    }
 
     /* ─── PRIMARY CARDS ─── */
     .card-primary {
@@ -623,6 +633,7 @@
         </div>
         <div class="card-body">
           <div class="card-tag">DAGLIG RAPPORT</div>
+          <div class="card-chip">AI · WEB SEARCH</div>
           <div class="card-title">Marked</div>
           <div class="card-desc">Daglig markedssentiment med score, nøkkeltall og sektoranalyse. Cachet til neste dag.</div>
           <div class="card-cta">HENT RAPPORT →</div>
@@ -654,6 +665,7 @@
         </div>
         <div class="card-body">
           <div class="card-tag">UKENTLIG OVERSIKT</div>
+          <div class="card-chip">SPDR ETF DATA</div>
           <div class="card-title">Sektorer</div>
           <div class="card-desc">Ukentlig styrke per sektor — se hvilke sektorer som leder og hvilke som henger etter.</div>
           <div class="card-cta">SE SEKTORER →</div>
@@ -690,6 +702,7 @@
         </div>
         <div class="card-body">
           <div class="card-tag">ENKELTAKSJER</div>
+          <div class="card-chip">AI · 7-LAGS ANALYSE</div>
           <div class="card-title">Ticker</div>
           <div class="card-desc">Dyp aksjeanalyse på fem lag: nyheter, earnings, insider, short float og sentiment.</div>
           <div class="card-cta">SØK TICKER →</div>
@@ -721,6 +734,7 @@
         </div>
         <div class="card-body">
           <div class="card-tag">EARNINGS PLAY</div>
+          <div class="card-chip">AI · YAHOO FINANCE</div>
           <div class="card-title">Earnings Play</div>
           <div class="card-desc">EPS-historikk, implied move og AI-tolkning. Komplett beslutningsgrunnlag på ett minutt.</div>
           <div class="card-cta">ANALYSER EARNINGS →</div>
@@ -760,6 +774,7 @@
         </div>
         <div class="card-body">
           <div class="card-tag">HISTORISK KONTEKST</div>
+          <div class="card-chip">ALPACA MARKETS</div>
           <div class="card-title">Historikk</div>
           <div class="card-desc">Forstå hvorfor en aksje har beveget seg — AI-generert tidslinje over de viktigste katalysatorene.</div>
           <div class="card-cta">SE HISTORIKK →</div>
@@ -805,6 +820,7 @@
         </div>
         <div class="card-body">
           <div class="card-tag">AI SCREENING</div>
+          <div class="card-chip">AI · SHORT FLOAT</div>
           <div class="card-title">Radar</div>
           <div class="card-desc">Daglig screening etter swing-kandidater — gap movers, short float, momentum og katalysator samlet på ett sted.</div>
           <div class="card-cta">KJØR RADAR →</div>
@@ -835,6 +851,7 @@
         </div>
         <div class="card-body">
           <div class="card-tag">HANDELSDAGBOK</div>
+          <div class="card-chip">LOKAL LAGRING</div>
           <div class="card-title">Logg</div>
           <div class="card-desc">Logg trades, noter setup-kvalitet og følg P&L over tid. Bygg disiplin gjennom dokumentasjon.</div>
           <div class="card-cta">ÅPNE LOGG →</div>
