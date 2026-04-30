@@ -712,7 +712,7 @@
             <rect x="38" y="42" width="148" height="9" rx="2" fill="rgba(29,184,126,0.55)"
               class="bar-left" style="animation:barGrow 4s ease-out 130ms infinite"/>
             <!-- BEAT badge -->
-            <g class="dot-center" style="transform-origin:175px 46px; animation:badgeIn 4s ease-out 420ms infinite">
+            <g class="dot-center" style="animation:badgeIn 4s ease-out 420ms infinite">
               <rect x="156" y="38" width="34" height="14" rx="2" fill="rgba(29,184,126,0.20)"/>
               <text x="173" y="48" font-family="'Space Mono',monospace" font-size="7" font-weight="700"
                 fill="#1DB87E" text-anchor="middle">BEAT</text>
@@ -788,7 +788,7 @@
             <!-- Center dot -->
             <circle cx="36" cy="36" r="2" fill="#1DB87E" opacity="0.5"/>
             <!-- Rotating sweep group (transform-origin at radar center) -->
-            <g style="transform-origin:36px 36px; animation:sweep 4s linear infinite">
+            <g style="transform-box:fill-box; transform-origin:center; animation:sweep 4s linear infinite">
               <line x1="36" y1="36" x2="36" y2="6" stroke="#1DB87E" stroke-width="1.5"
                 stroke-linecap="round" opacity="0.75"/>
               <line x1="36" y1="36" x2="36" y2="10" stroke="#1DB87E" stroke-width="5"
