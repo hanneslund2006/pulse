@@ -9,7 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
   <script>document.documentElement.classList.add('js')</script>
-  <noscript><style>.card { opacity: 1 !important; transform: none !important; }</style></noscript>
+  <noscript><style>.feature-card, .feature-explain { opacity: 1 !important; transform: none !important; }</style></noscript>
   <style>
 
     /* ─── GRAIN OVERLAY ─── */
@@ -75,9 +75,18 @@
     .hi-1    { animation-delay: 140ms; }
     .hi-2    { animation-delay: 260ms; }
     .hi-3    { animation-delay: 380ms; }
+    .hi-4    { animation-delay: 480ms; }
 
-    /* ─── HERO ─── */
-    .hero { margin-top: 80px; }
+    /* ─── HERO SECTION ─── */
+    .hero-section {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding-top: 40px;
+      padding-bottom: 60px;
+      gap: 0;
+    }
 
     .hero-kicker {
       font-family: 'DM Sans', sans-serif;
@@ -89,14 +98,7 @@
       align-items: center;
       gap: 10px;
     }
-    .hero-kicker::before {
-      content: '';
-      display: inline-block;
-      width: 24px;
-      height: 1px;
-      background: var(--green);
-      opacity: 0.6;
-    }
+    .hero-kicker::before,
     .hero-kicker::after {
       content: '';
       display: inline-block;
@@ -109,9 +111,9 @@
     .hero-title {
       font-family: 'Cormorant Garamond', serif;
       font-weight: 600;
-      font-size: clamp(52px, 9vw, 80px);
-      line-height: 0.96;
-      letter-spacing: -0.01em;
+      font-size: clamp(72px, 12vw, 104px);
+      line-height: 0.92;
+      letter-spacing: -2px;
       color: var(--text-primary);
       margin-bottom: 28px;
     }
@@ -157,79 +159,100 @@
     }
     .morgen-btn:hover { opacity: 0.88; transform: translateY(-1px); }
 
-    /* ─── DIVIDER ─── */
-    .divider {
-      width: 100%;
-      height: 0.5px;
-      background: linear-gradient(90deg, transparent, var(--border) 30%, var(--border) 70%, transparent);
-      margin: 56px 0;
-    }
-
-    /* ─── HOW IT WORKS ─── */
-    .steps {
-      display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
-      gap: 1px;
-      background: var(--border);
+    /* ─── GAUGE STRIP ─── */
+    .gauge-strip {
+      background: var(--surface);
       border: 1px solid var(--border);
       border-radius: 10px;
-      overflow: hidden;
+      padding: 20px 24px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.05), 0 1px 4px rgba(0,0,0,0.3);
+      margin-bottom: 32px;
     }
-    .step { background: var(--surface); padding: 24px 22px 28px; }
-    .step-num {
+    .gauge-svg { flex-shrink: 0; }
+    .gauge-text { flex: 1; }
+    .gauge-headline {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 10px;
+      letter-spacing: 0.14em;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+    .gauge-status {
       font-family: 'Cormorant Garamond', serif;
-      font-size: 40px;
-      font-weight: 400;
-      color: rgba(29,184,126,0.35);
-      line-height: 1;
-      margin-bottom: 12px;
-    }
-    .step-title {
-      font-size: 13px;
-      font-weight: 500;
+      font-size: 22px;
+      font-weight: 600;
       color: var(--text-primary);
-      margin-bottom: 6px;
-      letter-spacing: 0.02em;
     }
-    .step-desc { font-size: 12px; color: var(--text-secondary); line-height: 1.6; }
+    .gauge-sub { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
 
-    /* ─── SECTION LABELS (landing page override) ─── */
-    .section-label {
+    /* ─── HERO TICKER TAPE ─── */
+    @keyframes heroTickerScroll {
+      from { transform: translateX(0); }
+      to   { transform: translateX(-50%); }
+    }
+    .hero-ticker {
+      overflow: hidden;
+      margin-top: 32px;
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      padding: 10px 0;
+      min-height: 38px;
+    }
+    .hero-ticker-track {
+      display: flex;
+      gap: 0;
+      width: max-content;
+      animation: heroTickerScroll 40s linear infinite;
+    }
+    .hero-ticker:hover .hero-ticker-track { animation-play-state: paused; }
+    .hero-tick-item {
+      padding: 0 24px;
+      font-family: 'Space Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.06em;
+      color: var(--text-muted);
+      border-right: 1px solid var(--border);
+      white-space: nowrap;
+    }
+
+    /* ─── FEATURES SECTION ─── */
+    .features-section {
+      padding-top: 80px;
+    }
+
+    .feature-cat {
       display: flex;
       align-items: center;
       gap: 16px;
-      justify-content: center;
-      margin-bottom: 28px;
+      margin: 64px 0 40px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 11px;
+      letter-spacing: 0.2em;
+      color: var(--text-muted);
+      text-transform: uppercase;
     }
-    .section-label::before,
-    .section-label::after {
+    .feature-cat::before,
+    .feature-cat::after {
       content: '';
       flex: 1;
       height: 1px;
       background: var(--border);
     }
+    .feature-cat:first-child { margin-top: 0; }
 
-    /* ─── CATEGORY SECTIONS ─── */
-    .cat-section { margin-top: 64px; }
-
-    /* ─── CARD GRIDS ─── */
-    .cards {
+    .feature-row {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 24px;
-      align-items: stretch;
-      grid-auto-rows: 1fr;
-    }
-    .cards-3 {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 20px;
-      align-items: stretch;
-      grid-auto-rows: 1fr;
+      gap: 32px;
+      align-items: center;
+      padding: 60px 0;
     }
 
-    /* ─── CARD BASE ─── */
-    .card {
+    /* ─── FEATURE CARD (reuses card styles) ─── */
+    .feature-card {
       background: var(--surface);
       border: 1px solid rgba(255,255,255,0.05);
       border-radius: 14px;
@@ -238,7 +261,7 @@
       position: relative;
       overflow: hidden;
       box-shadow: 0 2px 12px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.05);
-      transition: border-color 220ms ease, box-shadow 220ms ease, opacity 0.4s ease, transform 220ms ease;
+      transition: border-color 220ms ease, box-shadow 220ms ease, opacity 0.5s ease, transform 0.5s ease;
       text-decoration: none;
       display: flex;
       flex-direction: column;
@@ -246,13 +269,23 @@
     }
 
     /* JS-only: hide cards until IO reveals them */
-    .js .card { opacity: 0; transform: translateY(12px); }
-    .card.revealed { opacity: 1; transform: translateY(0); }
+    .js .feature-card {
+      opacity: 0;
+      transform: translateX(-20px);
+    }
+    .feature-row.revealed .feature-card {
+      opacity: 1;
+      transform: translateX(0);
+    }
 
-    .card:hover {
+    .feature-card:hover {
       border-color: rgba(29,184,126,0.28);
-      transform: translateY(-4px);
+      transform: translateX(-20px) translateY(-4px);
       box-shadow: 0 8px 24px rgba(0,0,0,0.6), inset 0 1px 0 rgba(29,184,126,0.12);
+    }
+
+    .feature-row.revealed .feature-card:hover {
+      transform: translateY(-4px);
     }
 
     /* ─── CARD CORNER DOT ─── */
@@ -260,7 +293,7 @@
       0%, 100% { opacity: 0.10; transform: scale(1); }
       50%       { opacity: 0.30; transform: scale(1.5); }
     }
-    .card::after {
+    .feature-card::after {
       content: '';
       position: absolute;
       bottom: 10px;
@@ -270,7 +303,7 @@
       border-radius: 50%;
       background: rgba(255,255,255,0.10);
     }
-    .card:hover::after { animation: dotPulse 1.2s ease-in-out infinite; }
+    .feature-card:hover::after { animation: dotPulse 1.2s ease-in-out infinite; }
 
     /* ─── CARD VIZ ─── */
     .card-viz {
@@ -331,6 +364,13 @@
       color: var(--text-muted);
       margin-bottom: 10px;
     }
+    .card-chip {
+      font-family: 'Space Mono', monospace;
+      font-size: 8px;
+      letter-spacing: 0.14em;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
     .card-title {
       font-family: 'Cormorant Garamond', serif;
       font-weight: 600;
@@ -362,56 +402,55 @@
       margin-top: auto;
       transition: gap 200ms ease, color 200ms ease;
     }
-    .card:hover .card-cta { gap: 10px; color: var(--green); }
-
-    /* ─── CARD CHIP (data source) ─── */
-    .card-chip {
-      font-family: 'Space Mono', monospace;
-      font-size: 8px;
-      letter-spacing: 0.14em;
-      color: var(--text-muted);
-      margin-bottom: 8px;
-    }
+    .feature-card:hover .card-cta { gap: 10px; color: var(--green); }
 
     /* ─── PRIMARY CARDS ─── */
     .card-primary {
-      padding: 0;
       border-color: var(--green-border);
       background: rgba(29,184,126,0.05);
     }
     .card-primary .card-title { font-size: 34px; }
 
-    /* 3-col cards are narrower — tighten title */
-    .cards-3 .card-title { font-size: 22px; line-height: 1.15; }
-    .cards-3 .card-primary .card-title { font-size: 26px; }
-
-    /* ─── GAUGE STRIP ─── */
-    .gauge-strip {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 20px 24px;
+    /* ─── FEATURE EXPLANATION ─── */
+    .feature-explain {
       display: flex;
-      align-items: center;
-      gap: 20px;
-      box-shadow: inset 0 1px 0 rgba(255,255,255,0.05), 0 1px 4px rgba(0,0,0,0.3);
+      flex-direction: column;
+      gap: 14px;
     }
-    .gauge-svg { flex-shrink: 0; }
-    .gauge-text { flex: 1; }
-    .gauge-headline {
-      font-family: 'DM Sans', sans-serif;
-      font-size: 10px;
+
+    /* JS-only: hide explanations until IO reveals them */
+    .js .feature-explain {
+      opacity: 0;
+      transform: translateX(20px);
+      transition: opacity 0.5s ease 0.12s, transform 0.5s ease 0.12s;
+    }
+    .feature-row.revealed .feature-explain {
+      opacity: 1;
+      transform: translateX(0);
+    }
+
+    .fe-num {
+      font-family: 'Space Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 0.16em;
+      color: var(--text-muted);
+    }
+    .fe-body {
+      font-size: 15px;
+      line-height: 1.7;
+      color: var(--text-secondary);
+      font-weight: 400;
+    }
+    .fe-body strong {
+      color: var(--text-primary);
+      font-weight: 500;
+    }
+    .fe-source {
+      font-family: 'Space Mono', monospace;
+      font-size: 8px;
       letter-spacing: 0.14em;
       color: var(--text-muted);
-      margin-bottom: 4px;
     }
-    .gauge-status {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 22px;
-      font-weight: 600;
-      color: var(--text-primary);
-    }
-    .gauge-sub { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
 
     /* ─── FOOTER ─── */
     footer {
@@ -488,20 +527,27 @@
 
     /* ─── REDUCED MOTION ─── */
     @media (prefers-reduced-motion: reduce) {
-      .hero-in, .hi-0, .hi-1, .hi-2, .hi-3 { animation: none; opacity: 1; transform: none; }
+      .hero-in, .hi-0, .hi-1, .hi-2, .hi-3, .hi-4 { animation: none; opacity: 1; transform: none; }
       .morgen-btn   { animation: none; }
       .glow-top     { animation: none; }
-      .js .card     { opacity: 1; transform: none; transition: none; }
-      .card:hover   { transform: none; }
-      .card:hover::after { animation: none; }
+      .hero-ticker-track { animation: none; }
+      .js .feature-card, .js .feature-explain { opacity: 1; transform: none; transition: none; }
+      .feature-card:hover { transform: none; }
+      .feature-card:hover::after { animation: none; }
       .card-viz * { animation: none !important; opacity: 1 !important; transform: none !important; }
     }
 
     /* ─── RESPONSIVE ─── */
-    @media (max-width: 520px) {
-      .cards, .cards-3 { grid-template-columns: 1fr; }
-      .steps { grid-template-columns: 1fr; }
-      .hero-title { font-size: 52px; }
+    @media (max-width: 560px) {
+      .feature-row {
+        grid-template-columns: 1fr;
+      }
+      .feature-row .feature-explain {
+        order: -1;
+      }
+      .hero-title {
+        font-size: 64px;
+      }
     }
 
   </style>
@@ -513,14 +559,14 @@
 <div class="page">
 
   <!-- NAV -->
-  <nav class="a0">
+  <nav>
     <div class="nav-logo">PULSE</div>
   </nav>
 
-  <!-- HERO -->
-  <section class="hero">
+  <!-- HERO SECTION -->
+  <section class="hero-section">
 
-    <div class="hero-kicker hero-in hi-0">Markedssentiment for swingtraders</div>
+    <div class="hero-kicker hero-in hi-0">— Markedssentiment —</div>
 
     <h1 class="hero-title hero-in hi-1">
       Les markedet.<br>
@@ -528,9 +574,7 @@
     </h1>
 
     <p class="hero-desc hero-in hi-2">
-      PULSE bruker AI til å skanne nyheter, futures og sektordata i sanntid —
-      og leverer deg en <strong>strukturert markedsoversikt på sekunder</strong>.
-      Ingen støy. Kun det som faktisk betyr noe før du trykker på kjøp.
+      PULSE bruker AI til å skanne nyheter, futures og sektordata i sanntid — og leverer deg en <strong>strukturert markedsoversikt på sekunder</strong>.
     </p>
 
     <div class="hero-in hi-3">
@@ -538,7 +582,7 @@
     </div>
 
     <!-- GAUGE STRIP -->
-    <div class="gauge-strip">
+    <div class="gauge-strip hero-in hi-4">
       <svg class="gauge-svg" width="56" height="56" viewBox="0 0 56 56">
         <circle cx="28" cy="28" r="22" fill="none" stroke="#162840" stroke-width="4"/>
         <circle id="gauge-arc"
@@ -566,41 +610,22 @@
       </div>
     </div>
 
+    <!-- HERO TICKER TAPE -->
+    <div class="hero-ticker">
+      <div class="hero-ticker-track"></div>
+    </div>
+
   </section>
 
-  <div class="divider"></div>
+  <!-- FEATURES SECTION -->
+  <section class="features-section">
 
-  <!-- SLIK FUNGERER DET -->
-  <div>
-    <div class="section-label">Slik fungerer det</div>
-    <div class="steps">
-      <div class="step">
-        <div class="step-num">01</div>
-        <div class="step-title">AI scanner markedet</div>
-        <div class="step-desc">Claude søker gjennom nyheter, futures og sektordata i sanntid.</div>
-      </div>
-      <div class="step">
-        <div class="step-num">02</div>
-        <div class="step-title">Du får strukturert oversikt</div>
-        <div class="step-desc">Makro, tech, energi og finans — med BULLISH/BEARISH-badge per sektor.</div>
-      </div>
-      <div class="step">
-        <div class="step-num">03</div>
-        <div class="step-title">Ta beslutningen</div>
-        <div class="step-desc">Med konteksten klar kan du trade med skarpere timing og bedre odds.</div>
-      </div>
-    </div>
-  </div>
+    <!-- MARKEDSOVERSIKT -->
+    <div class="feature-cat">— Markedsoversikt —</div>
 
-  <div class="divider"></div>
-
-  <!-- MARKEDSOVERSIKT -->
-  <div class="cat-section" style="margin-top:0;">
-    <div class="section-label">Markedsoversikt</div>
-    <div class="cards">
-
-      <!-- VIZ 1: Marked — candlestick chart rising to the right -->
-      <a class="card card-primary" href="market.html">
+    <!-- Feature 1: Marked -->
+    <div class="feature-row">
+      <a class="feature-card card-primary" href="market.html">
         <div class="card-viz" aria-hidden="true">
           <svg width="100%" height="100%" viewBox="0 0 200 100" preserveAspectRatio="none">
             <!-- Candles (baseline at y=90) -->
@@ -639,9 +664,15 @@
           <div class="card-cta">HENT RAPPORT →</div>
         </div>
       </a>
+      <div class="feature-explain">
+        <div class="fe-num">01</div>
+        <div class="fe-body">Klikk én gang kl 07:00. PULSE gir deg en score fra 0–100, sektorbilde og de viktigste katalysatorene for dagen. <strong>Ta stilling til om du skal være offensiv eller defensiv</strong> — basert på live web search.</div>
+      </div>
+    </div>
 
-      <!-- VIZ 2: Sektorer — 5 sector bars at varying heights -->
-      <a class="card" href="sektor.html">
+    <!-- Feature 2: Sektorer -->
+    <div class="feature-row">
+      <a class="feature-card" href="sektor.html">
         <div class="card-viz" aria-hidden="true">
           <svg width="100%" height="100%" viewBox="0 0 200 80" preserveAspectRatio="none">
             <!-- Baseline -->
@@ -671,17 +702,18 @@
           <div class="card-cta">SE SEKTORER →</div>
         </div>
       </a>
-
+      <div class="feature-explain">
+        <div class="fe-num">02</div>
+        <div class="fe-body">Se hvilke av de elleve SPDR-sektorene som leder og hvilke som taper denne uken. <strong>Velg riktig sektorside og unngå motvind</strong> — et enkelt overblikk over rotasjonen.</div>
+      </div>
     </div>
-  </div>
 
-  <!-- ENKELTAKSJE -->
-  <div class="cat-section">
-    <div class="section-label">Enkeltaksje</div>
-    <div class="cards-3">
+    <!-- ENKELTAKSJE -->
+    <div class="feature-cat">— Enkeltaksje —</div>
 
-      <!-- VIZ 3: Ticker — layered data rows sliding in -->
-      <a class="card card-primary" href="ticker.html">
+    <!-- Feature 3: Ticker -->
+    <div class="feature-row">
+      <a class="feature-card card-primary" href="ticker.html">
         <div class="card-viz" aria-hidden="true">
           <div class="vr-item" style="top:11px; animation:rowSlide 4.5s ease-out 0ms infinite">
             <span class="vr-sym">NVDA</span>
@@ -708,9 +740,15 @@
           <div class="card-cta">SØK TICKER →</div>
         </div>
       </a>
+      <div class="feature-explain">
+        <div class="fe-num">03</div>
+        <div class="fe-body">Skriv inn en ticker. Få fem-lags analyse: nyheter, earnings, innsidehandler, short float og sentiment. <strong>Alt samlet på sekunder</strong> — basert på AI-drevet søk og Yahoo Finance.</div>
+      </div>
+    </div>
 
-      <!-- VIZ 4: Earnings Play — EPS estimate vs actual bars -->
-      <a class="card" href="earnings-play.html">
+    <!-- Feature 4: Earnings Play -->
+    <div class="feature-row">
+      <a class="feature-card" href="earnings-play.html">
         <div class="card-viz" aria-hidden="true">
           <svg width="100%" height="100%" viewBox="0 0 200 80" preserveAspectRatio="none">
             <!-- Label column -->
@@ -740,9 +778,15 @@
           <div class="card-cta">ANALYSER EARNINGS →</div>
         </div>
       </a>
+      <div class="feature-explain">
+        <div class="fe-num">04</div>
+        <div class="fe-body">Finn aksjer med sterk historikk for å slå estimater. EPS-historikk, forventet svingning og analytikerkonsensus — <strong>tolket av AI</strong>. Basert på Yahoo Finance-data.</div>
+      </div>
+    </div>
 
-      <!-- VIZ 5: Historikk — timeline dots appearing L→R -->
-      <a class="card" href="historikk.html">
+    <!-- Feature 5: Historikk -->
+    <div class="feature-row">
+      <a class="feature-card" href="historikk.html">
         <div class="card-viz" aria-hidden="true">
           <svg width="100%" height="100%" viewBox="0 0 200 80" preserveAspectRatio="none">
             <!-- Connecting lines -->
@@ -780,17 +824,18 @@
           <div class="card-cta">SE HISTORIKK →</div>
         </div>
       </a>
-
+      <div class="feature-explain">
+        <div class="fe-num">05</div>
+        <div class="fe-body">Forstå hvorfor en aksje har beveget seg de siste 1–3 månedene. Alpaca Markets henter nyheter. AI lager en kronologisk tidslinje med <strong>sentiment per hendelse</strong>: bullish, bearish eller nøytral.</div>
+      </div>
     </div>
-  </div>
 
-  <!-- VERKTØY -->
-  <div class="cat-section">
-    <div class="section-label">Verktøy</div>
-    <div class="cards">
+    <!-- VERKTØY -->
+    <div class="feature-cat">— Verktøy —</div>
 
-      <!-- VIZ 6: Radar — rotating sweep with pulsing blips -->
-      <a class="card" href="radar.html">
+    <!-- Feature 6: Radar -->
+    <div class="feature-row">
+      <a class="feature-card" href="radar.html">
         <div class="card-viz" aria-hidden="true">
           <svg width="72" height="72" viewBox="0 0 72 72">
             <!-- Concentric circles -->
@@ -826,9 +871,15 @@
           <div class="card-cta">KJØR RADAR →</div>
         </div>
       </a>
+      <div class="feature-explain">
+        <div class="fe-num">06</div>
+        <div class="fe-body">Daglig AI-screening etter swing-kandidater. Short float, momentum og fersk katalysator — <strong>3–5 konkrete kandidater</strong> med begrunnelse, klare til analyse.</div>
+      </div>
+    </div>
 
-      <!-- VIZ 7: Logg — trade log rows sliding up -->
-      <a class="card" href="logg.html">
+    <!-- Feature 7: Logg -->
+    <div class="feature-row">
+      <a class="feature-card" href="logg.html">
         <div class="card-viz" aria-hidden="true">
           <div class="vr-item" style="top:11px; animation:logRow 3.5s ease-out 0ms infinite">
             <span class="vr-sym">NVDA</span>
@@ -857,9 +908,13 @@
           <div class="card-cta">ÅPNE LOGG →</div>
         </div>
       </a>
-
+      <div class="feature-explain">
+        <div class="fe-num">07</div>
+        <div class="fe-body">Logg entry, exit, setup-type og resultat. Følg P&L og winrate over tid. <strong>Alt lagres lokalt</strong> i nettleseren — ingen konto, ingen server.</div>
+      </div>
     </div>
-  </div>
+
+  </section>
 
   <!-- FOOTER -->
   <footer>
@@ -926,17 +981,36 @@
     }
   } catch (e) {}
 
-  /* ─── INTERSECTION OBSERVER — staggered card reveal ─── */
-  const io = new IntersectionObserver((entries) => {
+  /* ─── HERO TICKER TAPE ─── */
+  function initHeroTicker() {
+    const rail = document.querySelector('.t-rail');
+    const track = document.querySelector('.hero-ticker-track');
+    if (!track) return;
+    if (!rail || !rail.querySelectorAll('.t-item').length) {
+      setTimeout(initHeroTicker, 300);
+      return;
+    }
+    const items = Array.from(rail.querySelectorAll('.t-item'));
+    // Double for seamless loop
+    [...items, ...items].forEach(item => {
+      const el = document.createElement('div');
+      el.className = 'hero-tick-item';
+      el.textContent = item.textContent.trim();
+      track.appendChild(el);
+    });
+  }
+  window.addEventListener('load', () => setTimeout(initHeroTicker, 200));
+
+  /* ─── INTERSECTION OBSERVER — feature row reveal ─── */
+  const featureIO = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
       if (!entry.isIntersecting) return;
-      const cards = entry.target.querySelectorAll('.card');
-      cards.forEach((card, i) => setTimeout(() => card.classList.add('revealed'), i * 80));
-      io.unobserve(entry.target);
+      entry.target.classList.add('revealed');
+      featureIO.unobserve(entry.target);
     });
-  }, { threshold: 0.1 });
+  }, { threshold: 0.15 });
 
-  document.querySelectorAll('.cards, .cards-3').forEach(grid => io.observe(grid));
+  document.querySelectorAll('.feature-row').forEach(r => featureIO.observe(r));
 </script>
 
 <script src="bg.js"></script>
