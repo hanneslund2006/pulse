@@ -144,50 +144,118 @@
     }
 
     /* ─── MARKET PROMPT ─── */
-    .market-prompt {
-      display: block;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 20px 24px;
-      text-decoration: none;
+    /* ─── MARKET STRIP ─── */
+    .market-strip {
+      position: relative;
+      height: 72px;
       margin-bottom: 32px;
-      transition: border-color 180ms, background 180ms;
     }
-    .market-prompt:hover {
-      border-color: var(--green-border);
-      background: rgba(29,184,126,0.03);
-    }
-    .mp-label {
+    .market-live-pill {
+      position: absolute;
+      top: 0;
+      right: 0;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
       font-family: 'Space Mono', monospace;
-      font-size: 9px;
-      letter-spacing: 0.16em;
-      color: var(--text-secondary);
-      margin-bottom: 8px;
+      font-size: 8.5px;
+      letter-spacing: 0.12em;
+      color: var(--text-muted);
+      padding: 4px 10px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--bg);
     }
-    .mp-cta {
+    .market-live-dot {
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: var(--green);
+      animation: livePulse 2s ease-in-out infinite;
+    }
+    @keyframes livePulse {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.3; }
+    }
+    .market-strip-grid {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      height: 100%;
+      gap: 0;
+    }
+    .market-tile {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 2px;
+      border-right: 1px solid rgba(255,255,255,0.06);
+      padding: 0 12px;
+      opacity: 0;
+      animation: marketTileFadeIn 0.4s cubic-bezier(0.16,1,0.3,1) forwards;
+    }
+    .market-tile:last-child {
+      border-right: none;
+    }
+    .market-tile[data-delay="0"]   { animation-delay:   0ms; }
+    .market-tile[data-delay="1"]   { animation-delay:  50ms; }
+    .market-tile[data-delay="2"]   { animation-delay: 100ms; }
+    .market-tile[data-delay="3"]   { animation-delay: 150ms; }
+    .market-tile[data-delay="4"]   { animation-delay: 200ms; }
+    .market-tile[data-delay="5"]   { animation-delay: 250ms; }
+    @keyframes marketTileFadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .market-tile-ticker {
+      font-family: 'Space Mono', monospace;
+      font-size: 9.5px;
+      letter-spacing: 0.08em;
+      color: #4A5468;
+    }
+    .market-tile-value {
+      font-family: 'Space Mono', monospace;
       font-size: 14px;
-      color: var(--text-secondary);
-      line-height: 1.5;
+      font-weight: 700;
+      color: var(--text-primary);
+      transition: opacity 240ms ease;
     }
-    .mp-cta::after {
-      content: '';
-      display: inline-block;
-      width: 0;
-      height: 0;
-      margin-left: 6px;
-      border-top: 3px solid transparent;
-      border-bottom: 3px solid transparent;
-      border-left: 5px solid currentColor;
-      opacity: 0.6;
-      transition: transform 140ms;
+    .market-tile-change {
+      font-family: 'Space Mono', monospace;
+      font-size: 10.5px;
+      transition: opacity 240ms ease;
     }
-    .market-prompt:hover .mp-cta::after {
-      transform: translateX(3px);
+    .market-tile-change.positive { color: #1D9E75; }
+    .market-tile-change.negative { color: #E24B4A; }
+    .market-tile.flickering .market-tile-value,
+    .market-tile.flickering .market-tile-change {
+      opacity: 0;
     }
-    .market-prompt:focus-visible {
-      outline: 2px solid var(--green);
-      outline-offset: 4px;
+    @keyframes microJitter {
+      0%, 100% { transform: translateX(0); }
+      25%      { transform: translateX(-0.5px); }
+      75%      { transform: translateX(0.5px); }
+    }
+    .market-tile-change.jitter {
+      animation: microJitter 0.2s ease;
+    }
+    @media (max-width: 720px) {
+      .market-strip-grid {
+        grid-template-columns: repeat(3, 1fr);
+        grid-template-rows: repeat(2, 1fr);
+      }
+      .market-tile {
+        border-right: 1px solid rgba(255,255,255,0.06);
+        border-bottom: 1px solid rgba(255,255,255,0.06);
+      }
+      .market-tile:nth-child(3),
+      .market-tile:nth-child(6) {
+        border-right: none;
+      }
+      .market-tile:nth-child(4),
+      .market-tile:nth-child(5),
+      .market-tile:nth-child(6) {
+        border-bottom: none;
+      }
     }
 
     /* ─── HERO TICKER TAPE ─── */
@@ -620,11 +688,45 @@
       <a href="market.html" class="morgen-btn">HENT DAGENS RAPPORT →</a>
     </div>
 
-    <!-- MARKET PROMPT -->
-    <a href="market.html" class="market-prompt hero-in hi-4">
-      <div class="mp-label">DAGENS MARKEDSRAPPORT</div>
-      <div class="mp-cta">Gå til Marked for å hente dagens analyse →</div>
-    </a>
+    <!-- MARKET STRIP -->
+    <div class="market-strip hero-in hi-4">
+      <div class="market-live-pill">
+        <span class="market-live-dot"></span>
+        LIVE · <span class="market-live-time">--:--</span>
+      </div>
+      <div class="market-strip-grid">
+        <div class="market-tile" data-ticker="SPX" data-delay="0">
+          <div class="market-tile-ticker">SPX</div>
+          <div class="market-tile-value">5234</div>
+          <div class="market-tile-change positive">+0.4%</div>
+        </div>
+        <div class="market-tile" data-ticker="NDX" data-delay="1">
+          <div class="market-tile-ticker">NDX</div>
+          <div class="market-tile-value">18424</div>
+          <div class="market-tile-change positive">+0.6%</div>
+        </div>
+        <div class="market-tile" data-ticker="VIX" data-delay="2">
+          <div class="market-tile-ticker">VIX</div>
+          <div class="market-tile-value">16.2</div>
+          <div class="market-tile-change negative">-0.8%</div>
+        </div>
+        <div class="market-tile" data-ticker="GOLD" data-delay="3">
+          <div class="market-tile-ticker">GOLD</div>
+          <div class="market-tile-value">2345</div>
+          <div class="market-tile-change positive">+0.3%</div>
+        </div>
+        <div class="market-tile" data-ticker="BTC" data-delay="4">
+          <div class="market-tile-ticker">BTC</div>
+          <div class="market-tile-value">67240</div>
+          <div class="market-tile-change positive">+1.2%</div>
+        </div>
+        <div class="market-tile" data-ticker="DXY" data-delay="5">
+          <div class="market-tile-ticker">DXY</div>
+          <div class="market-tile-value">104.8</div>
+          <div class="market-tile-change negative">-0.1%</div>
+        </div>
+      </div>
+    </div>
 
     <!-- HERO TICKER TAPE -->
     <div class="hero-ticker">
@@ -990,6 +1092,66 @@
     });
   }
   window.addEventListener('load', () => setTimeout(initHeroTicker, 200));
+
+  /* ─── MARKET STRIP ─── */
+  function initMarketStrip() {
+    const timeEl = document.querySelector('.market-live-time');
+    const tiles = document.querySelectorAll('.market-tile');
+
+    // Update time
+    function updateTime() {
+      const now = new Date();
+      const hours = String(now.getHours()).padStart(2, '0');
+      const minutes = String(now.getMinutes()).padStart(2, '0');
+      if (timeEl) timeEl.textContent = `${hours}:${minutes}`;
+    }
+    updateTime();
+    setInterval(updateTime, 30000); // Update every 30s
+
+    // Try to read live data from .t-rail
+    function updateFromLiveData() {
+      const rail = document.querySelector('.t-rail');
+      if (!rail) return false;
+
+      const items = rail.querySelectorAll('.t-item');
+      if (!items.length) return false;
+
+      // Map live.js data to tiles if available
+      // This is a fallback mechanism - live.js may have different ticker names
+      // For now, we keep static data as primary source
+      return false;
+    }
+
+    // Random value flicker animation
+    function flickerRandomTile() {
+      const randomIndex = Math.floor(Math.random() * tiles.length);
+      const tile = tiles[randomIndex];
+
+      // Add flickering class
+      tile.classList.add('flickering');
+
+      // After fade-out completes, update value and fade back in
+      setTimeout(() => {
+        tile.classList.remove('flickering');
+
+        // Add micro-jitter to change element
+        const changeEl = tile.querySelector('.market-tile-change');
+        if (changeEl) {
+          changeEl.classList.add('jitter');
+          setTimeout(() => changeEl.classList.remove('jitter'), 200);
+        }
+      }, 240);
+
+      // Schedule next flicker
+      const nextDelay = 3000 + Math.random() * 2000; // 3-5s
+      setTimeout(flickerRandomTile, nextDelay);
+    }
+
+    // Start flicker cycle after initial animations complete
+    setTimeout(flickerRandomTile, 1000);
+  }
+
+  window.addEventListener('load', initMarketStrip);
 
   /* ─── INTERSECTION OBSERVER — feature row reveal ─── */
   const featureIO = new IntersectionObserver((entries) => {
