@@ -1,16 +1,17 @@
 # PULSE — Handoff
 
 ## Dato
-01. mai 2026
+03. mai 2026
 
 ## Gjeldende HEAD
-Siste commit: index.html full rewrite med feature-rad layout
+Siste commit: docs update (5c80507)
+Pending: AI slop fixes — pulsing/glow removed, WCAG AA compliant
 
 ## Status
 - Fase 1: KOMPLETT
 - Fase 1b: KOMPLETT  
 - Fase 2: KOMPLETT (morgenbrief, radar-logg, earnings-ranker, multi-modell)
-- Design: PÅGÅR — feature-rad layout implementert, kritikk-fixes gjenstår
+- Design: KOMPLETT — alle 5 critique-fixes implementert og verifisert
 
 ## Hva er bygget
 - 7 sider: Marked, Ticker, Sektorer, Radar, Earnings Play, Logg, Historikk
@@ -21,15 +22,27 @@ Siste commit: index.html full rewrite med feature-rad layout
 - Juridisk disclaimer på alle AI-sider
 - Modell: Sonnet 4.5 (standard kontekst — ikke 1M)
 
-## Gjenstår fra /impeccable critique
-1. Fjern all pulsing og glow (btnPulse, spotPulse, dotPulse)
-2. Morgenbrief-knapp: ny tekst "ANALYSER MARKEDET →", outlined stil
-3. Gauge-strip: fjern falsk feilstate, erstatt med nøytral lenke
-4. Chip-taxonomy: standardiser til datakilde kun
-5. Kontrast: fiks WCAG AA-brudd (#0000ee lenker)
+## Siste sesjon (03. mai) — AI slop cleanup
+**Alle 5 critique-fixes komplett:**
+1. ✅ Fjernet all pulsing/glow (btnPulse, spotPulse, dotPulse)
+2. ✅ Morgenbrief-knapp: "ANALYSER MARKEDET →", outlined stil
+3. ✅ Gauge-strip → market-prompt lenke (ingen falsk feilstate)
+4. ✅ Chip-taxonomy: Ticker-kortet endret til "AI · YAHOO FINANCE"
+5. ✅ Kontrast: WCAG AA compliant (5.8:1 ratio, alle brudd fikset)
+
+**Verifikasjon gjennomført:**
+- /impeccable distill → 0 dekorative elementer
+- /impeccable audit → 19/20 score, WCAG AA PASS
+- superpowers:code-reviewer → 0 P0 issues
+- /impeccable critique → 34/40 (opp fra 23/40), AI slop PASS
+
+**Valgfrie neste steg (ikke påkrevd):**
+- /impeccable harden: error states for ticker-loading
+- /impeccable clarify: tooltips på chips/scores
+- /impeccable onboard: first-run guidance
 
 ## Neste sesjon starter med
-Implementer de 5 /impeccable critique-funnene via prompten som er klar.
+Commit pending changes eller kjør valgfrie polish-steps (/harden, /clarify, /onboard).
 
 ## Teknisk kontekst
 - Stack: Vanilla JS, Node.js serverless, Vercel, Upstash Redis

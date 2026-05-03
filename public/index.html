@@ -22,25 +22,6 @@
       z-index: 0;
     }
 
-    /* ─── SPOTLIGHT ─── */
-    @keyframes spotPulse {
-      0%, 100% { opacity: 1; }
-      50%       { opacity: 0.55; }
-    }
-    .glow-top {
-      position: fixed;
-      top: 0;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 100%;
-      height: 500px;
-      background:
-        radial-gradient(ellipse 200px 180px at 50% -80px, rgba(29,184,126,0.10) 0%, transparent 100%),
-        radial-gradient(ellipse 800px 500px at 50% -120px, rgba(29,184,126,0.04) 0%, transparent 70%);
-      pointer-events: none;
-      z-index: 0;
-      animation: spotPulse 6s ease-in-out infinite;
-    }
 
     /* ─── WRAPPER ─── */
     .page {
@@ -136,57 +117,78 @@
     }
 
     /* ─── MORGENBRIEF BUTTON ─── */
-    @keyframes btnPulse {
-      0%, 100% { box-shadow: 0 0 0 0 rgba(29,184,126,0); }
-      50%       { box-shadow: 0 0 0 8px rgba(29,184,126,0.18); }
-    }
     .morgen-btn {
       display: inline-flex;
       align-items: center;
       gap: 10px;
       padding: 14px 28px;
-      background: var(--green);
-      color: #040B07;
+      background: transparent;
+      border: 1px solid var(--green);
+      color: var(--green);
       font-family: 'DM Sans', sans-serif;
       font-size: 11px;
       font-weight: 700;
       letter-spacing: 0.16em;
       border-radius: 8px;
       text-decoration: none;
-      animation: btnPulse 3s ease-in-out infinite;
-      transition: opacity 140ms, transform 140ms;
+      transition: background 140ms, transform 140ms;
       margin-bottom: 32px;
     }
-    .morgen-btn:hover { opacity: 0.88; transform: translateY(-1px); }
+    .morgen-btn:hover {
+      background: rgba(29,184,126,0.08);
+      transform: translateY(-1px);
+    }
+    .morgen-btn:focus-visible {
+      outline: 2px solid var(--green);
+      outline-offset: 4px;
+    }
 
-    /* ─── GAUGE STRIP ─── */
-    .gauge-strip {
+    /* ─── MARKET PROMPT ─── */
+    .market-prompt {
+      display: block;
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: 10px;
       padding: 20px 24px;
-      display: flex;
-      align-items: center;
-      gap: 20px;
-      box-shadow: inset 0 1px 0 rgba(255,255,255,0.05), 0 1px 4px rgba(0,0,0,0.3);
+      text-decoration: none;
       margin-bottom: 32px;
+      transition: border-color 180ms, background 180ms;
     }
-    .gauge-svg { flex-shrink: 0; }
-    .gauge-text { flex: 1; }
-    .gauge-headline {
-      font-family: 'DM Sans', sans-serif;
-      font-size: 10px;
-      letter-spacing: 0.14em;
-      color: var(--text-muted);
-      margin-bottom: 4px;
+    .market-prompt:hover {
+      border-color: var(--green-border);
+      background: rgba(29,184,126,0.03);
     }
-    .gauge-status {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 22px;
-      font-weight: 600;
-      color: var(--text-primary);
+    .mp-label {
+      font-family: 'Space Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 0.16em;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
     }
-    .gauge-sub { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+    .mp-cta {
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+    .mp-cta::after {
+      content: '';
+      display: inline-block;
+      width: 0;
+      height: 0;
+      margin-left: 6px;
+      border-top: 3px solid transparent;
+      border-bottom: 3px solid transparent;
+      border-left: 5px solid currentColor;
+      opacity: 0.6;
+      transition: transform 140ms;
+    }
+    .market-prompt:hover .mp-cta::after {
+      transform: translateX(3px);
+    }
+    .market-prompt:focus-visible {
+      outline: 2px solid var(--green);
+      outline-offset: 4px;
+    }
 
     /* ─── HERO TICKER TAPE ─── */
     @keyframes heroTickerScroll {
@@ -213,7 +215,7 @@
       font-family: 'Space Mono', monospace;
       font-size: 10px;
       letter-spacing: 0.06em;
-      color: var(--text-muted);
+      color: var(--text-secondary);
       border-right: 1px solid var(--border);
       white-space: nowrap;
     }
@@ -289,10 +291,6 @@
     }
 
     /* ─── CARD CORNER DOT ─── */
-    @keyframes dotPulse {
-      0%, 100% { opacity: 0.10; transform: scale(1); }
-      50%       { opacity: 0.30; transform: scale(1.5); }
-    }
     .feature-card::after {
       content: '';
       position: absolute;
@@ -303,7 +301,11 @@
       border-radius: 50%;
       background: rgba(255,255,255,0.10);
     }
-    .feature-card:hover::after { animation: dotPulse 1.2s ease-in-out infinite; }
+    .feature-card:hover::after { opacity: 1; }
+    .feature-card:focus-visible {
+      outline: 2px solid var(--green);
+      outline-offset: 4px;
+    }
 
     /* ─── CARD VIZ ─── */
     .card-viz {
@@ -345,8 +347,8 @@
     .vr-muted { color: var(--text-muted); }
     .vr-auto  { margin-left: auto; }
     .vr-badge { font-size: 7px; padding: 1px 5px; border-radius: 2px; letter-spacing: 0.08em; }
-    .vr-win   { background: rgba(29,184,126,0.15); color: #1DB87E; }
-    .vr-loss  { background: rgba(229,75,74,0.15);  color: #E54B4A; }
+    .vr-win   { background: var(--green-dim); color: var(--green); }
+    .vr-loss  { background: rgba(229,75,74,0.15); color: var(--red); }
 
     /* ─── CARD BODY ─── */
     .card-body {
@@ -368,7 +370,7 @@
       font-family: 'Space Mono', monospace;
       font-size: 8px;
       letter-spacing: 0.14em;
-      color: var(--text-muted);
+      color: var(--text-secondary);
       margin-bottom: 8px;
     }
     .card-title {
@@ -395,7 +397,7 @@
       font-family: 'DM Sans', sans-serif;
       font-size: 11px;
       font-weight: 500;
-      letter-spacing: 0.12em;
+      letter-spacing: 0.08em;
       color: var(--text-secondary);
       border-top: 1px solid var(--border);
       padding-top: 16px;
@@ -433,7 +435,7 @@
       font-family: 'Space Mono', monospace;
       font-size: 9px;
       letter-spacing: 0.16em;
-      color: var(--text-muted);
+      color: var(--text-secondary);
     }
     .fe-body {
       font-size: 15px;
@@ -469,7 +471,28 @@
     }
     .footer-note { font-size: 11px; color: var(--text-muted); }
 
+    /* ─── ERROR TOAST ─── */
+    .error-toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: var(--surface-2);
+      border: 1px solid var(--red);
+      border-radius: 8px;
+      padding: 16px 20px;
+      font-size: 12px;
+      color: var(--text-primary);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+      animation: slideInRight 0.3s ease;
+      z-index: 1000;
+    }
+
     /* ─── VIZ KEYFRAMES ─── */
+
+    @keyframes slideInRight {
+      from { transform: translateX(400px); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
 
     @keyframes stickUp {
       0%, 5%   { transform: scaleY(0); opacity: 0; }
@@ -528,16 +551,21 @@
     /* ─── REDUCED MOTION ─── */
     @media (prefers-reduced-motion: reduce) {
       .hero-in, .hi-0, .hi-1, .hi-2, .hi-3, .hi-4 { animation: none; opacity: 1; transform: none; }
-      .morgen-btn   { animation: none; }
-      .glow-top     { animation: none; }
       .hero-ticker-track { animation: none; }
       .js .feature-card, .js .feature-explain { opacity: 1; transform: none; transition: none; }
       .feature-card:hover { transform: none; }
-      .feature-card:hover::after { animation: none; }
       .card-viz * { animation: none !important; opacity: 1 !important; transform: none !important; }
     }
 
     /* ─── RESPONSIVE ─── */
+    @media (max-width: 1024px) and (min-width: 768px) {
+      .feature-row {
+        gap: 24px;
+      }
+      .hero-title {
+        font-size: 68px;
+      }
+    }
     @media (max-width: 560px) {
       .feature-row {
         grid-template-columns: 1fr;
@@ -550,11 +578,22 @@
       }
     }
 
+    /* ─── GLOBAL ACCESSIBILITY ─── */
+    /* P1.1: Ensure all links use accessible colors instead of browser default */
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    /* P1.4: Global focus-visible fallback for all interactive elements */
+    a:focus-visible, button:focus-visible {
+      outline: 2px solid var(--green);
+      outline-offset: 4px;
+    }
+
   </style>
 </head>
 <body>
-
-<div class="glow-top"></div>
 
 <div class="page">
 
@@ -578,41 +617,20 @@
     </p>
 
     <div class="hero-in hi-3">
-      <a href="market.html" class="morgen-btn">HENT MORGENBRIEF →</a>
+      <a href="market.html" class="morgen-btn">HENT DAGENS RAPPORT →</a>
     </div>
 
-    <!-- GAUGE STRIP -->
-    <div class="gauge-strip hero-in hi-4">
-      <svg class="gauge-svg" width="56" height="56" viewBox="0 0 56 56">
-        <circle cx="28" cy="28" r="22" fill="none" stroke="#162840" stroke-width="4"/>
-        <circle id="gauge-arc"
-          cx="28" cy="28" r="22"
-          fill="none"
-          stroke="#162840"
-          stroke-width="4"
-          stroke-linecap="round"
-          stroke-dasharray="138.23"
-          stroke-dashoffset="138.23"
-          transform="rotate(-90 28 28)"/>
-        <text id="gauge-num"
-          x="28" y="28"
-          font-family="'Space Mono', monospace"
-          font-weight="700"
-          font-size="13"
-          fill="#3a5878"
-          text-anchor="middle"
-          dominant-baseline="middle">--</text>
-      </svg>
-      <div class="gauge-text">
-        <div class="gauge-headline">SENTIMENT SCORE I DAG</div>
-        <div class="gauge-status" id="gauge-status">Ingen rapport hentet</div>
-        <div class="gauge-sub" id="gauge-sub">Gå til Marked for å hente dagens analyse</div>
-      </div>
-    </div>
+    <!-- MARKET PROMPT -->
+    <a href="market.html" class="market-prompt hero-in hi-4">
+      <div class="mp-label">DAGENS MARKEDSRAPPORT</div>
+      <div class="mp-cta">Gå til Marked for å hente dagens analyse →</div>
+    </a>
 
     <!-- HERO TICKER TAPE -->
     <div class="hero-ticker">
-      <div class="hero-ticker-track"></div>
+      <div class="hero-ticker-track">
+        <div class="hero-tick-item" style="opacity:0.3">Laster markedsdata...</div>
+      </div>
     </div>
 
   </section>
@@ -625,7 +643,7 @@
 
     <!-- Feature 1: Marked -->
     <div class="feature-row">
-      <a class="feature-card card-primary" href="market.html">
+      <a class="feature-card card-primary" href="market.html" aria-label="Gå til Marked for daglig markedssentiment med score, nøkkeltall og sektoranalyse">
         <div class="card-viz" aria-hidden="true">
           <svg width="100%" height="100%" viewBox="0 0 200 100" preserveAspectRatio="none">
             <!-- Candles (baseline at y=90) -->
@@ -672,7 +690,7 @@
 
     <!-- Feature 2: Sektorer -->
     <div class="feature-row">
-      <a class="feature-card" href="sektor.html">
+      <a class="feature-card" href="sektor.html" aria-label="Gå til Sektorer for ukentlig oversikt over hvilke sektorer som leder og henger etter">
         <div class="card-viz" aria-hidden="true">
           <svg width="100%" height="100%" viewBox="0 0 200 80" preserveAspectRatio="none">
             <!-- Baseline -->
@@ -704,7 +722,7 @@
       </a>
       <div class="feature-explain">
         <div class="fe-num">02</div>
-        <div class="fe-body">Se hvilke av de elleve SPDR-sektorene som leder og hvilke som taper denne uken. <strong>Velg riktig sektorside og unngå motvind</strong> — et enkelt overblikk over rotasjonen.</div>
+        <div class="fe-body">Se hvilke av de elleve <abbr title="SPDR = Standard & Poor's Depositary Receipts — sektor-ETFer som tracker ulike industrisektorer">SPDR-sektorene</abbr> som leder og hvilke som taper denne uken. <strong>Velg riktig sektorside og unngå motvind</strong> — et enkelt overblikk over rotasjonen.</div>
       </div>
     </div>
 
@@ -713,7 +731,7 @@
 
     <!-- Feature 3: Ticker -->
     <div class="feature-row">
-      <a class="feature-card card-primary" href="ticker.html">
+      <a class="feature-card card-primary" href="ticker.html" aria-label="Gå til Ticker for dyp aksjeanalyse med nyheter, earnings, insider, short float og sentiment">
         <div class="card-viz" aria-hidden="true">
           <div class="vr-item" style="top:11px; animation:rowSlide 4.5s ease-out 0ms infinite">
             <span class="vr-sym">NVDA</span>
@@ -734,7 +752,7 @@
         </div>
         <div class="card-body">
           <div class="card-tag">ENKELTAKSJER</div>
-          <div class="card-chip">AI · 7-LAGS ANALYSE</div>
+          <div class="card-chip">AI · YAHOO FINANCE</div>
           <div class="card-title">Ticker</div>
           <div class="card-desc">Dyp aksjeanalyse på fem lag: nyheter, earnings, insider, short float og sentiment.</div>
           <div class="card-cta">SØK TICKER →</div>
@@ -742,13 +760,13 @@
       </a>
       <div class="feature-explain">
         <div class="fe-num">03</div>
-        <div class="fe-body">Skriv inn en ticker. Få fem-lags analyse: nyheter, earnings, innsidehandler, short float og sentiment. <strong>Alt samlet på sekunder</strong> — basert på AI-drevet søk og Yahoo Finance.</div>
+        <div class="fe-body">Skriv inn en ticker. Få fem-lags analyse: nyheter, earnings, innsidehandler, <abbr title="Short float = andel aksjer som er shortet — høy short float kan signalisere short squeeze potensial">short float</abbr> og sentiment. <strong>Alt samlet på sekunder</strong> — basert på AI-drevet søk og Yahoo Finance.</div>
       </div>
     </div>
 
     <!-- Feature 4: Earnings Play -->
     <div class="feature-row">
-      <a class="feature-card" href="earnings-play.html">
+      <a class="feature-card" href="earnings-play.html" aria-label="Gå til Earnings Play for EPS-historikk, implied move og AI-tolkning av earnings data">
         <div class="card-viz" aria-hidden="true">
           <svg width="100%" height="100%" viewBox="0 0 200 80" preserveAspectRatio="none">
             <!-- Label column -->
@@ -780,13 +798,13 @@
       </a>
       <div class="feature-explain">
         <div class="fe-num">04</div>
-        <div class="fe-body">Finn aksjer med sterk historikk for å slå estimater. EPS-historikk, forventet svingning og analytikerkonsensus — <strong>tolket av AI</strong>. Basert på Yahoo Finance-data.</div>
+        <div class="fe-body">Finn aksjer med sterk historikk for å slå estimater. <abbr title="EPS = Earnings Per Share (resultat per aksje) — nøkkeltall for å vurdere lønnsomhet">EPS-historikk</abbr>, forventet svingning og analytikerkonsensus — <strong>tolket av AI</strong>. Basert på Yahoo Finance-data.</div>
       </div>
     </div>
 
     <!-- Feature 5: Historikk -->
     <div class="feature-row">
-      <a class="feature-card" href="historikk.html">
+      <a class="feature-card" href="historikk.html" aria-label="Gå til Historikk for AI-generert tidslinje over viktigste katalysatorer som har påvirket aksjen">
         <div class="card-viz" aria-hidden="true">
           <svg width="100%" height="100%" viewBox="0 0 200 80" preserveAspectRatio="none">
             <!-- Connecting lines -->
@@ -835,7 +853,7 @@
 
     <!-- Feature 6: Radar -->
     <div class="feature-row">
-      <a class="feature-card" href="radar.html">
+      <a class="feature-card" href="radar.html" aria-label="Gå til Radar for daglig AI-screening av swing-kandidater med short float, momentum og katalysatorer">
         <div class="card-viz" aria-hidden="true">
           <svg width="72" height="72" viewBox="0 0 72 72">
             <!-- Concentric circles -->
@@ -879,7 +897,7 @@
 
     <!-- Feature 7: Logg -->
     <div class="feature-row">
-      <a class="feature-card" href="logg.html">
+      <a class="feature-card" href="logg.html" aria-label="Gå til Logg for å logge trades, følge P&L og bygge disiplin gjennom dokumentasjon">
         <div class="card-viz" aria-hidden="true">
           <div class="vr-item" style="top:11px; animation:logRow 3.5s ease-out 0ms infinite">
             <span class="vr-sym">NVDA</span>
@@ -924,73 +942,45 @@
 
 </div>
 
+<!-- TICKER FALLBACK DATA (hidden, used by initHeroTicker if live.js fails) -->
+<div class="t-rail" style="display:none">
+  <div class="t-item">SPY +0.5%</div>
+  <div class="t-item">QQQ +0.8%</div>
+  <div class="t-item">DJIA +0.3%</div>
+  <div class="t-item">VIX 14.2</div>
+  <div class="t-item">GOLD $2,650</div>
+  <div class="t-item">BTC $98,500</div>
+</div>
+
 <script>
-  /* ─── GAUGE ─── */
-  const CIRC = 138.23;
-
-  function scoreColor(s) {
-    if (s < 40) return '#E54B4A';
-    if (s <= 60) return '#C4821A';
-    return '#1DB87E';
+  /* ─── ERROR TOAST UTILITY ─── */
+  function showErrorToast(message) {
+    const toast = document.createElement('div');
+    toast.className = 'error-toast';
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 5000);
   }
-
-  function scoreLabel(s) {
-    if (s < 30) return 'Ekstremt bearish';
-    if (s < 45) return 'Bearish';
-    if (s <= 55) return 'Nøytral';
-    if (s <= 70) return 'Bullish';
-    return 'Ekstremt bullish';
-  }
-
-  function animateGauge(target) {
-    const arc    = document.getElementById('gauge-arc');
-    const num    = document.getElementById('gauge-num');
-    const status = document.getElementById('gauge-status');
-    const sub    = document.getElementById('gauge-sub');
-    const col    = scoreColor(target);
-
-    arc.setAttribute('stroke', col);
-    num.setAttribute('fill', col);
-    status.textContent = scoreLabel(target);
-    status.style.color = col;
-    sub.textContent = 'Score oppdatert i dag';
-
-    const targetOffset = CIRC * (1 - target / 100);
-    const dur = 1400;
-    const t0  = performance.now();
-
-    function ease(t) {
-      return t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t+2,3)/2;
-    }
-
-    (function tick(now) {
-      const p = Math.min((now - t0) / dur, 1);
-      const e = ease(p);
-      arc.setAttribute('stroke-dashoffset', CIRC - e * (CIRC - targetOffset));
-      num.textContent = Math.round(e * target);
-      if (p < 1) requestAnimationFrame(tick);
-      else num.textContent = target;
-    })(t0);
-  }
-
-  const cacheKey = 'pulse_market_' + new Date().toISOString().slice(0, 10);
-  try {
-    const cached = JSON.parse(localStorage.getItem(cacheKey) || 'null');
-    if (cached && typeof cached.score === 'number') {
-      setTimeout(() => animateGauge(cached.score), 600);
-    }
-  } catch (e) {}
 
   /* ─── HERO TICKER TAPE ─── */
+  let tickerRetries = 0;
   function initHeroTicker() {
     const rail = document.querySelector('.t-rail');
     const track = document.querySelector('.hero-ticker-track');
     if (!track) return;
     if (!rail || !rail.querySelectorAll('.t-item').length) {
+      tickerRetries++;
+      if (tickerRetries > 10) {
+        track.innerHTML = '<div class="hero-tick-item" style="opacity:0.5">Markedsdata utilgjengelig</div>';
+        showErrorToast('Kunne ikke laste markedsdata. Prøv å laste siden på nytt.');
+        console.error('Ticker initialization failed after 10 retries');
+        return;
+      }
       setTimeout(initHeroTicker, 300);
       return;
     }
     const items = Array.from(rail.querySelectorAll('.t-item'));
+    track.innerHTML = ''; // Clear skeleton state
     // Double for seamless loop
     [...items, ...items].forEach(item => {
       const el = document.createElement('div');
@@ -1011,6 +1001,28 @@
   }, { threshold: 0.15 });
 
   document.querySelectorAll('.feature-row').forEach(r => featureIO.observe(r));
+
+  /* ─── KEYBOARD SHORTCUTS ─── */
+  document.addEventListener('keydown', (e) => {
+    // Skip if modifier keys are pressed (Ctrl, Cmd, Alt) or input is focused
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) return;
+
+    const shortcuts = {
+      'm': 'market.html',
+      't': 'ticker.html',
+      's': 'sektor.html',
+      'r': 'radar.html',
+      'e': 'earnings-play.html',
+      'l': 'logg.html',
+      'h': 'historikk.html'
+    };
+
+    if (shortcuts[e.key]) {
+      e.preventDefault();
+      window.location.href = shortcuts[e.key];
+    }
+  });
 </script>
 
 <script src="bg.js"></script>
