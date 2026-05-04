@@ -1,11 +1,11 @@
 # PULSE — Handoff
 
 ## Dato
-03. mai 2026
+04. mai 2026
 
 ## Gjeldende HEAD
-Siste commit: feat: replace market-prompt with live market strip (d268ac7)
-Status: Live market strip implementert i hero-seksjonen
+Siste commit: refactor: restructure LIVE pill DOM and fix spacing rhythm (1588344)
+Status: DOM-struktur og spacing rhythm optimalisert
 
 ## Status
 - Fase 1: KOMPLETT
@@ -22,22 +22,36 @@ Status: Live market strip implementert i hero-seksjonen
 - Juridisk disclaimer på alle AI-sider
 - Modell: Sonnet 4.5 (standard kontekst — ikke 1M)
 
-## Siste sesjon (03. mai) — Live market strip
+## Siste sesjon (04. mai) — DOM struktur og spacing fixes
 
-**Market strip implementert:**
-- ✅ Erstattet .market-prompt med live market data strip
-- ✅ 6 tiles: SPX, NDX, VIX, GOLD, BTC, DXY
-- ✅ Hairline-skillelinjer (1px rgba(255,255,255,0.06))
-- ✅ Typography: ticker #4A5468 mono 9.5px, verdi hvit mono 14px bold, endring 10.5px
-- ✅ LIVE · HH:MM pill med pulserende dot (oppdateres hvert 30. sekund)
-- ✅ Animasjoner: stagger fade-in (0-250ms), random flicker hver 3-5s, micro-jitter ved oppdatering
-- ✅ Responsiv: 3×2 grid under 720px
-- ✅ Fallback til statiske verdier (ingen avhengighet til live.js for initial render)
+**Fire presise fixes:**
+1. ✅ LIVE-pill DOM-struktur
+   - Flyttet fra .market-strip sibling til DXY tile child
+   - Semantisk korrekt: pill tilhører DXY tile data
+   - position: relative på .market-tile (positioning context)
+   - Ingen absolute positioning utenfor naturlig container
 
-**Design:**
-- Ingen gradienter, glassmorphism eller border på tiles
-- Følger purposeful animation-prinsippet (ingen dekorative effekter)
-- 72px total høyde
+2. ✅ Spacing rhythm (3 gaps)
+   - Gap A: hero-ticker → how-it-works: 48px → 56px
+   - Gap B: step 03 → feature-cat: 144px+ → 48px
+   - Gap C: mellom .hiw-step: 80px → 40px
+   - Konsistent: 56px (section transitions), 40px (internal gaps), 48px (boundaries)
+
+3. ✅ Fjernet "Se alle verktøy ↓"-link
+   - Både HTML og CSS fjernet
+   - Ren seksjon-boundary mellom how-it-works og features
+
+4. ✅ Ticker timing (verifisert)
+   - 800ms initial delay + content validation
+   - Forhindrer "BTC-", "SPX-", "NDX-" display
+
+**Tidligere sesjon (03. mai) — "Slik fungerer det" section:**
+- ✅ 3-stegs workflow: markedsoversikt, finn trade, logg beslutning
+- ✅ Animerte visuals: score ring, radar sweep, log dots, sparkline
+- ✅ Scroll-triggered reveals via IntersectionObserver
+- ✅ GPU-accelerated animations (transform + opacity only)
+- ✅ Responsive: 2-column → single-column under 720px
+- ✅ prefers-reduced-motion support
 
 **Tidligere sesjon (03. mai) — AI slop cleanup + P1/P2 UX improvements:**
 1. ✅ WCAG AA compliance (100% — global link color inheritance)
