@@ -152,8 +152,8 @@
     }
     .market-live-pill {
       position: absolute;
-      top: 0;
-      right: 0;
+      top: 8px;
+      right: 8px;
       z-index: 10;
       display: inline-flex;
       align-items: center;
@@ -291,14 +291,14 @@
 
     /* ─── FEATURES SECTION ─── */
     .features-section {
-      padding-top: 80px;
+      padding-top: 0;
     }
 
     .feature-cat {
       display: flex;
       align-items: center;
       gap: 16px;
-      margin: 64px 0 40px;
+      margin: 48px 0 40px;
       font-family: 'DM Sans', sans-serif;
       font-size: 11px;
       letter-spacing: 0.2em;
@@ -664,13 +664,13 @@
     .how-it-works-section {
       max-width: 680px;
       margin: 0 auto;
-      padding: 48px 24px 100px;
+      padding: 48px 24px 0;
     }
 
     .hiw-heading {
       font-family: 'Cormorant Garamond', serif;
       font-weight: 700;
-      font-size: clamp(56px, 9vw, 72px);
+      font-size: clamp(32px, 5vw, 44px);
       line-height: 1.05;
       letter-spacing: -0.02em;
       text-align: center;
@@ -1871,6 +1871,22 @@
       return;
     }
     const items = Array.from(rail.querySelectorAll('.t-item'));
+    // Validate content - retry if items have incomplete data (e.g., "BTC-" instead of "BTC $98,500")
+    const hasValidContent = items.some(item => {
+      const text = item.textContent.trim();
+      return text.length > 5 && !text.endsWith('-');
+    });
+    if (!hasValidContent) {
+      tickerRetries++;
+      if (tickerRetries > 10) {
+        track.innerHTML = '<div class="hero-tick-item" style="opacity:0.5">Markedsdata utilgjengelig</div>';
+        showErrorToast('Kunne ikke laste markedsdata. Prøv å laste siden på nytt.');
+        console.error('Ticker initialization failed: invalid content after 10 retries');
+        return;
+      }
+      setTimeout(initHeroTicker, 300);
+      return;
+    }
     track.innerHTML = ''; // Clear skeleton state
     // Double for seamless loop
     [...items, ...items].forEach(item => {
@@ -1880,7 +1896,7 @@
       track.appendChild(el);
     });
   }
-  window.addEventListener('load', () => setTimeout(initHeroTicker, 200));
+  window.addEventListener('load', () => setTimeout(initHeroTicker, 800));
 
   /* ─── MARKET STRIP ─── */
   function initMarketStrip() {
