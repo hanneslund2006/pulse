@@ -185,6 +185,7 @@
       gap: 0;
     }
     .market-tile {
+      position: relative;
       display: flex;
       flex-direction: column;
       justify-content: center;
@@ -298,7 +299,7 @@
       display: flex;
       align-items: center;
       gap: 16px;
-      margin: 48px 0 40px;
+      margin: 8px 0 40px;
       font-family: 'DM Sans', sans-serif;
       font-size: 11px;
       letter-spacing: 0.2em;
@@ -664,7 +665,7 @@
     .how-it-works-section {
       max-width: 680px;
       margin: 0 auto;
-      padding: 48px 24px 0;
+      padding: 56px 24px 0;
     }
 
     .hiw-heading {
@@ -686,7 +687,7 @@
       display: grid;
       grid-template-columns: 40% 60%;
       gap: 48px;
-      margin-bottom: 80px;
+      margin-bottom: 40px;
       opacity: 0;
       transform: translateY(24px);
       transition: opacity 0.6s cubic-bezier(0.16,1,0.3,1),
@@ -749,22 +750,6 @@
       border: 1px solid var(--border);
       border-radius: 4px;
       background: transparent;
-    }
-
-    .hiw-tools-link {
-      display: block;
-      text-align: center;
-      font-family: 'Space Mono', monospace;
-      font-size: 10px;
-      letter-spacing: 0.12em;
-      color: var(--text-muted);
-      text-decoration: none;
-      margin-top: 56px;
-      transition: color 180ms;
-    }
-
-    .hiw-tools-link:hover {
-      color: var(--text-secondary);
     }
 
     .hiw-visual-card {
@@ -1272,10 +1257,6 @@
 
     <!-- MARKET STRIP -->
     <div class="market-strip hero-in hi-4">
-      <div class="market-live-pill">
-        <span class="market-live-dot"></span>
-        LIVE · <span class="market-live-time">--:--</span>
-      </div>
       <div class="market-strip-grid">
         <div class="market-tile" data-ticker="SPX" data-delay="0">
           <div class="market-tile-ticker">SPX</div>
@@ -1303,6 +1284,10 @@
           <div class="market-tile-change positive">+1.2%</div>
         </div>
         <div class="market-tile" data-ticker="DXY" data-delay="5">
+          <div class="market-live-pill">
+            <span class="market-live-dot"></span>
+            LIVE · <span class="market-live-time">--:--</span>
+          </div>
           <div class="market-tile-ticker">DXY</div>
           <div class="market-tile-value">104.8</div>
           <div class="market-tile-change negative">-0.1%</div>
@@ -1523,7 +1508,6 @@
       </div>
     </div>
 
-    <a href="#features-section" class="hiw-tools-link">Se alle verktøy ↓</a>
   </section>
 
   <!-- FEATURES SECTION -->
