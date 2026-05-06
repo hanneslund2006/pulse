@@ -65,7 +65,7 @@
       flex-direction: column;
       justify-content: center;
       padding-top: 40px;
-      padding-bottom: 60px;
+      padding-bottom: 0;
       gap: 0;
     }
 
@@ -103,11 +103,16 @@
       color: var(--green);
     }
 
+    /* ─── HERO PAYOFF FADE ─── */
+    .hero-payoff {
+      display: inline;
+    }
+
     .hero-desc {
       font-size: 16px;
       line-height: 1.7;
       color: var(--text-secondary);
-      max-width: 520px;
+      max-width: 480px;
       font-weight: 400;
       margin-bottom: 36px;
     }
@@ -625,6 +630,8 @@
       .js .feature-card, .js .feature-explain { opacity: 1; transform: none; transition: none; }
       .feature-card:hover { transform: none; }
       .card-viz * { animation: none !important; opacity: 1 !important; transform: none !important; }
+      .hero-payoff { opacity: 1 !important; transition: none !important; }
+      .hero-desc { opacity: 1 !important; transition: none !important; }
     }
 
     /* ─── RESPONSIVE ─── */
@@ -665,7 +672,7 @@
     .how-it-works-section {
       max-width: 680px;
       margin: 0 auto;
-      padding: 56px 24px 0;
+      padding: 48px 24px 0;
     }
 
     .hiw-heading {
@@ -1242,13 +1249,13 @@
 
     <div class="hero-kicker hero-in hi-0">— Markedssentiment —</div>
 
-    <h1 class="hero-title hero-in hi-1">
+    <h1 class="hero-title">
       Les markedet.<br>
-      <em>Raskere.</em>
+      <em class="hero-payoff" style="opacity:0">Raskere.</em>
     </h1>
 
-    <p class="hero-desc hero-in hi-2">
-      PULSE bruker AI til å skanne nyheter, futures og sektordata i sanntid — og leverer deg en <strong>strukturert markedsoversikt på sekunder</strong>.
+    <p class="hero-desc" style="opacity:0">
+      PULSE bruker AI til å lese markedet for deg — nyheter, futures og sektordata i sanntid. Du får det som faktisk betyr noe, strukturert og klart.
     </p>
 
     <div class="hero-in hi-3">
@@ -1257,6 +1264,10 @@
 
     <!-- MARKET STRIP -->
     <div class="market-strip hero-in hi-4">
+      <div class="market-live-pill">
+        <span class="market-live-dot"></span>
+        LIVE · <span class="market-live-time">--:--</span>
+      </div>
       <div class="market-strip-grid">
         <div class="market-tile" data-ticker="SPX" data-delay="0">
           <div class="market-tile-ticker">SPX</div>
@@ -1284,10 +1295,6 @@
           <div class="market-tile-change positive">+1.2%</div>
         </div>
         <div class="market-tile" data-ticker="DXY" data-delay="5">
-          <div class="market-live-pill">
-            <span class="market-live-dot"></span>
-            LIVE · <span class="market-live-time">--:--</span>
-          </div>
           <div class="market-tile-ticker">DXY</div>
           <div class="market-tile-value">104.8</div>
           <div class="market-tile-change negative">-0.1%</div>
@@ -1836,6 +1843,39 @@
     document.body.appendChild(toast);
     setTimeout(() => toast.remove(), 5000);
   }
+
+  /* ─── HERO FADE-IN ANIMATION ─── */
+  function initHeroFadeIn() {
+    // Check for reduced motion preference
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      const payoff = document.querySelector('.hero-payoff');
+      const desc = document.querySelector('.hero-desc');
+      if (payoff) payoff.style.opacity = '1';
+      if (desc) desc.style.opacity = '1';
+      return;
+    }
+
+    const payoff = document.querySelector('.hero-payoff');
+    const desc = document.querySelector('.hero-desc');
+
+    // "Raskere." fade in after 200ms
+    if (payoff) {
+      setTimeout(() => {
+        payoff.style.opacity = '1';
+        payoff.style.transition = 'opacity 300ms ease-out';
+      }, 200);
+    }
+
+    // Hero-desc fade in after 400ms
+    if (desc) {
+      setTimeout(() => {
+        desc.style.opacity = '1';
+        desc.style.transition = 'opacity 300ms ease-out';
+      }, 400);
+    }
+  }
+
+  window.addEventListener('load', initHeroFadeIn);
 
   /* ─── HERO TICKER TAPE ─── */
   let tickerRetries = 0;
