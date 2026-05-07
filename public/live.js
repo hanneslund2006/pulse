@@ -6,6 +6,14 @@
 (function () {
   'use strict';
 
+  // ── Fetch with timeout ─────────────────────────────────────
+  function fetchWithTimeout(url, options = {}, ms = 30000) {
+    const controller = new AbortController();
+    const id = setTimeout(() => controller.abort(), ms);
+    return fetch(url, { ...options, signal: controller.signal })
+      .finally(() => clearTimeout(id));
+  }
+
   const DEFAULT_SYMS = ['^GSPC', '^NDX', '^DJI', '^VIX', 'DX-Y.NYB', 'GC=F', 'BTC-USD'];
 
   // ── Inject shared CSS ────────────────────────────────────
@@ -137,7 +145,7 @@
     try {
       const wl   = (() => { try { return JSON.parse(localStorage.getItem('pulse_watchlist') || '[]'); } catch { return []; } })();
       const syms = [...DEFAULT_SYMS, ...wl.filter(s => !DEFAULT_SYMS.includes(s))];
-      const res  = await fetch('/api/quotes?symbols=' + encodeURIComponent(syms.join(',')));
+      const res  = await fetchWithTimeout('/api/quotes?symbols=' + encodeURIComponent(syms.join(',')));
       if (!res.ok) return;
       const data = await res.json();
       if (!Array.isArray(data) || !data.length) return;
@@ -152,7 +160,13 @@
       track.innerHTML = html + html; // duplicate for seamless loop
       const dur = Math.max(data.length * 4, 24);
       track.style.animationDuration = dur + 's';
-    } catch (e) { console.error('[live] quotes:', e.message); }
+    } catch (e) {
+      if (e.name === 'AbortError') {
+        console.warn('[timeout] /api/quotes (live ticker)');
+      } else {
+        console.error('[live] quotes:', e.message);
+      }
+    }
   }
 
   loadTicker();

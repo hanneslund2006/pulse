@@ -236,6 +236,14 @@
   </div>
 
   <script>
+    // ── Fetch with timeout ─────────────────────────────────────
+    function fetchWithTimeout(url, options = {}, ms = 30000) {
+      const controller = new AbortController();
+      const id = setTimeout(() => controller.abort(), ms);
+      return fetch(url, { ...options, signal: controller.signal })
+        .finally(() => clearTimeout(id));
+    }
+
     function esc(s) {
       if (s == null) return '—';
       return String(s)
@@ -663,14 +671,17 @@
         if (cached) { renderRanker(cached); return; }
       } catch (_) {}
       try {
-        const res = await fetch('/api/earnings-ranker');
+        const res = await fetchWithTimeout('/api/earnings-ranker');
         if (!res.ok) { document.getElementById('ranker-loading').style.display = 'none'; return; }
         const data = await res.json();
         if (Array.isArray(data)) {
           localStorage.setItem(RANKER_KEY, JSON.stringify(data));
           renderRanker(data);
         }
-      } catch (_) {
+      } catch (e) {
+        if (e.name === 'AbortError') {
+          console.warn('[timeout] /api/earnings-ranker');
+        }
         const el = document.getElementById('ranker-loading');
         if (el) el.style.display = 'none';
       }

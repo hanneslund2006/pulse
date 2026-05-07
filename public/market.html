@@ -294,6 +294,14 @@
   </div>
 
   <script>
+    // ── Fetch with timeout ─────────────────────────────────────
+    function fetchWithTimeout(url, options = {}, ms = 30000) {
+      const controller = new AbortController();
+      const id = setTimeout(() => controller.abort(), ms);
+      return fetch(url, { ...options, signal: controller.signal })
+        .finally(() => clearTimeout(id));
+    }
+
     const TODAY     = new Date().toISOString().slice(0, 10);
     const CACHE_KEY = 'pulse_market_' + TODAY;
 
@@ -346,7 +354,7 @@
       try {
         let data = window.PULSE_QUOTES;
         if (!data) {
-          const res = await fetch('/api/quotes?symbols=' + encodeURIComponent(LIVE_SYMS.join(',')));
+          const res = await fetchWithTimeout('/api/quotes?symbols=' + encodeURIComponent(LIVE_SYMS.join(',')));
           if (!res.ok) throw new Error();
           data = await res.json();
         }
@@ -381,7 +389,10 @@
             if (cached) { cached.vix = vixQ.price; localStorage.setItem(CACHE_KEY, JSON.stringify(cached)); }
           } catch (_) {}
         }
-      } catch (_) {
+      } catch (e) {
+        if (e.name === 'AbortError') {
+          console.warn('[timeout] /api/quotes (market keydata)');
+        }
         // Fallback: show Claude's keydata if available
         if (lastClaudeKeydata && lastClaudeKeydata.length) {
           const el = document.getElementById('keydata');
@@ -741,14 +752,18 @@
         if (cached) { renderGappers(cached); return; }
       } catch (_) {}
       try {
-        const res = await fetch('/api/gappers');
+        const res = await fetchWithTimeout('/api/gappers');
         if (!res.ok) return;
         const data = await res.json();
         if (Array.isArray(data)) {
           localStorage.setItem(key, JSON.stringify(data));
           renderGappers(data);
         }
-      } catch (_) {}
+      } catch (e) {
+        if (e.name === 'AbortError') {
+          console.warn('[timeout] /api/gappers');
+        }
+      }
     }
 
     // ── Earnings calendar ─────────────────────────────────────
@@ -803,14 +818,18 @@
       const wl = getWatchlist();
       const qs = wl.length ? '?watchlist=' + encodeURIComponent(wl.join(',')) : '';
       try {
-        const res = await fetch('/api/earnings' + qs);
+        const res = await fetchWithTimeout('/api/earnings' + qs);
         if (!res.ok) return;
         const data = await res.json();
         if (Array.isArray(data)) {
           localStorage.setItem(EARNINGS_KEY, JSON.stringify(data));
           renderEarnings(data);
         }
-      } catch (e) {}
+      } catch (e) {
+        if (e.name === 'AbortError') {
+          console.warn('[timeout] /api/earnings');
+        }
+      }
     }
   </script>
 <script src="bg.js"></script>

@@ -249,6 +249,14 @@
   </div>
 
   <script>
+    // ── Fetch with timeout ─────────────────────────────────────
+    function fetchWithTimeout(url, options = {}, ms = 30000) {
+      const controller = new AbortController();
+      const id = setTimeout(() => controller.abort(), ms);
+      return fetch(url, { ...options, signal: controller.signal })
+        .finally(() => clearTimeout(id));
+    }
+
     // ── Watchlist ──────────────────────────────────────────────
     const WL_KEY = 'pulse_watchlist';
     let lastFoundTicker = null;
@@ -315,12 +323,16 @@
       const wl = getWatchlist();
       if (!wl.length) return;
       try {
-        const res = await fetch('/api/quotes?symbols=' + encodeURIComponent(wl.join(',')));
+        const res = await fetchWithTimeout('/api/quotes?symbols=' + encodeURIComponent(wl.join(',')));
         if (!res.ok) return;
         const data = await res.json();
         (data || []).forEach(q => { quoteCache[q.symbol] = q; });
         renderWatchlist();
-      } catch (_) {}
+      } catch (e) {
+        if (e.name === 'AbortError') {
+          console.warn('[timeout] /api/quotes (watchlist)');
+        }
+      }
     }
 
     function addToWatchlist() {
@@ -411,7 +423,7 @@
           q = (window.PULSE_QUOTES || []).find(x => x.symbol === ticker || x.displaySymbol === ticker);
         }
         if (!q) {
-          const res = await fetch('/api/quotes?symbols=' + encodeURIComponent(ticker));
+          const res = await fetchWithTimeout('/api/quotes?symbols=' + encodeURIComponent(ticker));
           if (!res.ok) throw new Error();
           const data = await res.json();
           q = (data || [])[0];
@@ -429,7 +441,11 @@
           <span class="price-bar-chg ${cls}">${sign}${q.changePercent.toFixed(2)}%</span>
           <span class="price-bar-delay">15-MIN FORSINKET</span>`;
         bar.classList.add('visible');
-      } catch (_) {}
+      } catch (e) {
+        if (e.name === 'AbortError') {
+          console.warn('[timeout] /api/quotes (price bar)');
+        }
+      }
     }
 
     // ── Render layers ──────────────────────────────────────────
@@ -609,7 +625,7 @@
       section.style.display = 'block';
 
       try {
-        const res = await fetch('/api/ticker-multimodel', {
+        const res = await fetchWithTimeout('/api/ticker-multimodel', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ ticker, layers }),
@@ -637,7 +653,10 @@
             </div>
           </div>`;
         }).join('');
-      } catch (_) {
+      } catch (e) {
+        if (e.name === 'AbortError') {
+          console.warn('[timeout] /api/ticker-multimodel');
+        }
         section.style.display = 'none';
       }
     }

@@ -110,6 +110,14 @@
   </div>
 
   <script>
+    // ── Fetch with timeout ─────────────────────────────────────
+    function fetchWithTimeout(url, options = {}, ms = 30000) {
+      const controller = new AbortController();
+      const id = setTimeout(() => controller.abort(), ms);
+      return fetch(url, { ...options, signal: controller.signal })
+        .finally(() => clearTimeout(id));
+    }
+
     const TODAY     = new Date().toISOString().slice(0, 10);
     const CACHE_KEY = 'pulse_sektor_' + TODAY;
 
@@ -156,13 +164,16 @@
       document.getElementById('load-wrap').classList.add('visible');
 
       try {
-        const res = await fetch('/api/sektor');
+        const res = await fetchWithTimeout('/api/sektor');
         if (!res.ok) throw new Error('Serverfeil ' + res.status);
         const data = await res.json();
         if (data.error) throw new Error(data.error);
         localStorage.setItem(CACHE_KEY, JSON.stringify(data));
         renderSectors(data);
       } catch (e) {
+        if (e.name === 'AbortError') {
+          e.message = 'Forespørselen tok for lang tid. Prøv igjen.';
+        }
         document.getElementById('load-wrap').classList.remove('visible');
         document.getElementById('empty-state').style.display = 'block';
         if (btn) btn.disabled = false;
@@ -220,7 +231,7 @@
 
       panel.innerHTML = `<div class="panel-loading"><div class="ls-dot"></div>ANALYSERER ${esc(symbol)}…</div>`;
 
-      fetch(`/api/sektor?ticker=${encodeURIComponent(symbol)}&navn=${encodeURIComponent(name)}`)
+      fetchWithTimeout(`/api/sektor?ticker=${encodeURIComponent(symbol)}&navn=${encodeURIComponent(name)}`)
         .then(r => r.json())
         .then(d => {
           if (d.error) throw new Error(d.error);
@@ -229,7 +240,8 @@
           try { localStorage.setItem(key, JSON.stringify({ html })); } catch (_) {}
         })
         .catch(e => {
-          panel.innerHTML = `<div class="panel-error">${esc(e.message || 'Klarte ikke hente analyse.')}</div>`;
+          const msg = e.name === 'AbortError' ? 'Forespørselen tok for lang tid.' : (e.message || 'Klarte ikke hente analyse.');
+          panel.innerHTML = `<div class="panel-error">${esc(msg)}</div>`;
         });
     }
 

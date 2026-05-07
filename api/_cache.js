@@ -1,5 +1,7 @@
 const { Redis } = require('@upstash/redis');
 
+const NAMESPACE = 'pulse:';
+
 // In-memory cache — sync, works within same warm lambda instance
 const memCache = new Map();
 
@@ -18,7 +20,7 @@ async function get(key) {
 
   if (redis) {
     try {
-      const val = await redis.get(key);
+      const val = await redis.get(NAMESPACE + key);
       if (val && typeof val === 'object' && Date.now() < val.expiresAt) {
         memCache.set(key, val);
         return val.data;
@@ -35,7 +37,7 @@ function set(key, data, ttlSeconds) {
 
   // Fire-and-forget write to Redis for cross-instance sharing
   if (redis) {
-    redis.set(key, { data, expiresAt }, { ex: ttlSeconds }).catch(() => {});
+    redis.set(NAMESPACE + key, { data, expiresAt }, { ex: ttlSeconds }).catch(() => {});
   }
 }
 
