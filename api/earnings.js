@@ -38,7 +38,8 @@ module.exports = async (req, res) => {
     ? watchlistParam.split(',').map(s => s.trim().toUpperCase()).filter(Boolean)
     : [];
 
-  const cacheKey = `earnings_v1_${watchlistParam}`;
+  const today = new Date().toISOString().slice(0, 10);
+  const cacheKey = `earnings_v1_${today}`;
   const cached = await cache.get(cacheKey);
   if (cached) {
     console.log('[earnings] CACHE HIT');
@@ -47,9 +48,6 @@ module.exports = async (req, res) => {
   console.log('[earnings] CACHE MISS — calling Claude');
 
   const { start, end } = getWeekRange();
-  const watchlistHint = watchlist.length
-    ? `Prioriter disse selskapene hvis de rapporterer: ${watchlist.join(', ')}. Hvis ingen av dem rapporterer denne uken, returner de 5 mest markedsrelevante selskapene som rapporterer.`
-    : 'Returner de 5 mest markedsrelevante selskapene som rapporterer denne uken (store cap, høy handelsvolum).';
 
   const SYSTEM = `Du er en finansanalytiker. Søk etter earnings-rapporter for inneværende uke (${start} til ${end}).
 
@@ -79,12 +77,12 @@ Regler:
     const messages = [
       {
         role: 'user',
-        content: `Søk etter hvilke selskaper som rapporterer earnings denne uken (${start}–${end}). ${watchlistHint}`
+        content: `Søk etter hvilke selskaper som rapporterer earnings denne uken (${start}–${end}). Returner de 5-8 mest markedsrelevante selskapene som rapporterer (store cap, høy handelsvolum).`
       }
     ];
 
     const response = await anthropic.messages.create({
-      model: 'claude-sonnet-4-6',
+      model: 'claude-haiku-4-5-20251001',
       max_tokens: 600,
       system: SYSTEM,
       tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: 3 }],

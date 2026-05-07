@@ -13,6 +13,14 @@ function extractJSON(text) {
   return null;
 }
 
+function isRelevantArticle(headline, summary) {
+  const text = `${headline} ${summary || ''}`.toLowerCase();
+  const keywords = ['earnings', 'guidance', 'analyst', 'acquisition', 'merger',
+                    'lawsuit', 'fda', 'sec', 'upgrade', 'downgrade', 'target',
+                    'revenue', 'profit', 'loss', 'beat', 'miss'];
+  return keywords.some(kw => text.includes(kw));
+}
+
 module.exports = async (req, res) => {
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
@@ -87,14 +95,24 @@ module.exports = async (req, res) => {
   }
 
   // Prepare article text for Claude — oldest first
-  const articleText = articles
+  const filteredArticles = articles
     .slice()
     .reverse()
+    .filter(a => isRelevantArticle(a.headline, a.summary));
+
+  const articleText = filteredArticles
+    .slice(0, 8)
     .map(a => {
-      const full = `[${(a.created_at || '').slice(0, 10)}] ${a.headline}${a.summary ? ': ' + a.summary : ''}`;
-      return full.slice(0, 800);
+      const date = (a.created_at || '').slice(0, 10);
+      const headline = a.headline.split(' ').slice(0, 15).join(' ');
+      const summary = a.summary
+        ? a.summary.split(' ').slice(0, 20).join(' ')
+        : '';
+      return `[${date}] ${headline}${summary ? ': ' + summary : ''}`;
     })
     .join('\n');
+
+  console.log(`[historikk] Articles: ${articles.length} total, ${filteredArticles.length} relevant, ${Math.min(filteredArticles.length, 8)} sent to Claude (${articleText.length} chars)`);
 
   const systemPrompt = `List the 5 most important stock-moving catalysts for ${ticker} from the provided news. Today is ${new Date().toISOString().slice(0, 10)}. Return ONLY valid JSON, no preamble, no markdown:
 {"ticker":"${ticker}","catalysts":[{"date":"YYYY-MM-DD","headline":"max 8 words","explanation":"max 1 sentence, 20 words","sentiment":"positive"}]}

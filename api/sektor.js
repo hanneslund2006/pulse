@@ -2,6 +2,7 @@ const Anthropic = require('@anthropic-ai/sdk');
 const { check: rateCheck } = require('./_ratelimit');
 const { validateTicker } = require('./_validate');
 const { fetchWithTimeout } = require('./_fetch');
+const cache = require('./_cache');
 
 const SECTORS = [
   { symbol: 'XLK',  name: 'Technology' },
@@ -62,6 +63,14 @@ module.exports = async (req, res) => {
     }
     const navn = (req.query.navn || ticker).slice(0, 40);
 
+    const today = new Date().toISOString().slice(0, 10);
+    const cacheKey = `sektor:${ticker}:${today}`;
+    const cached = await cache.get(cacheKey);
+    if (cached) {
+      console.log(`[sektor] CACHE HIT: ${ticker}:${today}`);
+      return res.status(200).json(cached);
+    }
+
     const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
     try {
       const response = await anthropic.messages.create({
@@ -74,7 +83,9 @@ module.exports = async (req, res) => {
         }]
       });
       const text = response.content.filter(b => b.type === 'text').map(b => b.text).join('').trim();
-      return res.status(200).json({ analyse: text });
+      const result = { analyse: text };
+      cache.set(cacheKey, result, 24 * 3600);
+      return res.status(200).json(result);
     } catch (e) {
       console.error('[sektor] Haiku feil:', e.message);
       return res.status(500).json({ error: 'Klarte ikke hente analyse. Prøv igjen.' });

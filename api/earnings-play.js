@@ -105,7 +105,7 @@ async function claudeInterpret(ticker, mapped) {
   try {
     console.log('[earnings-play] Claude kall starter');
     const response = await anthropic.messages.create({
-      model: 'claude-sonnet-4-6',
+      model: 'claude-haiku-4-5-20251001',
       max_tokens: 200,
       system: systemPrompt,
       messages: [{ role: 'user', content: payload }],
@@ -159,7 +159,7 @@ module.exports = async (req, res) => {
       impliedMove: ai.impliedMove != null ? { percent: ai.impliedMove } : null,
     };
 
-    cache.set(CACHE_KEY, safe, 6 * 3600);
+    cache.set(CACHE_KEY, safe, 60 * 60 * 24);
     return res.status(200).json(safe);
 
   } catch (error) {

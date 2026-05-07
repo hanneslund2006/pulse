@@ -166,7 +166,7 @@ module.exports = async (req, res) => {
     }
 
     if (technical) parsed.technical = technical;
-    cache.set(`ticker_${ticker}`, parsed, 6 * 3600);
+    cache.set(`ticker_${ticker}`, parsed, 60 * 60 * 24);
     return res.status(200).json(parsed);
 
   } catch (error) {
