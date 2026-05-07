@@ -1,4 +1,6 @@
 const { check: rateCheck } = require('./_ratelimit');
+const { validateTicker } = require('./_validate');
+const { fetchWithTimeout } = require('./_fetch');
 const cache = require('./_cache');
 
 const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
@@ -13,12 +15,17 @@ module.exports = async (req, res) => {
   const rl = rateCheck(req);
   if (rl) return res.status(429).json({ error: `Du har nådd grensen for analyser denne timen. Prøv igjen om ${rl.waitMinutes} minutter.` });
 
-  const { ticker, layers } = req.body || {};
-  if (!ticker || !Array.isArray(layers)) {
-    return res.status(400).json({ error: 'ticker og layers kreves' });
+  const { ticker: rawTicker, layers } = req.body || {};
+
+  let ticker;
+  try {
+    ticker = validateTicker(rawTicker);
+  } catch (e) {
+    return res.status(400).json({ error: e.message });
   }
-  if (!/^[A-Z]{1,6}$/.test(ticker)) {
-    return res.status(400).json({ error: 'Ugyldig ticker-format.' });
+
+  if (!Array.isArray(layers)) {
+    return res.status(400).json({ error: 'layers kreves som array' });
   }
 
   const today = new Date().toISOString().slice(0, 10);
@@ -42,7 +49,7 @@ module.exports = async (req, res) => {
 
   try {
     const results = await Promise.all(MODELS.map(async ({ id, name }) => {
-      const response = await fetch(OPENROUTER_URL, {
+      const response = await fetchWithTimeout(OPENROUTER_URL, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
@@ -55,7 +62,7 @@ module.exports = async (req, res) => {
           max_tokens: 120,
           messages: [{ role: 'user', content: prompt }],
         }),
-      });
+      }, 30000);
 
       if (!response.ok) {
         console.error('[ticker-multimodel]', id, 'returnerte', response.status);

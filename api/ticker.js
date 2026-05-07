@@ -1,5 +1,6 @@
 const Anthropic = require('@anthropic-ai/sdk');
 const { check: rateCheck } = require('./_ratelimit');
+const { validateTicker } = require('./_validate');
 const cache = require('./_cache');
 const YahooFinance = require('yahoo-finance2').default;
 const yf = new YahooFinance({ suppressNotices: ['yahooSurvey'] });
@@ -38,17 +39,28 @@ Regler:
 - Alltid nøyaktig 5 lag i layers-arrayet i rekkefølgen over
 - Svar KUN med JSON-objektet, ingenting annet`;
 
+function timeoutPromise(ms, message) {
+  return new Promise((_, reject) =>
+    setTimeout(() => reject(new Error(message)), ms)
+  );
+}
 
 async function fetchTechnicals(ticker) {
   try {
     const end = new Date();
     const start = new Date();
     start.setDate(start.getDate() - 290);
-    const rows = await yf.historical(ticker, {
+
+    const historicalPromise = yf.historical(ticker, {
       period1: start.toISOString().slice(0, 10),
       period2: end.toISOString().slice(0, 10),
       interval: '1d',
     });
+
+    const rows = await Promise.race([
+      historicalPromise,
+      timeoutPromise(30000, 'Yahoo Finance timeout')
+    ]);
     const closes = (rows || []).map(r => r.close).filter(c => typeof c === 'number');
     if (closes.length < 10) return null;
     const currentPrice = closes[closes.length - 1];
@@ -91,20 +103,21 @@ module.exports = async (req, res) => {
     return res.status(500).json({ error: 'API-nøkkel mangler.' });
   }
 
-  const raw = (req.body?.ticker || '').trim().toUpperCase();
-  if (!raw || !/^[A-Z0-9.]{1,6}$/.test(raw)) {
-    return res.status(400).json({ error: 'Ugyldig ticker-symbol.' });
+  try {
+    var ticker = validateTicker(req.body?.ticker);
+  } catch (e) {
+    return res.status(400).json({ error: e.message });
   }
 
   const rl = rateCheck(req);
   if (rl) return res.status(429).json({ error: `Du har nådd grensen for analyser denne timen. Prøv igjen om ${rl.waitMinutes} minutter.` });
 
-  const cached = await cache.get(`ticker_${raw}`);
+  const cached = await cache.get(`ticker_${ticker}`);
   if (cached) {
-    console.log(`[ticker] CACHE HIT: ${raw}`);
+    console.log(`[ticker] CACHE HIT: ${ticker}`);
     return res.status(200).json(cached);
   }
-  console.log(`[ticker] CACHE MISS: ${raw} — calling Claude`);
+  console.log(`[ticker] CACHE MISS: ${ticker} — calling Claude`);
 
   const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
@@ -112,7 +125,7 @@ module.exports = async (req, res) => {
     const messages = [
       {
         role: 'user',
-        content: `Søk etter informasjon om aksjen ${raw} og returner analysen som JSON.`
+        content: `Søk etter informasjon om aksjen ${ticker} og returner analysen som JSON.`
       }
     ];
 
@@ -124,7 +137,7 @@ module.exports = async (req, res) => {
         tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: 1 }],
         messages,
       }),
-      fetchTechnicals(raw),
+      fetchTechnicals(ticker),
     ]);
 
     const finalText = response.content
@@ -153,7 +166,7 @@ module.exports = async (req, res) => {
     }
 
     if (technical) parsed.technical = technical;
-    cache.set(`ticker_${raw}`, parsed, 6 * 3600);
+    cache.set(`ticker_${ticker}`, parsed, 6 * 3600);
     return res.status(200).json(parsed);
 
   } catch (error) {

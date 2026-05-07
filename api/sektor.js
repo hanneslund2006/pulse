@@ -1,5 +1,7 @@
 const Anthropic = require('@anthropic-ai/sdk');
 const { check: rateCheck } = require('./_ratelimit');
+const { validateTicker } = require('./_validate');
+const { fetchWithTimeout } = require('./_fetch');
 
 const SECTORS = [
   { symbol: 'XLK',  name: 'Technology' },
@@ -17,9 +19,9 @@ const SECTORS = [
 
 async function fetchWeeklyChange(symbol) {
   const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=5d`;
-  const res = await fetch(url, {
+  const res = await fetchWithTimeout(url, {
     headers: { 'User-Agent': 'Mozilla/5.0 (compatible; PULSE/1.0)' },
-  });
+  }, 30000);
   if (!res.ok) return null;
   const json = await res.json();
   const result = json?.chart?.result?.[0];
@@ -52,8 +54,13 @@ module.exports = async (req, res) => {
     const rl = rateCheck(req);
     if (rl) return res.status(429).json({ error: `Prøv igjen om ${rl.waitMinutes} minutt(er).` });
 
-    const ticker = (req.query.ticker || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6);
-    const navn   = (req.query.navn   || ticker).slice(0, 40);
+    let ticker;
+    try {
+      ticker = validateTicker(req.query.ticker);
+    } catch (e) {
+      return res.status(400).json({ error: e.message });
+    }
+    const navn = (req.query.navn || ticker).slice(0, 40);
 
     const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
     try {

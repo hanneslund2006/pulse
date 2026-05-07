@@ -78,7 +78,7 @@ module.exports = async (req, res) => {
       model: 'claude-haiku-4-5-20251001',
       max_tokens: 900,
       system: SYSTEM_PROMPT,
-      tools: [{ type: 'web_search_20250305', name: 'web_search' }],
+      tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: 3 }],
       messages: [{ role: 'user', content: `Today is ${today}. Finn alle viktige earnings denne uken og ranger dem etter trading-potensial. Returner JSON-array.` }],
     });
 

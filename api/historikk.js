@@ -1,5 +1,7 @@
 const Anthropic = require('@anthropic-ai/sdk');
 const { check: rateCheck } = require('./_ratelimit');
+const { validateTicker } = require('./_validate');
+const { fetchWithTimeout } = require('./_fetch');
 const cache = require('./_cache');
 
 function extractJSON(text) {
@@ -18,9 +20,11 @@ module.exports = async (req, res) => {
 
   const { ticker: rawTicker, months: rawMonths } = req.query;
 
-  const ticker = (rawTicker || '').trim().toUpperCase();
-  if (!ticker || !/^[A-Z0-9.]{1,6}$/.test(ticker)) {
-    return res.status(400).json({ error: 'Ugyldig ticker-symbol.' });
+  let ticker;
+  try {
+    ticker = validateTicker(rawTicker);
+  } catch (e) {
+    return res.status(400).json({ error: e.message });
   }
 
   const months = parseInt(rawMonths) || 3;
@@ -55,12 +59,12 @@ module.exports = async (req, res) => {
   let articles = [];
   try {
     const alpacaUrl = `https://data.alpaca.markets/v1beta1/news?symbols=${encodeURIComponent(ticker)}&start=${startISO}&limit=10&sort=desc`;
-    const alpacaRes = await fetch(alpacaUrl, {
+    const alpacaRes = await fetchWithTimeout(alpacaUrl, {
       headers: {
         'APCA-API-KEY-ID': process.env.ALPACA_API_KEY,
         'APCA-API-SECRET-KEY': process.env.ALPACA_API_SECRET,
       }
-    });
+    }, 30000);
 
     if (!alpacaRes.ok) {
       const errText = await alpacaRes.text();

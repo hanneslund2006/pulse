@@ -1,11 +1,14 @@
-const fs = require('fs');
-const path = require('path');
-const RL_DIR = '/tmp/pulse-rl';
-const WINDOW_MS = 60 * 60 * 1000;
-const MAX_CALLS = 10;
+const { Redis } = require('@upstash/redis');
 
-function ensureDir() {
-  if (!fs.existsSync(RL_DIR)) fs.mkdirSync(RL_DIR, { recursive: true });
+const WINDOW_SEC = 3600; // 60 minutes
+const MAX_CALLS = 25;
+
+let redis = null;
+if (process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN) {
+  redis = new Redis({
+    url: process.env.KV_REST_API_URL,
+    token: process.env.KV_REST_API_TOKEN,
+  });
 }
 
 function getIP(req) {
@@ -14,34 +17,37 @@ function getIP(req) {
     || 'unknown';
 }
 
-function safeKey(ip) {
-  return ip.replace(/[^a-zA-Z0-9._-]/g, '_');
-}
-
 // Returns null if allowed, { waitMinutes } if rate limited
-function check(req) {
-  ensureDir();
-  const ip = getIP(req);
-  const file = path.join(RL_DIR, safeKey(ip) + '.json');
-  const now = Date.now();
-
-  let state = { count: 0, windowStart: now };
-  try {
-    const raw = fs.readFileSync(file, 'utf8');
-    const parsed = JSON.parse(raw);
-    if (now - parsed.windowStart <= WINDOW_MS) {
-      state = parsed;
-    }
-  } catch (_) {}
-
-  if (state.count >= MAX_CALLS) {
-    const waitMs = WINDOW_MS - (now - state.windowStart);
-    return { waitMinutes: Math.ceil(waitMs / 60000) };
+async function check(req) {
+  // Fallback: hvis Redis ikke er tilgjengelig, tillat request (graceful degradation)
+  if (!redis) {
+    console.warn('[ratelimit] Redis ikke konfigurert - rate limiting deaktivert');
+    return null;
   }
 
-  state.count++;
-  try { fs.writeFileSync(file, JSON.stringify(state)); } catch (_) {}
-  return null;
+  const ip = getIP(req);
+  const key = `pulse:rl:${ip}`;
+
+  try {
+    // Atomisk INCR - returnerer ny count
+    const count = await redis.incr(key);
+
+    // Sett TTL for å unngå at keys akkumuleres (alltid kjøres, unngår race condition)
+    await redis.expire(key, WINDOW_SEC);
+
+    if (count > MAX_CALLS) {
+      // Hent TTL for å fortelle brukeren hvor lenge de må vente
+      const ttl = await redis.ttl(key);
+      const waitMinutes = Math.ceil(ttl / 60);
+      return { waitMinutes };
+    }
+
+    return null; // Request tillatt
+  } catch (error) {
+    console.error('[ratelimit] Redis error:', error.message);
+    // Graceful degradation: ved Redis-feil, tillat request
+    return null;
+  }
 }
 
 module.exports = { check };

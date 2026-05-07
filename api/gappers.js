@@ -4,16 +4,28 @@ const cache = require('./_cache');
 const YahooFinance = require('yahoo-finance2').default;
 const yf = new YahooFinance({ suppressNotices: ['yahooSurvey'] });
 
+function timeoutPromise(ms, message) {
+  return new Promise((_, reject) =>
+    setTimeout(() => reject(new Error(message)), ms)
+  );
+}
+
 async function enrichWithSma(ticker) {
   try {
     const end = new Date();
     const start = new Date();
     start.setDate(start.getDate() - 290);
-    const rows = await yf.historical(ticker, {
+
+    const historicalPromise = yf.historical(ticker, {
       period1: start.toISOString().slice(0, 10),
       period2: end.toISOString().slice(0, 10),
       interval: '1d',
     });
+
+    const rows = await Promise.race([
+      historicalPromise,
+      timeoutPromise(30000, 'Yahoo Finance timeout')
+    ]);
     const closes = (rows || []).map(r => r.close).filter(c => typeof c === 'number');
     if (closes.length < 10) return null;
     const current = closes[closes.length - 1];
