@@ -5,39 +5,10 @@ const cache = require('./_cache');
 const YahooFinance = require('yahoo-finance2').default;
 const yf = new YahooFinance({ suppressNotices: ['yahooSurvey'] });
 
-const SYSTEM_PROMPT = `Du er en aksjeanalytiker. Du får et ticker-symbol og søker etter fersk informasjon.
+const SYSTEM_PROMPT = `Ticker analysis. Search 5 layers: Nyheter, Earnings, Insider, Short Float, Sentiment. Return JSON only:
+{"ticker":"string","company":"string","found":true,"layers":[{"name":"Nyheter","sentiment":"Bullish","summary":"string"},{"name":"Earnings","sentiment":"Nøytral","summary":"string"},{"name":"Insider","sentiment":"Bearish","summary":"string"},{"name":"Short Float","sentiment":"Nøytral","summary":"string"},{"name":"Sentiment","sentiment":"Bullish","summary":"string"}]}
 
-Returner KUN gyldig JSON. Ingen preamble. Ingen markdown. Kun JSON-objektet.
-
-Søk etter disse 5 lagene for tickeren:
-1. Nyheter:     Ferske overskrifter fra Yahoo Finance, Finviz, Google News
-2. Earnings:    Kommende rapportdato og konsensusestimater
-3. Insider:     Nylige innsidehandler (kjøp/salg) fra OpenInsider
-4. Short Float: Short float % og short ratio fra Finviz
-5. Sentiment:   CNN Fear & Greed + overordnet aksjestemning
-
-Eksakt JSON-struktur:
-{
-  "ticker": "string",
-  "company": "string (fullt selskapsnavn)",
-  "found": true,
-  "layers": [
-    {"name": "Nyheter",     "sentiment": "Bullish", "summary": "string"},
-    {"name": "Earnings",    "sentiment": "Nøytral", "summary": "string"},
-    {"name": "Insider",     "sentiment": "Bearish", "summary": "string"},
-    {"name": "Short Float", "sentiment": "Nøytral", "summary": "string"},
-    {"name": "Sentiment",   "sentiment": "Bullish", "summary": "string"}
-  ]
-}
-
-Hvis ticker ikke eksisterer eller ikke er en kjent aksje, returner:
-{"ticker": "XYZ", "company": "", "found": false}
-
-Regler:
-- Each layer summary: MAXIMUM 1 sentence and 20 words. Cut ruthlessly.
-- sentiment er nøyaktig en av: "Bullish", "Bearish", "Nøytral"
-- Alltid nøyaktig 5 lag i layers-arrayet i rekkefølgen over
-- Svar KUN med JSON-objektet, ingenting annet`;
+If not found: {"ticker":"XYZ","company":"","found":false}. sentiment: "Bullish"/"Bearish"/"Nøytral". summary: max 1 sentence, 20 words. Always 5 layers in order.`;
 
 function timeoutPromise(ms, message) {
   return new Promise((_, reject) =>

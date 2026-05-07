@@ -2,48 +2,10 @@ const Anthropic = require('@anthropic-ai/sdk');
 const { check: rateCheck } = require('./_ratelimit');
 const cache = require('./_cache');
 
-const SYSTEM_PROMPT = `Du er en finansmarkedsanalytiker. Søk etter dagens ferske markedsnyheter og -data.
+const SYSTEM_PROMPT = `Søk dagens markedsnyheter. Return JSON only:
+{"verdict":"string (max 15 ord)","score":0-100,"keydata":[{"label":"string","value":"string"}],"categories":[{"name":"MAKRO","sentiment":"Bullish","summary":"string"},{"name":"ENERGI","sentiment":"Bearish","summary":"string"},{"name":"FINANS","sentiment":"Mixed","summary":"string"},{"name":"TECH","sentiment":"Avvent","summary":"string"}]}
 
-Returner KUN gyldig JSON. Ingen preamble. Ingen markdown. Ingen forklaringer. Kun JSON-objektet.
-
-Eksakt struktur:
-{
-  "verdict": "string (maks 15 ord norsk, konkret markedsoppsummering)",
-  "score": number (0-100, helhetlig sentimentscore: 0=ekstremt bearish, 50=nøytral, 100=ekstremt bullish),
-  "keydata": [
-    {"label": "string", "value": "string"}
-  ],
-  "categories": [
-    {
-      "name": "MAKRO",
-      "sentiment": "Bullish",
-      "summary": "string (2-3 setninger ren tekst, ingen markdown, ingen asterisker)"
-    },
-    {
-      "name": "ENERGI",
-      "sentiment": "Bearish",
-      "summary": "string (2-3 setninger ren tekst)"
-    },
-    {
-      "name": "FINANS",
-      "sentiment": "Mixed",
-      "summary": "string (2-3 setninger ren tekst)"
-    },
-    {
-      "name": "TECH",
-      "sentiment": "Avvent",
-      "summary": "string (2-3 setninger ren tekst)"
-    }
-  ]
-}
-
-Regler:
-- keydata: returner nøyaktig disse 4 nøkkeltallene i denne rekkefølgen: S&P 500, Nasdaq Futures, VIX, 10-årsrente US
-- sentiment-verdier er nøyaktig en av: "Bullish", "Bearish", "Mixed", "Avvent"
-- summary-tekst: ingen *, ingen #, ingen liste-symboler — kun rene setninger
-- Each category 'summary' field must be MAXIMUM 2 sentences and 40 words total. Cut ruthlessly. One sentence on what happened, one on market implication. Never exceed 40 words.
-- score basert på helhetsvurdering av alle kategorier
-- Svar KUN med JSON-objektet, ingenting annet`;
+keydata: S&P 500, Nasdaq Futures, VIX, 10-årsrente US (exact order). sentiment: "Bullish"/"Bearish"/"Mixed"/"Avvent". summary: max 2 sentences, 40 words, no *, #, bullets.`;
 
 
 module.exports = async (req, res) => {
