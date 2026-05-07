@@ -12,6 +12,7 @@ const DISPLAY_MAP = {
   'DX-Y.NYB': 'DXY',
   'GC=F'    : 'GOLD',
   'BTC-USD' : 'BTC',
+  'CL=F'    : 'OIL',
   '^TNX'    : '10Y',
 };
 
@@ -24,6 +25,7 @@ const NAME_MAP = {
   'DX-Y.NYB': 'Dollar Index',
   'GC=F'    : 'Gold',
   'BTC-USD' : 'Bitcoin',
+  'CL=F'    : 'WTI Crude',
   '^TNX'    : '10Y Treasury',
 };
 

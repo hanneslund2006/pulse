@@ -14,7 +14,7 @@
       .finally(() => clearTimeout(id));
   }
 
-  const DEFAULT_SYMS = ['^GSPC', '^NDX', '^DJI', '^VIX', 'DX-Y.NYB', 'GC=F', 'BTC-USD'];
+  const DEFAULT_SYMS = ['^GSPC', '^NDX', '^DJI', '^VIX', 'DX-Y.NYB', 'GC=F', 'BTC-USD', 'CL=F', 'AAPL', 'TSLA', 'NVDA', 'MSFT', 'META', 'AMZN', 'GOOGL', 'JPM'];
 
   // ── Inject shared CSS ────────────────────────────────────
   const style = document.createElement('style');
