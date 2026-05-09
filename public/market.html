@@ -233,8 +233,8 @@
       <div class="cta-card">
         <div class="cta-label">DAGLIG MARKEDSANALYSE</div>
         <div class="cta-title">Hva skjer i markedet i dag?</div>
-        <div class="cta-desc">AI-drevet sentimentoversikt med score, sektorbilde og earnings-kalender — på under ett minutt.</div>
-        <button class="btn-ghost" id="fetch-btn" onclick="fetchReport()">ANALYSER MARKEDET →</button>
+        <div class="cta-desc">AI-driven sentiment overview with score, sector overview and earnings calendar — in under one minute.</div>
+        <button class="btn-ghost" id="fetch-btn" onclick="fetchReport()">ANALYZE MARKET →</button>
       </div>
     </div>
 
@@ -290,7 +290,7 @@
 
     </div>
 
-    <div style="text-align:center;padding:32px 0 0;font-family:'DM Sans',sans-serif;font-size:11px;color:var(--text-muted);letter-spacing:0.08em;">IKKE FINANSIELL RÅDGIVNING</div>
+    <div style="text-align:center;padding:32px 0 0;font-family:'DM Sans',sans-serif;font-size:11px;color:var(--text-muted);letter-spacing:0.08em;">NOT FINANCIAL ADVICE</div>
   </div>
 
   <script>
@@ -411,7 +411,7 @@
     window.__onQuotesReady = () => fetchAndInjectRealPrices();
 
     // ── Multi-step loading ───────────────────────────────────
-    const LOAD_STEPS = ['SØKER NYHETER', 'ANALYSERER SEKTORER', 'SCORER SENTIMENT', 'FORMATERER RAPPORT'];
+    const LOAD_STEPS = ['SØKER NYHETER', 'ANALYZING SEKTORER', 'SCORER SENTIMENT', 'FORMATERER RAPPORT'];
     const loadState  = { stepTimer: null, elapsedTimer: null, startTime: 0, stepIdx: 0 };
 
     function startLoading() {
@@ -466,7 +466,7 @@
     }
     function showTimeoutError() {
       const el = document.getElementById('error-msg');
-      el.innerHTML = 'Forespørselen tok for lang tid. <button onclick="fetchReport()" style="background:none;border:1px solid var(--green);color:var(--green);font-family:\'DM Sans\',sans-serif;font-size:11px;letter-spacing:0.04em;cursor:pointer;padding:4px 10px;border-radius:3px;margin-left:8px;">PRØV IGJEN</button>';
+      el.innerHTML = 'Forespørselen tok for lang tid. <button onclick="fetchReport()" style="background:none;border:1px solid var(--green);color:var(--green);font-family:\'DM Sans\',sans-serif;font-size:11px;letter-spacing:0.04em;cursor:pointer;padding:4px 10px;border-radius:3px;margin-left:8px;">TRY AGAIN</button>';
       el.classList.add('visible');
     }
     function clearError() {
@@ -476,7 +476,7 @@
     // ── Render report ────────────────────────────────────────
     function renderData(data) {
       if (!data || !Array.isArray(data.categories) || !data.categories.length) {
-        console.warn('[market] renderData: ugyldig eller ufullstendig data-struktur');
+        console.warn('[market] renderData: invalid or incomplete data structure');
         return;
       }
       lastClaudeKeydata = data.keydata || [];
@@ -548,9 +548,9 @@
         clearTimeout(abortTimer);
         if (res.status === 429) {
           const d = await res.json().catch(() => ({}));
-          throw new Error(d.error || 'For mange forespørsler. Prøv igjen litt senere.');
+          throw new Error(d.error || 'Too many requests. Try again a bit later.');
         }
-        if (!res.ok) throw new Error('Analysefeil. Prøv igjen.');
+        if (!res.ok) throw new Error('Analysis error. Try again.');
         const data = await res.json();
         if (data.error) throw new Error(data.error);
 
@@ -565,7 +565,7 @@
         if (e.name === 'AbortError') {
           showTimeoutError();
         } else {
-          showError(e.message || 'Ukjent feil. Prøv igjen.');
+          showError(e.message || 'Unknown error. Try again.');
         }
       } finally {
         fetching = false;
@@ -711,7 +711,7 @@
       if (!wrap || !section) return;
 
       if (!isGappersWindow()) {
-        section.innerHTML = '<div class="gappers-closed">Markedet er åpent — gap-data ikke relevant</div>';
+        section.innerHTML = '<div class="gappers-closed">Market is open — gap-data ikke relevant</div>';
         wrap.style.display = 'block';
         return;
       }

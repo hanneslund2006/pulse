@@ -187,7 +187,7 @@
     <a href="index.html" class="back anim" style="animation-delay:0ms;">← TILBAKE</a>
 
     <div class="page-title anim" style="animation-delay:40ms;">EARNINGS PLAY</div>
-    <div class="page-subtitle anim" style="animation-delay:80ms;">Komplett beslutningsgrunnlag før en earnings-trade.</div>
+    <div class="page-subtitle anim" style="animation-delay:80ms;">Complete decision basis before an earnings trade.</div>
 
     <!-- Weekly ranker section - REMOVED: Vercel function limit (12 max) -->
     <!--
@@ -210,7 +210,7 @@
           autocapitalize="characters"
           spellcheck="false"
         />
-        <button class="btn-primary" id="analyse-btn" onclick="runAnalysis()">ANALYSER →</button>
+        <button class="btn-primary" id="analyse-btn" onclick="runAnalysis()">ANALYZE →</button>
       </div>
       <div class="earnings-date-hint" id="earnings-hint"></div>
     </div>
@@ -234,7 +234,7 @@
     <!-- Results -->
     <div id="results" style="display:none;"></div>
 
-    <div style="text-align:center;padding:32px 0 0;font-family:'DM Sans',sans-serif;font-size:11px;color:var(--text-muted);letter-spacing:0.08em;">IKKE FINANSIELL RÅDGIVNING</div>
+    <div style="text-align:center;padding:32px 0 0;font-family:'DM Sans',sans-serif;font-size:11px;color:var(--text-muted);letter-spacing:0.08em;">NOT FINANCIAL ADVICE</div>
   </div>
 
   <script>
@@ -495,7 +495,7 @@
           <div class="section-label">IMPLIED MOVE</div>
           <div class="implied-center">
             <div class="implied-pct">±${fmt(im.percent, 1)}%</div>
-            <div class="implied-sub">Markedet pricer inn ±${fmt(im.percent, 1)}% på earnings</div>
+            <div class="implied-sub">Market prices in ±${fmt(im.percent, 1)}% at earnings</div>
             <div class="implied-badge ${badgeClass}">${badgeText}</div>
           </div>
           <div class="implied-compare">
@@ -515,7 +515,7 @@
             ${im.expiry ? `
             <div class="ic-item">
               <div class="ic-val" style="color:var(--text-muted); font-size:11px;">${esc(im.expiry)}</div>
-              <div class="ic-lbl">UTLØP</div>
+              <div class="ic-lbl">EXPIRY</div>
             </div>` : ''}
           </div>
         </div>`;
@@ -525,7 +525,7 @@
       if (!d.interpretation) return '';
       return `
         <div class="ep-card" style="animation-delay:360ms;">
-          <div class="section-label">CLAUDE-ANALYSE</div>
+          <div class="section-label">CLAUDE ANALYSIS</div>
           <p style="font-size:13px; color:var(--text-secondary); line-height:1.7; margin:0;">${esc(d.interpretation)}</p>
         </div>`;
     }
@@ -560,7 +560,7 @@
     }
     function showTimeoutError() {
       const el = document.getElementById('error-msg');
-      el.innerHTML = 'Forespørselen tok for lang tid. <button onclick="runAnalysis()" style="background:none;border:1px solid var(--green);color:var(--green);font-family:\'DM Sans\',sans-serif;font-size:11px;letter-spacing:0.04em;cursor:pointer;padding:4px 10px;border-radius:3px;margin-left:8px;">PRØV IGJEN</button>';
+      el.innerHTML = 'Forespørselen tok for lang tid. <button onclick="runAnalysis()" style="background:none;border:1px solid var(--green);color:var(--green);font-family:\'DM Sans\',sans-serif;font-size:11px;letter-spacing:0.04em;cursor:pointer;padding:4px 10px;border-radius:3px;margin-left:8px;">TRY AGAIN</button>';
       el.classList.add('visible');
     }
     function clearError() {
@@ -570,7 +570,7 @@
     let fetching = false;
 
     async function runAnalysis() {
-      console.log('Analyser klikket');
+      console.log('Analyze clicked');
       const raw = document.getElementById('ticker-input').value.trim().toUpperCase();
       if (!raw) return;
       if (fetching) return;
@@ -592,9 +592,9 @@
         clearTimeout(abortTimer);
         if (res.status === 429) {
           const d = await res.json().catch(() => ({}));
-          throw new Error(d.error || 'For mange forespørsler. Prøv igjen litt senere.');
+          throw new Error(d.error || 'Too many requests. Try again a bit later.');
         }
-        if (!res.ok) throw new Error('Analysefeil. Prøv igjen.');
+        if (!res.ok) throw new Error('Analysis error. Try again.');
         const data = await res.json();
         if (data.error) throw new Error(data.error);
         showSkeletons(false);
@@ -605,7 +605,7 @@
         if (e.name === 'AbortError') {
           showTimeoutError();
         } else {
-          showError(e.message || 'Ukjent feil. Prøv igjen.');
+          showError(e.message || 'Unknown error. Try again.');
         }
       } finally {
         fetching = false;

@@ -5,24 +5,24 @@ module.exports = async (req, res) => {
 
   const ticker = (req.query.ticker || '').toUpperCase().trim();
   if (!ticker || !/^[A-Z0-9.]{1,6}$/.test(ticker)) {
-    return res.status(400).json({ error: 'Ugyldig ticker-parameter' });
+    return res.status(400).json({ error: 'Invalid ticker parameter' });
   }
 
   const today = new Date().toISOString().slice(0, 10);
   const key = `earnings:${ticker}:${today}`;
 
   if (!process.env.KV_REST_API_URL || !process.env.KV_REST_API_TOKEN) {
-    return res.status(500).json({ error: 'Redis-miljøvariabler mangler.' });
+    return res.status(500).json({ error: 'Redis environment variables missing.' });
   }
 
   const redis = new Redis({ url: process.env.KV_REST_API_URL, token: process.env.KV_REST_API_TOKEN });
 
   try {
     await redis.del(key);
-    console.log(`[cache-clear] Slettet: ${key}`);
+    console.log(`[cache-clear] Deleted: ${key}`);
     return res.status(200).json({ ok: true, deleted: key });
   } catch (e) {
-    console.error('[cache-clear] Redis del feilet:', e.message);
-    return res.status(500).json({ error: 'Klarte ikke slette cache-nøkkel.' });
+    console.error('[cache-clear] Redis del failed:', e.message);
+    return res.status(500).json({ error: 'Failed to delete cache key.' });
   }
 };

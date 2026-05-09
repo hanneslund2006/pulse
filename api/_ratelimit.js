@@ -37,9 +37,9 @@ function getIP(req) {
 
 // Returns null if allowed, { waitMinutes } if rate limited
 async function check(req) {
-  // Fallback: hvis Redis ikke er tilgjengelig, tillat request (graceful degradation)
+  // Fallback: if Redis is not available, allow request (graceful degradation)
   if (!redis) {
-    console.warn('[ratelimit] Redis ikke konfigurert - rate limiting deaktivert');
+    console.warn('[ratelimit] Redis not configured - rate limiting disabled');
     return null;
   }
 
@@ -50,8 +50,10 @@ async function check(req) {
     // Atomisk INCR - returnerer ny count
     const count = await redis.incr(key);
 
-    // Sett TTL for å unngå at keys akkumuleres (alltid kjøres, unngår race condition)
-    await redis.expire(key, WINDOW_SEC);
+    // Only set TTL on first request (when key is created) to create a true 1-hour window
+    if (count === 1) {
+      await redis.expire(key, WINDOW_SEC);
+    }
 
     if (count > MAX_CALLS) {
       // Hent TTL for å fortelle brukeren hvor lenge de må vente

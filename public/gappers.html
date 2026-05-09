@@ -104,7 +104,7 @@
       </div>
     </div>
 
-    <div style="text-align:center;padding:32px 0 0;font-family:'Space Mono',monospace;font-size:9px;color:var(--text-muted);letter-spacing:0.14em;">IKKE FINANSIELL RÅDGIVNING</div>
+    <div style="text-align:center;padding:32px 0 0;font-family:'Space Mono',monospace;font-size:9px;color:var(--text-muted);letter-spacing:0.14em;">NOT FINANCIAL ADVICE</div>
   </div>
 
   <script>
@@ -156,7 +156,7 @@
       document.getElementById('status').innerHTML = `
         <div class="window-closed">
           <div class="window-closed-label">UTENFOR GAPPERS-VINDUET</div>
-          <div class="window-closed-title">Markedet er åpent</div>
+          <div class="window-closed-title">Market is open</div>
           <div class="window-closed-desc">
             Pre-market gap-data er relevant mellom 04:00 og 10:30 ET.
             Klokken er nå <span class="et-time">${etTimeStr()} ET</span>.
@@ -176,7 +176,7 @@
     function showError(msg) {
       document.getElementById('status').innerHTML = `
         <div style="font-family:'Space Mono',monospace; font-size:10px; color:var(--red); letter-spacing:0.08em; padding:16px 0;">${esc(msg)}</div>
-        <div style="margin-top:12px;"><button class="btn" onclick="refresh()">PRØV IGJEN →</button></div>`;
+        <div style="margin-top:12px;"><button class="btn" onclick="refresh()">TRY AGAIN →</button></div>`;
     }
 
     async function fetchGappers() {
@@ -196,7 +196,7 @@
         clearTimeout(abortTimer);
         if (res.status === 429) {
           const d = await res.json().catch(() => ({}));
-          throw new Error(d.error || 'For mange forespørsler. Prøv igjen litt senere.');
+          throw new Error(d.error || 'Too many requests. Try again a bit later.');
         }
         if (!res.ok) throw new Error('Serverfeil ' + res.status);
         const data = await res.json();
@@ -207,7 +207,7 @@
         clearTimeout(abortTimer);
         showError(e.name === 'AbortError'
           ? 'Forespørselen tok for lang tid.'
-          : 'Klarte ikke hente gap movers: ' + e.message);
+          : 'Failed to fetch gap movers: ' + e.message);
       }
     }
 

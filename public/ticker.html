@@ -168,7 +168,7 @@
     <a href="index.html" class="back anim" style="animation-delay: 0ms;">← TILBAKE</a>
 
     <div class="page-title anim" style="animation-delay: 40ms;">TICKER</div>
-    <div class="page-subtitle anim" style="animation-delay: 80ms;">Analyser en aksje på fem lag.</div>
+    <div class="page-subtitle anim" style="animation-delay: 80ms;">Analyze a stock in five layers.</div>
 
     <!-- Watchlist -->
     <div class="watchlist-section anim" style="animation-delay: 110ms;">
@@ -216,7 +216,7 @@
         <div class="layer-card" style="border-color:#7F77DD40;background:#7F77DD08;">
           <div class="layer-header">
             <div class="layer-name">ANDRE MODELLER</div>
-            <div id="multi-model-status" style="font-family:'DM Sans',sans-serif;font-size:10px;color:var(--text-muted);">LASTER...</div>
+            <div id="multi-model-status" style="font-family:'DM Sans',sans-serif;font-size:10px;color:var(--text-muted);">LOADING...</div>
           </div>
           <div id="multi-model-content"></div>
         </div>
@@ -245,7 +245,7 @@
       </div>
     </div>
 
-    <div style="text-align:center;padding:32px 0 0;font-family:'DM Sans',sans-serif;font-size:11px;color:var(--text-muted);letter-spacing:0.08em;">IKKE FINANSIELL RÅDGIVNING</div>
+    <div style="text-align:center;padding:32px 0 0;font-family:'DM Sans',sans-serif;font-size:11px;color:var(--text-muted);letter-spacing:0.08em;">NOT FINANCIAL ADVICE</div>
   </div>
 
   <script>
@@ -297,7 +297,7 @@
       const list = getWatchlist();
       const el = document.getElementById('watchlist-pills');
       if (list.length === 0) {
-        el.innerHTML = '<span class="watchlist-empty">Ingen tickers lagt til ennå</span>';
+        el.innerHTML = '<span class="watchlist-empty">No tickers added yet</span>';
         return;
       }
       el.innerHTML = list.map(t => {
@@ -555,7 +555,7 @@
     }
     function setTimeoutError(ticker) {
       const el = document.getElementById('error-msg');
-      el.innerHTML = 'Forespørselen tok for lang tid. <button onclick="runSearch(\'' + esc(ticker) + '\')" style="background:none;border:1px solid var(--green);color:var(--green);font-family:\'DM Sans\',sans-serif;font-size:11px;letter-spacing:0.04em;cursor:pointer;padding:4px 10px;border-radius:3px;margin-left:8px;">PRØV IGJEN</button>';
+      el.innerHTML = 'Forespørselen tok for lang tid. <button onclick="runSearch(\'' + esc(ticker) + '\')" style="background:none;border:1px solid var(--green);color:var(--green);font-family:\'DM Sans\',sans-serif;font-size:11px;letter-spacing:0.04em;cursor:pointer;padding:4px 10px;border-radius:3px;margin-left:8px;">TRY AGAIN</button>';
       el.classList.add('visible');
     }
 
@@ -593,14 +593,14 @@
         clearTimeout(abortTimer);
         if (res.status === 429) {
           const d = await res.json().catch(() => ({}));
-          throw new Error(d.error || 'For mange forespørsler. Prøv igjen litt senere.');
+          throw new Error(d.error || 'Too many requests. Try again a bit later.');
         }
-        if (!res.ok) throw new Error('Analysefeil. Prøv igjen.');
+        if (!res.ok) throw new Error('Analysis error. Try again.');
         const data = await res.json();
 
         stopLoading();
         if (data.error) { setError(data.error); return; }
-        if (!data.found) { setError(`Fant ikke ticker "${ticker}". Sjekk symbolet og prøv igjen.`); return; }
+        if (!data.found) { setError(`Could not find ticker "${ticker}". Check the symbol and try again.`); return; }
 
         renderTicker(data);
         if (data.layers && data.layers.length > 0) fetchMultiModel(data.ticker, data.layers);
@@ -610,7 +610,7 @@
         if (e.name === 'AbortError') {
           setTimeoutError(ticker);
         } else {
-          setError(e.message || 'Klarte ikke hente data. Prøv igjen.');
+          setError(e.message || 'Failed to fetch data. Try again.');
         }
       }
     }

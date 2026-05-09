@@ -5,10 +5,10 @@ const cache = require('./_cache');
 const YahooFinance = require('yahoo-finance2').default;
 const yf = new YahooFinance({ suppressNotices: ['yahooSurvey'] });
 
-const SYSTEM_PROMPT = `Ticker analysis. Search 5 layers: Nyheter, Earnings, Insider, Short Float, Sentiment. Return JSON only:
-{"ticker":"string","company":"string","found":true,"layers":[{"name":"Nyheter","sentiment":"Bullish","summary":"string"},{"name":"Earnings","sentiment":"Nøytral","summary":"string"},{"name":"Insider","sentiment":"Bearish","summary":"string"},{"name":"Short Float","sentiment":"Nøytral","summary":"string"},{"name":"Sentiment","sentiment":"Bullish","summary":"string"}]}
+const SYSTEM_PROMPT = `Ticker analysis. Search 5 layers: News, Earnings, Insider, Short Float, Sentiment. Return JSON only:
+{"ticker":"string","company":"string","found":true,"layers":[{"name":"News","sentiment":"Bullish","summary":"string"},{"name":"Earnings","sentiment":"Neutral","summary":"string"},{"name":"Insider","sentiment":"Bearish","summary":"string"},{"name":"Short Float","sentiment":"Neutral","summary":"string"},{"name":"Sentiment","sentiment":"Bullish","summary":"string"}]}
 
-If not found: {"ticker":"XYZ","company":"","found":false}. sentiment: "Bullish"/"Bearish"/"Nøytral". summary: max 1 sentence, 20 words. Always 5 layers in order.`;
+If not found: {"ticker":"XYZ","company":"","found":false}. sentiment: "Bullish"/"Bearish"/"Neutral". summary: max 1 sentence, 20 words. Always 5 layers in order.`;
 
 function timeoutPromise(ms, message) {
   return new Promise((_, reject) =>
@@ -60,7 +60,7 @@ async function fetchTechnicals(ticker) {
       priceVsSma200pct: parseFloat(((currentPrice - sma200) / sma200 * 100).toFixed(2)),
     };
   } catch (e) {
-    console.error('[ticker] fetchTechnicals feil:', e.message);
+    console.error('[ticker] fetchTechnicals error:', e.message);
     return null;
   }
 }
@@ -71,7 +71,7 @@ module.exports = async (req, res) => {
   }
 
   if (!process.env.ANTHROPIC_API_KEY) {
-    return res.status(500).json({ error: 'API-nøkkel mangler.' });
+    return res.status(500).json({ error: 'API key missing.' });
   }
 
   try {
@@ -81,7 +81,7 @@ module.exports = async (req, res) => {
   }
 
   const rl = await rateCheck(req);
-  if (rl) return res.status(429).json({ error: `Du har nådd grensen for analyser denne timen. Prøv igjen om ${rl.waitMinutes} minutter.` });
+  if (rl) return res.status(429).json({ error: `You have reached the limit for analyses this hour. Try again in ${rl.waitMinutes} minutes.` });
 
   // Analytics tracking (must never crash endpoint)
   try {
@@ -104,7 +104,7 @@ module.exports = async (req, res) => {
     const messages = [
       {
         role: 'user',
-        content: `Søk etter informasjon om aksjen ${ticker} og returner analysen som JSON.`
+        content: `Search for information about the stock ${ticker} and return the analysis as JSON.`
       }
     ];
 
@@ -126,22 +126,22 @@ module.exports = async (req, res) => {
       .trim();
 
     if (!finalText) {
-      return res.status(500).json({ error: 'Fikk ikke svar fra AI. Prøv igjen.' });
+      return res.status(500).json({ error: 'Got no response from AI. Try again.' });
     }
 
     const firstBrace = finalText.indexOf('{');
     const lastBrace = finalText.lastIndexOf('}');
     if (firstBrace === -1 || lastBrace === -1) {
-      console.error('[ticker] Ingen JSON funnet');
-      return res.status(500).json({ error: 'Parsing feilet' });
+      console.error('[ticker] No JSON found');
+      return res.status(500).json({ error: 'Parsing failed' });
     }
     const jsonString = finalText.substring(firstBrace, lastBrace + 1);
     let parsed;
     try {
       parsed = JSON.parse(jsonString);
     } catch (e) {
-      console.error('[ticker] JSON.parse feilet:', e.message);
-      return res.status(500).json({ error: 'JSON parse feilet' });
+      console.error('[ticker] JSON.parse failed:', e.message);
+      return res.status(500).json({ error: 'JSON parse failed' });
     }
 
     if (technical) parsed.technical = technical;
@@ -149,12 +149,12 @@ module.exports = async (req, res) => {
     return res.status(200).json(parsed);
 
   } catch (error) {
-    console.error('Ticker API feil:', error);
+    console.error('Ticker API error:', error);
     const message = error.status === 401
-      ? 'Ugyldig API-nøkkel.'
+      ? 'Invalid API key.'
       : error.status === 429
-        ? 'For mange forespørsler. Vent litt og prøv igjen.'
-        : 'Klarte ikke hente ticker-data. Prøv igjen.';
+        ? 'Too many requests. Wait a bit and try again.'
+        : 'Failed to fetch ticker data. Try again.';
     return res.status(500).json({ error: message });
   }
 };

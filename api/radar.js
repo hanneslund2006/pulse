@@ -2,29 +2,29 @@ const Anthropic = require('@anthropic-ai/sdk');
 const { check: rateCheck } = require('./_ratelimit');
 const cache = require('./_cache');
 
-const SYSTEM_PROMPT = `Du er en swingtrading-assistent. Søk etter US-aksjer som er gode swing trading-kandidater akkurat nå.
+const SYSTEM_PROMPT = `You are a swing trading assistant. Search for US stocks that are good swing trading candidates right now.
 
-Se etter aksjer med høy short interest (over 15%), positiv prismomentum siste uke, og en positiv katalysator (nyheter, earnings beat, analyst upgrade). Prioriter aksjer over 200 SMA.
+Look for stocks with high short interest (over 15%), positive price momentum last week, and a positive catalyst (news, earnings beat, analyst upgrade). Prioritize stocks above 200 SMA.
 
-Vurder disse tickerne basert på short float, momentum og nyhetskatalysator. Velg 3-5 beste swing-kandidater.
+Evaluate these tickers based on short float, momentum and news catalyst. Choose 3-5 best swing candidates.
 
-Returner KUN gyldig JSON-array. Ingen preamble. Ingen markdown. Kun JSON-arrayen.
+Return ONLY valid JSON array. No preamble. No markdown. Just the JSON array.
 
-Eksakt format:
+Exact format:
 [
-  {"ticker": "XXXX", "direction": "Bullish", "reason": "Kort begrunnelse maks 20 ord"},
-  {"ticker": "YYYY", "direction": "Bearish", "reason": "Kort begrunnelse maks 20 ord"}
+  {"ticker": "XXXX", "direction": "Bullish", "reason": "Brief rationale max 20 words"},
+  {"ticker": "YYYY", "direction": "Bearish", "reason": "Brief rationale max 20 words"}
 ]
 
-Svar KUN med JSON-arrayen.`;
+Answer ONLY with the JSON array.`;
 
 
 module.exports = async (req, res) => {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
-  if (!process.env.ANTHROPIC_API_KEY) return res.status(500).json({ error: 'API-nøkkel mangler' });
+  if (!process.env.ANTHROPIC_API_KEY) return res.status(500).json({ error: 'API key missing' });
 
   const rl = await rateCheck(req);
-  if (rl) return res.status(429).json({ error: `Du har nådd grensen for analyser denne timen. Prøv igjen om ${rl.waitMinutes} minutter.` });
+  if (rl) return res.status(429).json({ error: `You have reached the limit for analyses this hour. Try again in ${rl.waitMinutes} minutes.` });
 
   // Analytics tracking (must never crash endpoint)
   try {
@@ -51,43 +51,43 @@ module.exports = async (req, res) => {
       max_tokens: 600,
       system: SYSTEM_PROMPT,
       tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: 2 }],
-      messages: [{ role: 'user', content: 'Finn de beste swing trading-kandidatene akkurat nå basert på høy short float, positiv momentum og katalysator. Returner JSON-array.' }],
+      messages: [{ role: 'user', content: 'Find the best swing trading candidates right now based on high short float, positive momentum and catalyst. Return JSON array.' }],
     });
 
     const finalText = response.content.filter(b => b.type === 'text').map(b => b.text).join('\n').trim();
-    if (!finalText) return res.status(500).json({ error: 'Ingen respons fra AI.' });
+    if (!finalText) return res.status(500).json({ error: 'No response from AI.' });
 
     const firstBrace = finalText.indexOf('[');
     const lastBrace = finalText.lastIndexOf(']');
     if (firstBrace === -1 || lastBrace === -1) {
-      console.error('[radar] Ingen JSON funnet');
-      return res.status(500).json({ error: 'Parsing feilet' });
+      console.error('[radar] No JSON found');
+      return res.status(500).json({ error: 'Parsing failed' });
     }
     const jsonString = finalText.substring(firstBrace, lastBrace + 1);
     let parsed;
     try {
       parsed = JSON.parse(jsonString);
     } catch (e) {
-      console.error('[radar] JSON.parse feilet:', e.message);
-      return res.status(500).json({ error: 'JSON parse feilet' });
+      console.error('[radar] JSON.parse failed:', e.message);
+      return res.status(500).json({ error: 'JSON parse failed' });
     }
     if (!Array.isArray(parsed)) {
-      console.error('[radar] Ikke gyldig array');
-      return res.status(500).json({ error: 'AI returnerte ugyldig format.' });
+      console.error('[radar] Not valid array');
+      return res.status(500).json({ error: 'AI returned invalid format.' });
     }
 
     const valid = parsed.filter(item => item.ticker && item.direction && item.reason);
     if (!valid.length) {
-      console.error('[radar] Ingen gyldige items i array');
-      return res.status(500).json({ error: 'AI returnerte ingen gyldige kandidater.' });
+      console.error('[radar] No valid items in array');
+      return res.status(500).json({ error: 'AI returned no valid candidates.' });
     }
 
     cache.set(CACHE_KEY, valid, cache.nextMidnightTTL());
     return res.status(200).json(valid);
 
   } catch (error) {
-    console.error('[radar] API feil:', error);
-    const msg = error.status === 429 ? 'For mange forespørsler. Vent litt.' : 'Klarte ikke kjøre radar.';
+    console.error('[radar] API error:', error);
+    const msg = error.status === 429 ? 'Too many requests. Wait a bit.' : 'Failed to run radar.';
     return res.status(500).json({ error: msg });
   }
 };

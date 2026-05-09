@@ -117,7 +117,7 @@ async function claudeInterpret(ticker, mapped) {
     if (firstBrace === -1 || lastBrace === -1) return { interpretation: null, impliedMove: null };
     return JSON.parse(text.substring(firstBrace, lastBrace + 1));
   } catch (e) {
-    console.error('[earnings-play] claudeInterpret feilet:', e.message);
+    console.error('[earnings-play] claudeInterpret failed:', e.message);
     return { interpretation: null, impliedMove: null };
   }
 }
@@ -128,15 +128,15 @@ module.exports = async (req, res) => {
 
   const ticker = (req.query.ticker || '').toUpperCase().trim();
   if (!ticker || !/^[A-Z0-9.]{1,6}$/.test(ticker)) {
-    return res.status(400).json({ error: 'Mangler eller ugyldig ticker-parameter' });
+    return res.status(400).json({ error: 'Missing or invalid ticker parameter' });
   }
 
   if (!process.env.ANTHROPIC_API_KEY) {
-    return res.status(500).json({ error: 'ANTHROPIC_API_KEY mangler.' });
+    return res.status(500).json({ error: 'ANTHROPIC_API_KEY missing.' });
   }
 
   const rl = await rateCheck(req);
-  if (rl) return res.status(429).json({ error: `Du har nådd grensen for analyser denne timen. Prøv igjen om ${rl.waitMinutes} minutter.` });
+  if (rl) return res.status(429).json({ error: `You have reached the limit for analyses this hour. Try again in ${rl.waitMinutes} minutes.` });
 
   // Analytics tracking (must never crash endpoint)
   try {
@@ -159,7 +159,7 @@ module.exports = async (req, res) => {
     const raw = await fetchYahoo(ticker);
     const mapped = mapYahooData(ticker, raw);
     const ai = await claudeInterpret(ticker, mapped);
-    console.log('[earnings-play] Claude svar:', JSON.stringify(ai));
+    console.log('[earnings-play] Claude response:', JSON.stringify(ai));
 
     const safe = {
       ...mapped,
@@ -171,12 +171,12 @@ module.exports = async (req, res) => {
     return res.status(200).json(safe);
 
   } catch (error) {
-    console.error('[earnings-play] API feil:', error.status, error.message, error);
+    console.error('[earnings-play] API error:', error.status, error.message, error);
     const message = error.status === 401
-      ? 'Ugyldig API-nøkkel.'
+      ? 'Invalid API key.'
       : error.status === 429
-        ? 'For mange forespørsler. Vent litt og prøv igjen.'
-        : 'Klarte ikke analysere earnings. Prøv igjen.';
+        ? 'Too many requests. Wait a bit and try again.'
+        : 'Failed to analyze earnings. Try again.';
     return res.status(500).json({ error: message });
   }
 };

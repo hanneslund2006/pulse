@@ -106,7 +106,7 @@
       <button class="btn" onclick="clearAndRefetch()">HENT NY DATA</button>
     </div>
 
-    <div style="text-align:center;padding:32px 0 0;font-family:'DM Sans',sans-serif;font-size:11px;color:var(--text-muted);letter-spacing:0.08em;">IKKE FINANSIELL RÅDGIVNING</div>
+    <div style="text-align:center;padding:32px 0 0;font-family:'DM Sans',sans-serif;font-size:11px;color:var(--text-muted);letter-spacing:0.08em;">NOT FINANCIAL ADVICE</div>
   </div>
 
   <script>
@@ -172,13 +172,13 @@
         renderSectors(data);
       } catch (e) {
         if (e.name === 'AbortError') {
-          e.message = 'Forespørselen tok for lang tid. Prøv igjen.';
+          e.message = 'Request took too long. Try again.';
         }
         document.getElementById('load-wrap').classList.remove('visible');
         document.getElementById('empty-state').style.display = 'block';
         if (btn) btn.disabled = false;
         const errEl = document.getElementById('error-msg');
-        errEl.textContent = e.message || 'Klarte ikke hente sektordata. Prøv igjen.';
+        errEl.textContent = e.message || 'Failed to fetch sector data. Try again.';
         errEl.classList.add('visible');
       } finally {
         fetching = false;
@@ -229,7 +229,7 @@
         if (hit) { panel.innerHTML = JSON.parse(hit).html; return; }
       } catch (_) {}
 
-      panel.innerHTML = `<div class="panel-loading"><div class="ls-dot"></div>ANALYSERER ${esc(symbol)}…</div>`;
+      panel.innerHTML = `<div class="panel-loading"><div class="ls-dot"></div>ANALYZING ${esc(symbol)}…</div>`;
 
       fetchWithTimeout(`/api/sektor?ticker=${encodeURIComponent(symbol)}&navn=${encodeURIComponent(name)}`)
         .then(r => r.json())
@@ -240,7 +240,7 @@
           try { localStorage.setItem(key, JSON.stringify({ html })); } catch (_) {}
         })
         .catch(e => {
-          const msg = e.name === 'AbortError' ? 'Forespørselen tok for lang tid.' : (e.message || 'Klarte ikke hente analyse.');
+          const msg = e.name === 'AbortError' ? 'Request took too long.' : (e.message || 'Failed to fetch analysis.');
           panel.innerHTML = `<div class="panel-error">${esc(msg)}</div>`;
         });
     }

@@ -35,30 +35,30 @@ async function enrichWithSma(ticker) {
   } catch (_) { return null; }
 }
 
-const SYSTEM_PROMPT = `Du er en markedsanalytiker. Søk etter de største pre-market gap movers i USA i dag.
+const SYSTEM_PROMPT = `You are a market analyst. Search for the largest pre-market gap movers in USA today.
 
-Finn de 5 aksjene med størst pre-market gap (både opp og ned). Gap betyr prosentvis prisendring fra gårsdagens sluttkurs til pre-market pris i dag.
+Find the 5 stocks with largest pre-market gap (both up and down). Gap means percentage price change from yesterday's close to pre-market price today.
 
-Returner KUN gyldig JSON-array. Ingen preamble. Ingen markdown. Kun JSON-arrayen.
+Return ONLY valid JSON array. No preamble. No markdown. Just the JSON array.
 
-Eksakt format:
+Exact format:
 [
   {"ticker": "XXXX", "company": "Company Name", "gap": 8.4, "volume": "2.3M"},
   {"ticker": "YYYY", "company": "Company Name", "gap": -5.1, "volume": "890K"}
 ]
 
-gap: positiv for gap opp, negativ for gap ned. Sorter etter størst absolutt gap (blanding av opp og ned er OK).
-volume: formatert som "1.2M" eller "450K"
-Returner nøyaktig 5 entries. Svar KUN med JSON-arrayen.`;
+gap: positive for gap up, negative for gap down. Sort by largest absolute gap (mix of up and down is OK).
+volume: formatted as "1.2M" or "450K"
+Return exactly 5 entries. Answer ONLY with the JSON array.`;
 
 
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
-  if (!process.env.ANTHROPIC_API_KEY) return res.status(500).json({ error: 'API-nøkkel mangler' });
+  if (!process.env.ANTHROPIC_API_KEY) return res.status(500).json({ error: 'API key missing' });
 
   const rl = await rateCheck(req);
-  if (rl) return res.status(429).json({ error: `Du har nådd grensen for analyser denne timen. Prøv igjen om ${rl.waitMinutes} minutter.` });
+  if (rl) return res.status(429).json({ error: `You have reached the limit for analyses this hour. Try again in ${rl.waitMinutes} minutes.` });
 
   // Analytics tracking (must never crash endpoint)
   try {
@@ -78,7 +78,7 @@ module.exports = async (req, res) => {
   const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
   try {
-    const messages = [{ role: 'user', content: 'Finn de 5 største pre-market gap movers på US-børsene i dag. Returner JSON-array.' }];
+    const messages = [{ role: 'user', content: 'Find the 5 largest pre-market gap movers on US exchanges today. Return JSON array.' }];
 
     const response = await anthropic.messages.create({
       model: 'claude-haiku-4-5-20251001',
@@ -89,25 +89,25 @@ module.exports = async (req, res) => {
     });
 
     const finalText = response.content.filter(b => b.type === 'text').map(b => b.text).join('\n').trim();
-    if (!finalText) return res.status(500).json({ error: 'Ingen respons fra AI.' });
+    if (!finalText) return res.status(500).json({ error: 'No response from AI.' });
 
     const firstBrace = finalText.indexOf('[');
     const lastBrace = finalText.lastIndexOf(']');
     if (firstBrace === -1 || lastBrace === -1) {
-      console.error('[gappers] Ingen JSON funnet');
-      return res.status(500).json({ error: 'Parsing feilet' });
+      console.error('[gappers] No JSON found');
+      return res.status(500).json({ error: 'Parsing failed' });
     }
     const jsonString = finalText.substring(firstBrace, lastBrace + 1);
     let parsed;
     try {
       parsed = JSON.parse(jsonString);
     } catch (e) {
-      console.error('[gappers] JSON.parse feilet:', e.message);
-      return res.status(500).json({ error: 'JSON parse feilet' });
+      console.error('[gappers] JSON.parse failed:', e.message);
+      return res.status(500).json({ error: 'JSON parse failed' });
     }
     if (!Array.isArray(parsed)) {
-      console.error('[gappers] Ikke gyldig array');
-      return res.status(500).json({ error: 'AI returnerte ugyldig format.' });
+      console.error('[gappers] Not valid array');
+      return res.status(500).json({ error: 'AI returned invalid format.' });
     }
 
     const enriched = await Promise.all(
@@ -120,8 +120,8 @@ module.exports = async (req, res) => {
     return res.status(200).json(enriched);
 
   } catch (error) {
-    console.error('[gappers] API feil:', error);
-    const msg = error.status === 429 ? 'For mange forespørsler. Vent litt.' : 'Klarte ikke hente gappers.';
+    console.error('[gappers] API error:', error);
+    const msg = error.status === 429 ? 'Too many requests. Wait a bit.' : 'Failed to fetch gappers.';
     return res.status(500).json({ error: msg });
   }
 };

@@ -149,14 +149,14 @@
         <button class="period-btn" data-months="3" onclick="setPeriod(3)">3M</button>
       </div>
 
-      <button class="fetch-btn" id="fetch-btn" onclick="fetchHistorikk()">ANALYSER HISTORIKK →</button>
+      <button class="fetch-btn" id="fetch-btn" onclick="fetchHistorikk()">ANALYZE HISTORY →</button>
     </div>
 
     <div class="error-msg" id="error-msg"></div>
 
     <div class="load-wrap" id="load-wrap">
       <div class="load-pulse"></div>
-      <div class="load-text" id="load-text">ANALYSERER HISTORIKK…</div>
+      <div class="load-text" id="load-text">ANALYZING HISTORIKK…</div>
     </div>
 
     <div class="empty-msg" id="empty-msg">INGEN NYHETER FUNNET FOR DENNE PERIODEN</div>
@@ -168,7 +168,7 @@
       </div>
     </div>
 
-    <div style="text-align:center;padding:32px 0 0;font-family:'DM Sans',sans-serif;font-size:11px;color:var(--text-muted);letter-spacing:0.08em;">IKKE FINANSIELL RÅDGIVNING</div>
+    <div style="text-align:center;padding:32px 0 0;font-family:'DM Sans',sans-serif;font-size:11px;color:var(--text-muted);letter-spacing:0.08em;">NOT FINANCIAL ADVICE</div>
   </div>
 
   <script>
@@ -194,7 +194,7 @@
     }
     function showTimeoutError() {
       const el = document.getElementById('error-msg');
-      el.innerHTML = 'Forespørselen tok for lang tid. <button onclick="fetchHistorikk()" style="background:none;border:1px solid var(--green);color:var(--green);font-family:\'DM Sans\',sans-serif;font-size:11px;letter-spacing:0.04em;cursor:pointer;padding:4px 10px;border-radius:3px;margin-left:8px;">PRØV IGJEN</button>';
+      el.innerHTML = 'Forespørselen tok for lang tid. <button onclick="fetchHistorikk()" style="background:none;border:1px solid var(--green);color:var(--green);font-family:\'DM Sans\',sans-serif;font-size:11px;letter-spacing:0.04em;cursor:pointer;padding:4px 10px;border-radius:3px;margin-left:8px;">TRY AGAIN</button>';
       el.classList.add('visible');
     }
     function clearError() {
@@ -243,7 +243,7 @@
         return;
       }
       if (!/^[A-Z]{1,6}$/.test(raw)) {
-        showError('Ugyldig ticker. Bruk kun bokstaver, maks 6 tegn (f.eks. AAPL).');
+        showError('Invalid ticker. Use only letters, max 6 characters (e.g. AAPL).');
         return;
       }
       if (fetching) return;
@@ -265,7 +265,7 @@
       const btn = document.getElementById('fetch-btn');
       btn.disabled = true;
       const loadText = document.getElementById('load-text');
-      loadText.textContent = `ANALYSERER ${raw} HISTORIKK…`;
+      loadText.textContent = `ANALYZING ${raw} HISTORIKK…`;
       document.getElementById('load-wrap').classList.add('visible');
 
       const ctrl = new AbortController();
@@ -276,9 +276,9 @@
         clearTimeout(abortTimer);
         if (res.status === 429) {
           const d = await res.json().catch(() => ({}));
-          throw new Error(d.error || 'For mange forespørsler. Prøv igjen litt senere.');
+          throw new Error(d.error || 'Too many requests. Try again a bit later.');
         }
-        if (!res.ok) throw new Error('Analysefeil. Prøv igjen.');
+        if (!res.ok) throw new Error('Analysis error. Try again.');
         const data = await res.json();
         if (data.error) throw new Error(data.error);
 
@@ -296,7 +296,7 @@
         if (e.name === 'AbortError') {
           showTimeoutError();
         } else {
-          showError(e.message || 'Ukjent feil. Prøv igjen.');
+          showError(e.message || 'Unknown error. Try again.');
         }
       } finally {
         fetching = false;

@@ -50,10 +50,10 @@ module.exports = async (req, res) => {
   // ── Per-sektor Haiku-analyse ──────────────────────────────
   if (req.query.ticker) {
     if (!process.env.ANTHROPIC_API_KEY)
-      return res.status(500).json({ error: 'API-nøkkel mangler.' });
+      return res.status(500).json({ error: 'API key missing.' });
 
     const rl = await rateCheck(req);
-    if (rl) return res.status(429).json({ error: `Prøv igjen om ${rl.waitMinutes} minutt(er).` });
+    if (rl) return res.status(429).json({ error: `Try again in ${rl.waitMinutes} minute(s).` });
 
     let ticker;
     try {
@@ -84,19 +84,19 @@ module.exports = async (req, res) => {
       const response = await anthropic.messages.create({
         model: 'claude-haiku-4-5-20251001',
         max_tokens: 350,
-        system: 'Du er en kortfattet handels-orientert analytiker. Svar alltid på norsk. Maks 4 korte setninger. Ingen markdown, ingen liste-symboler.',
+        system: 'You are a concise trading-oriented analyst. Always answer in English. Max 4 short sentences. No markdown, no bullet points.',
         messages: [{
           role: 'user',
-          content: `Analyser ${ticker} (${navn}) SPDR-sektoren akkurat nå: 1) Hva driver sektoren, 2) Viktigste katalysator for og mot, 3) 1-2 konkrete aksjer å følge. Eksempel-stil: "XLK drevet av AI-vekst. Katalysator: Fed-pivot og sterk big tech. Risiko: høy P/E. Følg: NVDA, MSFT."`
+          content: `Analyze ${ticker} (${navn}) SPDR sector right now: 1) What drives the sector, 2) Most important catalyst for and against, 3) 1-2 specific stocks to follow. Example style: "XLK driven by AI growth. Catalyst: Fed pivot and strong big tech. Risk: high P/E. Follow: NVDA, MSFT."`
         }]
       });
       const text = response.content.filter(b => b.type === 'text').map(b => b.text).join('').trim();
-      const result = { analyse: text };
+      const result = { analysis: text };
       cache.set(cacheKey, result, 24 * 3600);
       return res.status(200).json(result);
     } catch (e) {
-      console.error('[sektor] Haiku feil:', e.message);
-      return res.status(500).json({ error: 'Klarte ikke hente analyse. Prøv igjen.' });
+      console.error('[sektor] Haiku error:', e.message);
+      return res.status(500).json({ error: 'Failed to fetch analysis. Try again.' });
     }
   }
 
@@ -116,7 +116,7 @@ module.exports = async (req, res) => {
 
     return res.status(200).json(sectors);
   } catch (error) {
-    console.error('Sektor API feil:', error);
-    return res.status(500).json({ error: 'Klarte ikke hente sektordata.' });
+    console.error('Sektor API error:', error);
+    return res.status(500).json({ error: 'Failed to fetch sector data.' });
   }
 };

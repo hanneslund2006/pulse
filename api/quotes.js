@@ -101,7 +101,7 @@ module.exports = async (req, res) => {
 
     return res.status(200).json(data);
   } catch (error) {
-    console.error('Quotes API feil:', error);
-    return res.status(500).json({ error: 'Klarte ikke hente kursdata.' });
+    console.error('Quotes API error:', error);
+    return res.status(500).json({ error: 'Failed to fetch quote data.' });
   }
 };

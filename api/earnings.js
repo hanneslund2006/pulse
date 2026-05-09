@@ -26,11 +26,11 @@ module.exports = async (req, res) => {
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
 
   if (!process.env.ANTHROPIC_API_KEY) {
-    return res.status(500).json({ error: 'API-nøkkel mangler.' });
+    return res.status(500).json({ error: 'API key missing.' });
   }
 
   const rl = await rateCheck(req);
-  if (rl) return res.status(429).json({ error: `Du har nådd grensen for analyser denne timen. Prøv igjen om ${rl.waitMinutes} minutter.` });
+  if (rl) return res.status(429).json({ error: `You have reached the limit for analyses this hour. Try again in ${rl.waitMinutes} minutes.` });
 
   // Parse watchlist from query param
   const watchlistParam = req.query.watchlist || '';
@@ -57,27 +57,27 @@ module.exports = async (req, res) => {
 
   const { start, end } = getWeekRange();
 
-  const SYSTEM = `Du er en finansanalytiker. Søk etter earnings-rapporter for inneværende uke (${start} til ${end}).
+  const SYSTEM = `You are a financial analyst. Search for earnings reports for the current week (${start} to ${end}).
 
-Returner KUN et gyldig JSON-array. Ingen preamble, ingen markdown, kun array-objektet.
+Return ONLY a valid JSON array. No preamble, no markdown, just the array object.
 
-Eksakt struktur:
+Exact structure:
 [
   {
     "ticker": "AAPL",
     "company": "Apple Inc.",
     "date": "2026-04-17",
-    "time": "etter børs",
+    "time": "after hours",
     "epsEstimate": "1.62"
   }
 ]
 
-Regler:
-- "time" er nøyaktig én av: "før børs", "etter børs", "ukjent"
-- "date" er ISO-format YYYY-MM-DD
-- "epsEstimate" er konsensusestimat som string, f.eks. "1.62" eller "N/A"
-- Maks 8 selskaper i arrayet
-- Svar KUN med JSON-arrayet, ingenting annet`;
+Rules:
+- "time" is exactly one of: "before market", "after hours", "unknown"
+- "date" is ISO format YYYY-MM-DD
+- "epsEstimate" is consensus estimate as string, e.g. "1.62" or "N/A"
+- Max 8 companies in array
+- Answer ONLY with the JSON array, nothing else`;
 
   const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
@@ -85,7 +85,7 @@ Regler:
     const messages = [
       {
         role: 'user',
-        content: `Søk etter hvilke selskaper som rapporterer earnings denne uken (${start}–${end}). Returner de 5-8 mest markedsrelevante selskapene som rapporterer (store cap, høy handelsvolum).`
+        content: `Search for which companies are reporting earnings this week (${start}–${end}). Return the 5-8 most market-relevant companies reporting (large cap, high trading volume).`
       }
     ];
 
@@ -103,23 +103,23 @@ Regler:
       .join('\n')
       .trim();
 
-    if (!finalText) return res.status(500).json({ error: 'Ingen respons fra AI.' });
+    if (!finalText) return res.status(500).json({ error: 'No response from AI.' });
 
-    console.error('[earnings] Claude råtekst:', finalText);
+    console.error('[earnings] Claude raw text:', finalText);
     const parsed = extractJSON(finalText);
     if (!Array.isArray(parsed)) {
-      console.error('Earnings JSON-feil. Råtekst:', finalText);
-      return res.status(500).json({ error: 'Ugyldig format fra AI.' });
+      console.error('Earnings JSON error. Raw text:', finalText);
+      return res.status(500).json({ error: 'Invalid format from AI.' });
     }
 
     cache.set(cacheKey, parsed, 60 * 60 * 6);
     return res.status(200).json(parsed);
 
   } catch (err) {
-    console.error('Earnings API feil:', err);
-    const msg = err.status === 401 ? 'Ugyldig API-nøkkel.'
-      : err.status === 429 ? 'For mange forespørsler. Vent litt.'
-      : 'Klarte ikke hente earnings-data.';
+    console.error('Earnings API error:', err);
+    const msg = err.status === 401 ? 'Invalid API key.'
+      : err.status === 429 ? 'Too many requests. Wait a bit.'
+      : 'Failed to fetch earnings data.';
     return res.status(500).json({ error: msg });
   }
 };

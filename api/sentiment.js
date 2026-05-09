@@ -2,10 +2,10 @@ const Anthropic = require('@anthropic-ai/sdk');
 const { check: rateCheck } = require('./_ratelimit');
 const cache = require('./_cache');
 
-const SYSTEM_PROMPT = `Søk dagens markedsnyheter. Return JSON only:
-{"verdict":"string (max 15 ord)","score":0-100,"keydata":[{"label":"string","value":"string"}],"categories":[{"name":"MAKRO","sentiment":"Bullish","summary":"string"},{"name":"ENERGI","sentiment":"Bearish","summary":"string"},{"name":"FINANS","sentiment":"Mixed","summary":"string"},{"name":"TECH","sentiment":"Avvent","summary":"string"}]}
+const SYSTEM_PROMPT = `Search today's market news. Return JSON only:
+{"verdict":"string (max 15 words)","score":0-100,"keydata":[{"label":"string","value":"string"}],"categories":[{"name":"MACRO","sentiment":"Bullish","summary":"string"},{"name":"ENERGY","sentiment":"Bearish","summary":"string"},{"name":"FINANCIALS","sentiment":"Mixed","summary":"string"},{"name":"TECH","sentiment":"Neutral","summary":"string"}]}
 
-keydata: S&P 500, Nasdaq Futures, VIX, 10-årsrente US (exact order). sentiment: "Bullish"/"Bearish"/"Mixed"/"Avvent". summary: max 2 sentences, 40 words, no *, #, bullets.`;
+keydata: S&P 500, Nasdaq Futures, VIX, US 10Y yield (exact order). sentiment: "Bullish"/"Bearish"/"Mixed"/"Neutral". summary: max 2 sentences, 40 words, no *, #, bullets.`;
 
 
 module.exports = async (req, res) => {
@@ -14,11 +14,11 @@ module.exports = async (req, res) => {
   }
 
   if (!process.env.ANTHROPIC_API_KEY) {
-    return res.status(500).json({ error: 'API-nøkkel mangler. Sett ANTHROPIC_API_KEY i miljøvariabler.' });
+    return res.status(500).json({ error: 'API key missing. Set ANTHROPIC_API_KEY in environment variables.' });
   }
 
   const rl = await rateCheck(req);
-  if (rl) return res.status(429).json({ error: `Du har nådd grensen for analyser denne timen. Prøv igjen om ${rl.waitMinutes} minutter.` });
+  if (rl) return res.status(429).json({ error: `You have reached the limit for analyses this hour. Try again in ${rl.waitMinutes} minutes.` });
 
   // Analytics tracking (must never crash endpoint)
   try {
@@ -43,7 +43,7 @@ module.exports = async (req, res) => {
     const messages = [
       {
         role: 'user',
-        content: 'Søk etter dagens markedsnyheter og returner sentimentrapporten som JSON.'
+        content: 'Search for today\'s market news and return the sentiment report as JSON.'
       }
     ];
 
@@ -62,42 +62,42 @@ module.exports = async (req, res) => {
       .trim();
 
     if (!finalText) {
-      return res.status(500).json({ error: 'Fikk ikke svar fra AI. Prøv igjen.' });
+      return res.status(500).json({ error: 'Got no response from AI. Try again.' });
     }
 
     const firstBrace = finalText.indexOf('{');
     const lastBrace = finalText.lastIndexOf('}');
     if (firstBrace === -1 || lastBrace === -1) {
-      console.error('[sentiment] Ingen JSON funnet');
-      return res.status(500).json({ error: 'Parsing feilet' });
+      console.error('[sentiment] No JSON found');
+      return res.status(500).json({ error: 'Parsing failed' });
     }
     const jsonString = finalText.substring(firstBrace, lastBrace + 1);
     let parsed;
     try {
       parsed = JSON.parse(jsonString);
     } catch (e) {
-      console.error('[sentiment] JSON.parse feilet:', e.message);
-      return res.status(500).json({ error: 'JSON parse feilet' });
+      console.error('[sentiment] JSON.parse failed:', e.message);
+      return res.status(500).json({ error: 'JSON parse failed' });
     }
 
     if (!parsed.verdict || !Array.isArray(parsed.categories) || parsed.categories.length === 0) {
-      console.error('[sentiment] Parsed JSON mangler required fields:', JSON.stringify(parsed).slice(0, 200));
-      return res.status(500).json({ error: 'AI returnerte ufullstendig rapport. Prøv igjen.' });
+      console.error('[sentiment] Parsed JSON missing required fields:', JSON.stringify(parsed).slice(0, 200));
+      return res.status(500).json({ error: 'AI returned incomplete report. Try again.' });
     }
 
     cache.set(CACHE_KEY, parsed, cache.nextMidnightTTL());
     return res.status(200).json(parsed);
 
   } catch (error) {
-    console.error('Anthropic API feil:', error);
+    console.error('Anthropic API error:', error);
 
     const message = error.status === 401
-      ? 'Ugyldig API-nøkkel.'
+      ? 'Invalid API key.'
       : error.status === 429
-        ? 'For mange forespørsler. Vent litt og prøv igjen.'
+        ? 'Too many requests. Wait a bit and try again.'
         : error.status === 529
-          ? 'Anthropic er overbelastet akkurat nå. Prøv igjen om 30 sekunder.'
-          : 'Klarte ikke hente sentiment. Prøv igjen.';
+          ? 'Anthropic is overloaded right now. Try again in 30 seconds.'
+          : 'Failed to fetch sentiment. Try again.';
 
     return res.status(500).json({ error: message });
   }

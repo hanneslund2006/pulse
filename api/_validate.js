@@ -4,7 +4,7 @@
 function validateTicker(raw) {
   const ticker = (raw || '').trim().toUpperCase();
   if (!ticker || !/^[A-Z0-9.]{1,6}$/.test(ticker)) {
-    throw new Error('Ugyldig ticker-symbol.');
+    throw new Error('Invalid ticker symbol.');
   }
   return ticker;
 }

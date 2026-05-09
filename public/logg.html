@@ -179,7 +179,7 @@
     <a href="index.html" class="back anim" style="animation-delay:0ms;">← TILBAKE</a>
 
     <div class="page-title anim" style="animation-delay:40ms;">LOGG</div>
-    <div class="page-subtitle anim" style="animation-delay:80ms;">Logg trades, mål setup-kvalitet og følg P&L over tid.</div>
+    <div class="page-subtitle anim" style="animation-delay:80ms;">Log trades, measure setup quality and track PLogg trades, mål setup-kvalitet og følg P&L over tid.L over time.</div>
 
     <!-- Stats -->
     <div class="anim" style="animation-delay:100ms;">
@@ -240,7 +240,7 @@
             <input type="number" id="f-stop" placeholder="0.00" step="0.01" min="0"/>
           </div>
           <div>
-            <label>STØRRELSE</label>
+            <label>SIZE</label>
             <input type="number" id="f-size" placeholder="100" min="1"/>
           </div>
         </div>
@@ -371,7 +371,7 @@
       const sorted = [...trades].sort((a, b) => new Date(b.date) - new Date(a.date));
 
       if (!sorted.length) {
-        list.innerHTML = '<div class="empty-state">INGEN TRADES LOGGET ENNÅ</div>';
+        list.innerHTML = '<div class="empty-state">NO TRADES LOGGED YET</div>';
         return;
       }
 
@@ -396,7 +396,7 @@
             <div class="trade-meta-item">Entry <span>${esc(fmtPrice(t.entry))}</span></div>
             ${t.exit != null ? `<div class="trade-meta-item">Exit <span>${esc(fmtPrice(t.exit))}</span></div>` : ''}
             <div class="trade-meta-item">Stop <span>${esc(fmtPrice(t.stop))}</span></div>
-            <div class="trade-meta-item">Størrelse <span>${esc(t.size)}</span></div>
+            <div class="trade-meta-item">Size <span>${esc(t.size)}</span></div>
             ${rrText ? `<div class="trade-meta-item">R:R <span>${esc(rrText)}</span></div>` : ''}
             ${qualLabel ? `<div class="trade-meta-item">Setup <span>${esc(qualLabel)}</span></div>` : ''}
             <div class="trade-meta-item">Dato <span>${esc(t.date || '—')}</span></div>
@@ -447,10 +447,10 @@
       const date   = document.getElementById('f-date').value;
       const notes  = document.getElementById('f-notes').value.trim();
 
-      if (!ticker)      { alert('Ticker mangler'); return; }
-      if (isNaN(entry)) { alert('Entry pris mangler'); return; }
-      if (isNaN(stop))  { alert('Stop loss mangler'); return; }
-      if (isNaN(size) || size <= 0) { alert('Størrelse mangler'); return; }
+      if (!ticker)      { alert('Ticker missing'); return; }
+      if (isNaN(entry)) { alert('Entry price missing'); return; }
+      if (isNaN(stop))  { alert('Stop loss missing'); return; }
+      if (isNaN(size) || size <= 0) { alert('Size missing'); return; }
 
       const trade = {
         id:        uid(),

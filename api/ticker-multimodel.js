@@ -9,11 +9,11 @@ module.exports = async (req, res) => {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   if (!process.env.OPENROUTER_API_KEY) {
-    return res.status(503).json({ error: 'OPENROUTER_API_KEY ikke konfigurert.' });
+    return res.status(503).json({ error: 'OPENROUTER_API_KEY not configured.' });
   }
 
   const rl = await rateCheck(req);
-  if (rl) return res.status(429).json({ error: `Du har nådd grensen for analyser denne timen. Prøv igjen om ${rl.waitMinutes} minutter.` });
+  if (rl) return res.status(429).json({ error: `You have reached the limit for analyses this hour. Try again in ${rl.waitMinutes} minutes.` });
 
   const { ticker: rawTicker, layers } = req.body || {};
 
@@ -25,7 +25,7 @@ module.exports = async (req, res) => {
   }
 
   if (!Array.isArray(layers)) {
-    return res.status(400).json({ error: 'layers kreves som array' });
+    return res.status(400).json({ error: 'layers required as array' });
   }
 
   // Analytics tracking (must never crash endpoint)
@@ -48,7 +48,7 @@ module.exports = async (req, res) => {
     .map(l => `${l.name}: ${l.sentiment} — ${l.summary}`)
     .join('\n');
 
-  const prompt = `Ticker: ${ticker}\n\nClaude-analyse:\n${layerSummary}\n\nHva er din uavhengige vurdering for swing trading? Returner KUN JSON: {"verdict":"Bullish","confidence":"Høy","reason":"maks 15 ord norsk"}`;
+  const prompt = `Ticker: ${ticker}\n\nClaude analysis:\n${layerSummary}\n\nWhat is your independent assessment for swing trading? Return ONLY JSON: {"verdict":"Bullish","confidence":"High","reason":"max 15 words English"}`;
 
   const MODELS = [
     { id: 'openai/gpt-4o-mini',         name: 'GPT-4o Mini' },
@@ -73,7 +73,7 @@ module.exports = async (req, res) => {
       }, 30000);
 
       if (!response.ok) {
-        console.error('[ticker-multimodel]', id, 'returnerte', response.status);
+        console.error('[ticker-multimodel]', id, 'returned', response.status);
         return { model: name, verdict: null, confidence: null, reason: null };
       }
 
@@ -95,7 +95,7 @@ module.exports = async (req, res) => {
     cache.set(CACHE_KEY, result, cache.nextMidnightTTL());
     return res.status(200).json(result);
   } catch (error) {
-    console.error('[ticker-multimodel] feil:', error);
-    return res.status(500).json({ error: 'Klarte ikke hente andre modellers analyse.' });
+    console.error('[ticker-multimodel] error:', error);
+    return res.status(500).json({ error: 'Failed to fetch other models\' analysis.' });
   }
 };

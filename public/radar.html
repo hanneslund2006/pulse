@@ -75,8 +75,8 @@
       <div class="cta-card">
         <div class="cta-label">SWING SETUP RADAR</div>
         <div class="cta-title">Finn dagens beste setup</div>
-        <div class="cta-desc">AI screener som leter etter aksjer med høy short float (&gt;15%), positiv momentum og katalysator. Returnerer 3–5 kandidater. Cachet til neste dag.</div>
-        <button class="btn-ghost" id="fetch-btn" onclick="fetchRadar()">KJØR RADAR →</button>
+        <div class="cta-desc">AI screener that searches for stocks with high short float (AI screener som leter etter aksjer med høy short float (&gt;15%), positiv momentum og katalysator. Returnerer 3–5 kandidater. Cachet til neste dag.gt;15%), positive momentum and catalyst. Returns 3–5 candidates. Cached until next day.</div>
+        <button class="btn-ghost" id="fetch-btn" onclick="fetchRadar()">RUN RADAR →</button>
       </div>
     </div>
 
@@ -94,7 +94,7 @@
       <div class="section-title">SWING-KANDIDATER</div>
       <div class="radar-list" id="radar-list"></div>
       <div style="margin-top:14px;">
-        <button class="btn" onclick="clearAndRefetch()">KJØR NY SCREENING</button>
+        <button class="btn" onclick="clearAndRefetch()">RUN NEW SCREENING</button>
       </div>
     </div>
 
@@ -104,7 +104,7 @@
       <div id="radar-log-list"></div>
     </div>
 
-    <div style="text-align:center;padding:32px 0 0;font-family:'DM Sans',sans-serif;font-size:11px;color:var(--text-muted);letter-spacing:0.08em;">IKKE FINANSIELL RÅDGIVNING</div>
+    <div style="text-align:center;padding:32px 0 0;font-family:'DM Sans',sans-serif;font-size:11px;color:var(--text-muted);letter-spacing:0.08em;">NOT FINANCIAL ADVICE</div>
   </div>
 
   <script>
@@ -133,7 +133,7 @@
     }
     function showTimeoutError() {
       const el = document.getElementById('error-msg');
-      el.innerHTML = 'Forespørselen tok for lang tid. <button onclick="fetchRadar()" style="background:none;border:1px solid var(--green);color:var(--green);font-family:\'DM Sans\',sans-serif;font-size:11px;letter-spacing:0.04em;cursor:pointer;padding:4px 10px;border-radius:3px;margin-left:8px;">PRØV IGJEN</button>';
+      el.innerHTML = 'Forespørselen tok for lang tid. <button onclick="fetchRadar()" style="background:none;border:1px solid var(--green);color:var(--green);font-family:\'DM Sans\',sans-serif;font-size:11px;letter-spacing:0.04em;cursor:pointer;padding:4px 10px;border-radius:3px;margin-left:8px;">TRY AGAIN</button>';
       el.classList.add('visible');
     }
     function clearError() {
@@ -203,9 +203,9 @@
         clearTimeout(abortTimer);
         if (res.status === 429) {
           const d = await res.json().catch(() => ({}));
-          throw new Error(d.error || 'For mange forespørsler. Prøv igjen litt senere.');
+          throw new Error(d.error || 'Too many requests. Try again a bit later.');
         }
-        if (!res.ok) throw new Error('Analysefeil. Prøv igjen.');
+        if (!res.ok) throw new Error('Analysis error. Try again.');
         const data = await res.json();
         if (data.error) throw new Error(data.error);
         localStorage.setItem(CACHE_KEY, JSON.stringify(data));
@@ -220,7 +220,7 @@
         if (e.name === 'AbortError') {
           showTimeoutError();
         } else {
-          showError(e.message || 'Ukjent feil. Prøv igjen.');
+          showError(e.message || 'Unknown error. Try again.');
         }
       } finally {
         fetching = false;

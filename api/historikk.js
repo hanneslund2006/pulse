@@ -37,11 +37,11 @@ module.exports = async (req, res) => {
 
   const months = parseInt(rawMonths) || 3;
   if (![1, 3, 6, 12].includes(months)) {
-    return res.status(400).json({ error: 'Ugyldig tidsperiode. Velg 1, 3, 6 eller 12 måneder.' });
+    return res.status(400).json({ error: 'Invalid time period. Choose 1, 3, 6 or 12 months.' });
   }
 
   const rl = await rateCheck(req);
-  if (rl) return res.status(429).json({ error: `Du har nådd grensen for analyser denne timen. Prøv igjen om ${rl.waitMinutes} minutter.` });
+  if (rl) return res.status(429).json({ error: `You have reached the limit for analyses this hour. Try again in ${rl.waitMinutes} minutes.` });
 
   // Analytics tracking (must never crash endpoint)
   try {
@@ -60,10 +60,10 @@ module.exports = async (req, res) => {
   console.log(`[historikk] CACHE MISS: ${ticker} ${months}m — calling Claude`);
 
   if (!process.env.ANTHROPIC_API_KEY) {
-    return res.status(500).json({ error: 'ANTHROPIC_API_KEY mangler.' });
+    return res.status(500).json({ error: 'ANTHROPIC_API_KEY missing.' });
   }
   if (!process.env.ALPACA_API_KEY || !process.env.ALPACA_API_SECRET) {
-    return res.status(500).json({ error: 'Alpaca API-nøkler mangler i miljøvariabler.' });
+    return res.status(500).json({ error: 'Alpaca API keys missing in environment variables.' });
   }
 
   // Calculate start date
@@ -84,18 +84,18 @@ module.exports = async (req, res) => {
 
     if (!alpacaRes.ok) {
       const errText = await alpacaRes.text();
-      console.error('Alpaca feil:', alpacaRes.status, errText);
+      console.error('Alpaca error:', alpacaRes.status, errText);
       if (alpacaRes.status === 403 || alpacaRes.status === 401) {
-        return res.status(502).json({ error: 'Alpaca API-nøkkel ugyldig eller mangler tilgang.' });
+        return res.status(502).json({ error: 'Alpaca API key invalid or missing access.' });
       }
-      return res.status(502).json({ error: `Klarte ikke hente nyheter (${alpacaRes.status}).` });
+      return res.status(502).json({ error: `Failed to fetch news (${alpacaRes.status}).` });
     }
 
     const alpacaData = await alpacaRes.json();
     articles = alpacaData.news || [];
   } catch (e) {
-    console.error('Alpaca fetch feil:', e);
-    return res.status(502).json({ error: 'Klarte ikke koble til Alpaca API.' });
+    console.error('Alpaca fetch error:', e);
+    return res.status(502).json({ error: 'Failed to connect to Alpaca API.' });
   }
 
   if (articles.length === 0) {
@@ -124,7 +124,7 @@ module.exports = async (req, res) => {
 
   const systemPrompt = `List the 5 most important stock-moving catalysts for ${ticker} from the provided news. Today is ${new Date().toISOString().slice(0, 10)}. Return ONLY valid JSON, no preamble, no markdown:
 {"ticker":"${ticker}","catalysts":[{"date":"YYYY-MM-DD","headline":"max 8 words","explanation":"max 1 sentence, 20 words","sentiment":"positive"}]}
-Rules: chronological order oldest first. sentiment: exactly "positive", "negative", or "neutral". CRITICAL: copy dates VERBATIM from the [YYYY-MM-DD] prefix in each article — never use dates from training data.`;
+Rules: chronological order oldest first. sentiment: exactly "positive", "negative", or "neutral". CRITICAL: copy dates VERBATIM from the [YYYY-MM-DD] prefix in each article — never use dates from training data. LANGUAGE: All text fields (headline, explanation) MUST be in Norwegian bokmål.`;
 
   const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
@@ -150,33 +150,33 @@ Rules: chronological order oldest first. sentiment: exactly "positive", "negativ
     const firstBrace = finalText.indexOf('{');
     const lastBrace = finalText.lastIndexOf('}');
     if (firstBrace === -1 || lastBrace === -1) {
-      console.error('[historikk] Ingen JSON funnet i råtekst');
-      return res.status(500).json({ error: 'Parsing feilet' });
+      console.error('[historikk] No JSON found in raw text');
+      return res.status(500).json({ error: 'Parsing failed' });
     }
     const jsonString = finalText.substring(firstBrace, lastBrace + 1);
     let parsed;
     try {
       parsed = JSON.parse(jsonString);
     } catch (e) {
-      console.error('[historikk] JSON.parse feilet:', e.message);
-      return res.status(500).json({ error: 'JSON parse feilet' });
+      console.error('[historikk] JSON.parse failed:', e.message);
+      return res.status(500).json({ error: 'JSON parse failed' });
     }
     if (!parsed || !Array.isArray(parsed.catalysts)) {
-      console.error('[historikk] Mangler catalysts-array. parsed:', JSON.stringify(parsed));
-      return res.status(500).json({ error: 'AI returnerte ugyldig format. Prøv igjen.' });
+      console.error('[historikk] Missing catalysts array. parsed:', JSON.stringify(parsed));
+      return res.status(500).json({ error: 'AI returned invalid format. Try again.' });
     }
 
     cache.set(`historikk_${ticker}_${months}`, parsed, 24 * 3600);
-    console.log('[historikk] Ferdig');
+    console.log('[historikk] Complete');
     return res.status(200).json(parsed);
 
   } catch (error) {
-    console.error('Historikk API feil:', error);
+    console.error('Historikk API error:', error);
     const message = error.status === 401
-      ? 'Ugyldig Anthropic API-nøkkel.'
+      ? 'Invalid Anthropic API key.'
       : error.status === 429
-        ? 'For mange forespørsler. Vent litt og prøv igjen.'
-        : 'Klarte ikke analysere historikk. Prøv igjen.';
+        ? 'Too many requests. Wait a bit and try again.'
+        : 'Failed to analyze history. Try again.';
     return res.status(500).json({ error: message });
   }
 };
