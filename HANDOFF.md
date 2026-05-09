@@ -1,11 +1,11 @@
 # PULSE — Handoff
 
 ## Dato
-07. mai 2026
+09. mai 2026
 
 ## Gjeldende HEAD
-Siste commit: perf: TIER 3 system prompt compression (4d86ca1)
-Status: API cost optimization komplett — 50-60% total kostnadsreduksjon
+Siste commit: fix: remove earnings-ranker to comply with Vercel Hobby function limit (14ec063)
+Status: Analytics komplett + Vercel function limit løst (13→12 functions)
 
 ## Status
 - Fase 1: KOMPLETT
@@ -23,7 +23,133 @@ Status: API cost optimization komplett — 50-60% total kostnadsreduksjon
 - Juridisk disclaimer på alle AI-sider
 - Modell: Sonnet 4.5 (standard kontekst — ikke 1M)
 
-## Siste sesjon (07. mai) — API Cost Optimization (TIER 1+2+3)
+## Siste sesjon (09. mai) — Analytics Implementation + Vercel Function Limit Fix
+
+**Mål:** Implementere Vercel Analytics og custom endpoint tracking for å spore bruk og API-kostnader.
+
+### Del 1: Vercel Analytics (9 HTML-filer)
+**Commit:** 6c1b37f
+
+✅ **Lagt til Vercel Analytics script i alle HTML-filer**
+- Script: `<script defer src="/_vercel/insights/script.js"></script>`
+- Plassering: Rett før `</body>` i alle 9 sider
+- Zero-config: Vercel auto-detekterer og aktiverer analytics
+- Sporer: Page views, unique visitors, geographic data
+
+**Modifiserte filer:**
+1. public/index.html
+2. public/market.html
+3. public/ticker.html
+4. public/sektor.html
+5. public/radar.html
+6. public/earnings-play.html
+7. public/gappers.html
+8. public/historikk.html
+9. public/logg.html
+
+### Del 2: Custom Endpoint Tracking (11 API-filer)
+**Commit:** 6c1b37f
+
+✅ **Lagt til analytics tracking i alle API-endepunkter**
+- Tracking-kode plassert: ETTER rate limit check, FØR cache check
+- Analytics failures krasher aldri endpoints (try/catch wrapper)
+- 30-dagers TTL på analytics-data
+- Format: `analytics:endpoint:YYYY-MM-DD`
+
+**Modifiserte endepunkter:**
+1. api/sentiment.js
+2. api/ticker.js
+3. api/ticker-multimodel.js
+4. api/earnings.js
+5. api/earnings-play.js
+6. api/earnings-ranker.js (senere fjernet)
+7. api/radar.js
+8. api/sektor.js
+9. api/historikk.js
+10. api/gappers.js
+11. api/quotes.js
+
+### Del 3: Analytics Dashboard
+**Commit:** 6c1b37f + 984eb16 (vercel.json fix)
+
+✅ **Opprettet /api/analytics-dashboard**
+- Autentisering: `x-analytics-key` header må matche `ANALYTICS_SECRET`
+- Returnerer: `{ endpoint: { date: count } }`
+- Graceful degradation: Returnerer `{}` hvis Redis unavailable (ikke 500)
+- Ingen CORS-header (internal use only)
+
+**Vercel.json fix:**
+- Først returnerte dashboard NOT_FOUND i prod
+- Root cause: vercel.json listet eksplisitt functions, analytics-dashboard manglet
+- Fix: La til `"api/analytics-dashboard.js": { "maxDuration": 10 }`
+
+**Miljøvariabel:**
+- `ANALYTICS_SECRET` generert via `openssl rand -hex 32`
+- Lagt til i .env.example (dokumentasjon)
+- Må legges til i Vercel env vars for produksjon
+
+### Del 4: Vercel Function Limit Fix
+**Commit:** 14ec063
+
+**Problem:** PULSE hadde 13 functions, Vercel Hobby tillater maks 12
+
+✅ **Fjernet api/earnings-ranker.js**
+- Feature: Rangerte top 8 earnings-kandidater per uke
+- Rationale: "Nice-to-have" feature, core earnings-funksjonalitet bevart
+- Impact: earnings.js og earnings-play.js fungerer fortsatt
+- Frontend: Kommentert ut ranker UI i earnings-play.html
+
+**Function count:**
+- Før: 13 (blokkert av Vercel)
+- Etter: 12 (build succeeder)
+
+**Gjenværende functions (12):**
+1. sentiment.js
+2. ticker.js
+3. ticker-multimodel.js
+4. earnings.js
+5. earnings-play.js
+6. radar.js
+7. sektor.js
+8. historikk.js
+9. gappers.js
+10. quotes.js
+11. analytics-dashboard.js
+12. cache-clear.js
+
+### Deployment Status
+
+✅ **Alle endringer deployet og verifisert**
+- Build: Success (ingen function limit error)
+- Analytics-dashboard: Returnerer 401 (ikke NOT_FOUND)
+- Autentisering: Fungerer med korrekt secret
+- Core endpoints: Fungerer normalt
+- Vercel Analytics: Tracker page views automatisk
+
+**Test-kommandoer:**
+```bash
+# Test autentisering (skal gi 401)
+curl https://pulse-theta-wheat.vercel.app/api/analytics-dashboard
+
+# Test med korrekt nøkkel (skal gi {} eller data)
+curl -H "x-analytics-key: SECRET" https://pulse-theta-wheat.vercel.app/api/analytics-dashboard
+```
+
+### Impact
+
+**Positive:**
+- ✅ Kan nå spore endpoint usage per dag
+- ✅ Kan beregne API-kostnader per feature
+- ✅ Vercel Analytics gir innsikt i page views og user behavior
+- ✅ Vercel build succeeder (function limit løst)
+- ✅ Analytics-dashboard tilgjengelig i produksjon
+
+**Fjernet features:**
+- ❌ Weekly earnings ranker (earnings.js og earnings-play.js bevart)
+
+---
+
+## Tidligere sesjon (07. mai) — API Cost Optimization (TIER 1+2+3)
 
 **Mål:** Redusere Anthropic API-kostnader med 50%+ uten å endre funksjonalitet.
 
