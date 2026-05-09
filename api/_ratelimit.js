@@ -1,5 +1,23 @@
 const { Redis } = require('@upstash/redis');
 
+/**
+ * IP-based rate limiting using Redis
+ *
+ * Keys: pulse:rl:{ip}
+ * Scope: Per IP address (not per user or API key)
+ * Window: 1 hour sliding window
+ * Max calls: 25 per hour
+ *
+ * IMPORTANT:
+ * - Rate limits are tied to client IP, not API key or session
+ * - Rotating ANTHROPIC_API_KEY does NOT reset rate limits
+ * - Users behind the same NAT/proxy share rate limits
+ * - Keys expire automatically after 1 hour of inactivity
+ *
+ * To manually reset a rate limit:
+ *   redis.del('pulse:rl:{ip}')
+ */
+
 const WINDOW_SEC = 3600; // 60 minutes
 const MAX_CALLS = 25;
 
@@ -38,7 +56,8 @@ async function check(req) {
     if (count > MAX_CALLS) {
       // Hent TTL for å fortelle brukeren hvor lenge de må vente
       const ttl = await redis.ttl(key);
-      const waitMinutes = Math.ceil(ttl / 60);
+      // Defensive: handle negative TTL (should not happen, but Redis can return -1 or -2)
+      const waitMinutes = Math.max(1, Math.ceil(ttl / 60));
       return { waitMinutes };
     }
 

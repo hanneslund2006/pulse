@@ -12,7 +12,7 @@ module.exports = async (req, res) => {
     return res.status(503).json({ error: 'OPENROUTER_API_KEY ikke konfigurert.' });
   }
 
-  const rl = rateCheck(req);
+  const rl = await rateCheck(req);
   if (rl) return res.status(429).json({ error: `Du har nådd grensen for analyser denne timen. Prøv igjen om ${rl.waitMinutes} minutter.` });
 
   const { ticker: rawTicker, layers } = req.body || {};

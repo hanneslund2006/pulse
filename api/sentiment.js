@@ -17,7 +17,7 @@ module.exports = async (req, res) => {
     return res.status(500).json({ error: 'API-nøkkel mangler. Sett ANTHROPIC_API_KEY i miljøvariabler.' });
   }
 
-  const rl = rateCheck(req);
+  const rl = await rateCheck(req);
   if (rl) return res.status(429).json({ error: `Du har nådd grensen for analyser denne timen. Prøv igjen om ${rl.waitMinutes} minutter.` });
 
   // Analytics tracking (must never crash endpoint)

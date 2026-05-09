@@ -52,7 +52,7 @@ module.exports = async (req, res) => {
     if (!process.env.ANTHROPIC_API_KEY)
       return res.status(500).json({ error: 'API-nøkkel mangler.' });
 
-    const rl = rateCheck(req);
+    const rl = await rateCheck(req);
     if (rl) return res.status(429).json({ error: `Prøv igjen om ${rl.waitMinutes} minutt(er).` });
 
     let ticker;

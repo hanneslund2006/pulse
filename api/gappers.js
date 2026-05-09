@@ -57,7 +57,7 @@ module.exports = async (req, res) => {
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
   if (!process.env.ANTHROPIC_API_KEY) return res.status(500).json({ error: 'API-nøkkel mangler' });
 
-  const rl = rateCheck(req);
+  const rl = await rateCheck(req);
   if (rl) return res.status(429).json({ error: `Du har nådd grensen for analyser denne timen. Prøv igjen om ${rl.waitMinutes} minutter.` });
 
   // Analytics tracking (must never crash endpoint)

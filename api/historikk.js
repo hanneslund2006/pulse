@@ -40,7 +40,7 @@ module.exports = async (req, res) => {
     return res.status(400).json({ error: 'Ugyldig tidsperiode. Velg 1, 3, 6 eller 12 måneder.' });
   }
 
-  const rl = rateCheck(req);
+  const rl = await rateCheck(req);
   if (rl) return res.status(429).json({ error: `Du har nådd grensen for analyser denne timen. Prøv igjen om ${rl.waitMinutes} minutter.` });
 
   // Analytics tracking (must never crash endpoint)
