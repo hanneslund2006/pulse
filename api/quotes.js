@@ -75,6 +75,14 @@ module.exports = async (req, res) => {
   if (symbols.length === 0) return res.status(400).json({ error: 'No valid symbols' });
   if (symbols.length > 20) return res.status(400).json({ error: 'Max 20 symbols' });
 
+  // Analytics tracking (must never crash endpoint)
+  try {
+    const today = new Date().toISOString().slice(0, 10);
+    const analyticsKey = `analytics:quotes:${today}`;
+    const currentCount = await cache.get(analyticsKey) || 0;
+    cache.set(analyticsKey, currentCount + 1, 30 * 24 * 3600);
+  } catch (e) { /* analytics must never crash endpoint */ }
+
   // Cache hit (same symbol set, within 60s)
   const cacheKey = symbols.slice().sort().join(',');
   if (_cache && _cacheKey === cacheKey && Date.now() - _cachedAt < 60_000) {

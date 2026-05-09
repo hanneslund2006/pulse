@@ -38,6 +38,14 @@ module.exports = async (req, res) => {
     ? watchlistParam.split(',').map(s => s.trim().toUpperCase()).filter(Boolean)
     : [];
 
+  // Analytics tracking (must never crash endpoint)
+  try {
+    const today = new Date().toISOString().slice(0, 10);
+    const analyticsKey = `analytics:earnings:${today}`;
+    const currentCount = await cache.get(analyticsKey) || 0;
+    cache.set(analyticsKey, currentCount + 1, 30 * 24 * 3600);
+  } catch (e) { /* analytics must never crash endpoint */ }
+
   const today = new Date().toISOString().slice(0, 10);
   const cacheKey = `earnings_v1_${today}`;
   const cached = await cache.get(cacheKey);

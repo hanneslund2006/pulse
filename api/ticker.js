@@ -83,6 +83,14 @@ module.exports = async (req, res) => {
   const rl = rateCheck(req);
   if (rl) return res.status(429).json({ error: `Du har nådd grensen for analyser denne timen. Prøv igjen om ${rl.waitMinutes} minutter.` });
 
+  // Analytics tracking (must never crash endpoint)
+  try {
+    const today = new Date().toISOString().slice(0, 10);
+    const analyticsKey = `analytics:ticker:${today}`;
+    const currentCount = await cache.get(analyticsKey) || 0;
+    cache.set(analyticsKey, currentCount + 1, 30 * 24 * 3600);
+  } catch (e) { /* analytics must never crash endpoint */ }
+
   const cached = await cache.get(`ticker_${ticker}`);
   if (cached) {
     console.log(`[ticker] CACHE HIT: ${ticker}`);

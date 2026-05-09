@@ -63,6 +63,14 @@ module.exports = async (req, res) => {
     }
     const navn = (req.query.navn || ticker).slice(0, 40);
 
+    // Analytics tracking (must never crash endpoint)
+    try {
+      const today = new Date().toISOString().slice(0, 10);
+      const analyticsKey = `analytics:sektor:${today}`;
+      const currentCount = await cache.get(analyticsKey) || 0;
+      cache.set(analyticsKey, currentCount + 1, 30 * 24 * 3600);
+    } catch (e) { /* analytics must never crash endpoint */ }
+
     const today = new Date().toISOString().slice(0, 10);
     const cacheKey = `sektor:${ticker}:${today}`;
     const cached = await cache.get(cacheKey);

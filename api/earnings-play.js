@@ -138,6 +138,14 @@ module.exports = async (req, res) => {
   const rl = rateCheck(req);
   if (rl) return res.status(429).json({ error: `Du har nådd grensen for analyser denne timen. Prøv igjen om ${rl.waitMinutes} minutter.` });
 
+  // Analytics tracking (must never crash endpoint)
+  try {
+    const today = new Date().toISOString().slice(0, 10);
+    const analyticsKey = `analytics:earnings-play:${today}`;
+    const currentCount = await cache.get(analyticsKey) || 0;
+    cache.set(analyticsKey, currentCount + 1, 30 * 24 * 3600);
+  } catch (e) { /* analytics must never crash endpoint */ }
+
   const today = new Date().toISOString().slice(0, 10);
   const CACHE_KEY = `earnings:${ticker}:${today}`;
   const cached = await cache.get(CACHE_KEY);

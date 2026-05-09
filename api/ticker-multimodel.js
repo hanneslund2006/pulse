@@ -28,6 +28,14 @@ module.exports = async (req, res) => {
     return res.status(400).json({ error: 'layers kreves som array' });
   }
 
+  // Analytics tracking (must never crash endpoint)
+  try {
+    const today = new Date().toISOString().slice(0, 10);
+    const analyticsKey = `analytics:ticker-multimodel:${today}`;
+    const currentCount = await cache.get(analyticsKey) || 0;
+    cache.set(analyticsKey, currentCount + 1, 30 * 24 * 3600);
+  } catch (e) { /* analytics must never crash endpoint */ }
+
   const today = new Date().toISOString().slice(0, 10);
   const CACHE_KEY = `multimodel:${ticker}:${today}`;
   const cached = await cache.get(CACHE_KEY);
