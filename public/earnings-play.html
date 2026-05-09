@@ -189,12 +189,14 @@
     <div class="page-title anim" style="animation-delay:40ms;">EARNINGS PLAY</div>
     <div class="page-subtitle anim" style="animation-delay:80ms;">Komplett beslutningsgrunnlag før en earnings-trade.</div>
 
-    <!-- Weekly ranker section -->
+    <!-- Weekly ranker section - REMOVED: Vercel function limit (12 max) -->
+    <!--
     <div class="anim" id="ranker-wrap" style="animation-delay:90ms; margin-bottom:28px;">
       <div class="section-title" style="margin-bottom:10px;">UKENS TOPP-KANDIDATER</div>
       <div id="ranker-loading" style="font-family:'DM Sans',sans-serif;font-size:11px;color:var(--text-muted);padding:10px 0;display:flex;align-items:center;"><span class="rk-dot"></span>LASTER RANKER...</div>
       <div id="ranker-list" style="display:flex;flex-direction:column;gap:8px;"></div>
     </div>
+    -->
 
     <div class="anim" style="animation-delay:120ms;">
       <div class="search-row">
@@ -687,7 +689,7 @@
       }
     }
 
-    loadRanker();
+    // loadRanker(); // REMOVED: earnings-ranker endpoint removed due to Vercel function limit
 
     // Pre-fill from URL param
     const urlTicker = new URLSearchParams(location.search).get('ticker');
