@@ -11,6 +11,7 @@
     "api/earnings-play.js": { "maxDuration": 60 },
     "api/historikk.js":     { "maxDuration": 60 },
     "api/insider.js":       { "maxDuration": 30 },
+    "api/cache-clear.js":   { "maxDuration": 10 },
     "api/analytics-dashboard.js": { "maxDuration": 10 }
   },
   "routes": [
