@@ -8,6 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
+  <script src="sanitize.js"></script>
   <style>
     body { padding: 32px 20px 80px; }
     .container { max-width: 600px; margin: 0 auto; }
@@ -120,6 +121,20 @@
       margin-bottom: 20px;
     }
     .ticker-label span { color: var(--green); }
+
+    /* Citation styling */
+    .citation {
+      cursor: pointer;
+      color: var(--green, #1DB87E);
+      text-decoration: none;
+      border-bottom: 1px dotted currentColor;
+      transition: background 0.2s ease;
+      padding: 0 2px;
+      border-radius: 2px;
+    }
+    .citation:hover {
+      background: rgba(29, 184, 126, 0.1);
+    }
   </style>
 </head>
 <body>
@@ -175,11 +190,6 @@
     let selectedMonths = 1;
     let fetching = false;
 
-    function esc(s) {
-      if (s == null) return '';
-      return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-    }
-
     function setPeriod(months) {
       selectedMonths = months;
       document.querySelectorAll('.period-btn').forEach(btn => {
@@ -189,7 +199,7 @@
 
     function showError(msg) {
       const el = document.getElementById('error-msg');
-      el.innerHTML = esc(msg);
+      el.innerHTML = sanitizeText(msg);
       el.classList.add('visible');
     }
     function showTimeoutError() {
@@ -212,19 +222,19 @@
       const timeline = document.getElementById('timeline');
       const label = document.getElementById('ticker-label');
 
-      label.innerHTML = `<span>${esc(data.ticker)}</span> — ${selectedMonths} måneder`;
+      label.innerHTML = `<span>${sanitizeText(data.ticker)}</span> — ${selectedMonths} måneder`;
 
       const items = (data.catalysts || []);
       const entries = items.map((c, i) => {
         const s = c.sentiment || 'neutral';
         return `<div class="catalyst" style="animation-delay:${i * 70}ms;">
           <div class="catalyst-left">
-            <div class="catalyst-dot ${esc(s)}"></div>
+            <div class="catalyst-dot ${sanitizeText(s)}"></div>
           </div>
           <div class="catalyst-body">
-            <div class="catalyst-date">${esc(formatDate(c.date))}</div>
-            <div class="catalyst-headline ${esc(s)}">${esc(c.headline)}</div>
-            <div class="catalyst-explanation">${esc(c.explanation)}</div>
+            <div class="catalyst-date">${sanitizeText(formatDate(c.date))}</div>
+            <div class="catalyst-headline ${sanitizeText(s)}">${sanitizeText(c.headline)}</div>
+            <div class="catalyst-explanation">${sanitizeWithCitations(c.explanation)}</div>
           </div>
         </div>`;
       }).join('');
@@ -313,6 +323,9 @@
     if (urlTicker) {
       document.getElementById('ticker-input').value = urlTicker.toUpperCase();
     }
+
+    // Initialize citation handlers
+    initCitationHandlers();
   </script>
   <script src="bg.js"></script>
   <script src="live.js"></script>

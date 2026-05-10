@@ -8,6 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
+  <script src="sanitize.js"></script>
   <style>
     body { padding: 32px 20px 64px; }
     .container { max-width: 600px; margin: 0 auto; }
@@ -72,6 +73,20 @@
       color: var(--green); letter-spacing: 0.12em; margin-bottom: 7px;
     }
     .panel-error { color: var(--red); font-size: 11px; }
+
+    /* Citation styling */
+    .citation {
+      cursor: pointer;
+      color: var(--green, #1DB87E);
+      text-decoration: none;
+      border-bottom: 1px dotted currentColor;
+      transition: background 0.2s ease;
+      padding: 0 2px;
+      border-radius: 2px;
+    }
+    .citation:hover {
+      background: rgba(29, 184, 126, 0.1);
+    }
   </style>
 </head>
 <body>
@@ -121,10 +136,6 @@
     const TODAY     = new Date().toISOString().slice(0, 10);
     const CACHE_KEY = 'pulse_sektor_' + TODAY;
 
-    function esc(s) {
-      return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-    }
-
     function renderSectors(data) {
       const list = document.getElementById('sector-list');
       const maxAbs = Math.max(...data.map(s => Math.abs(s.weeklyChange)), 0.01);
@@ -135,16 +146,16 @@
         const sign = up ? '+' : '';
         const barW = Math.min(Math.abs(s.weeklyChange) / maxAbs * 100, 100);
         const color = up ? '#1D9E75' : '#E24B4A';
-        return `<div class="sector-row" id="row-${esc(s.symbol)}"
-          onclick="togglePanel('${esc(s.symbol)}','${esc(s.name)}')"
+        return `<div class="sector-row" id="row-${sanitizeText(s.symbol)}"
+          onclick="togglePanel('${sanitizeText(s.symbol)}','${sanitizeText(s.name)}')"
           style="border-color:${color}40;background:${color}08;animation-delay:${i * 50}ms;">
           <div class="sector-rank">${i + 1}</div>
-          <div class="sector-name">${esc(s.name)}</div>
-          <div class="sector-symbol">${esc(s.symbol)}</div>
+          <div class="sector-name">${sanitizeText(s.name)}</div>
+          <div class="sector-symbol">${sanitizeText(s.symbol)}</div>
           <div class="sector-bar-wrap"><div class="sector-bar ${cls}" style="width:${barW}%"></div></div>
           <div class="sector-chg ${cls}">${sign}${s.weeklyChange.toFixed(2)}%</div>
         </div>
-        <div class="sector-panel" id="panel-${esc(s.symbol)}"></div>`;
+        <div class="sector-panel" id="panel-${sanitizeText(s.symbol)}"></div>`;
       }).join('');
 
       document.getElementById('empty-state').style.display = 'none';
@@ -226,22 +237,29 @@
       const key = sektorCacheKey(symbol);
       try {
         const hit = localStorage.getItem(key);
-        if (hit) { panel.innerHTML = JSON.parse(hit).html; return; }
+        if (hit) {
+          const cached = JSON.parse(hit);
+          if (cached.analyse) {
+            const html = `<div class="panel-ticker">${sanitizeText(symbol)} — ${sanitizeText(name)}</div><div>${sanitizeWithCitations(cached.analyse)}</div>`;
+            panel.innerHTML = html;
+            return;
+          }
+        }
       } catch (_) {}
 
-      panel.innerHTML = `<div class="panel-loading"><div class="ls-dot"></div>ANALYZING ${esc(symbol)}…</div>`;
+      panel.innerHTML = `<div class="panel-loading"><div class="ls-dot"></div>ANALYZING ${sanitizeText(symbol)}…</div>`;
 
       fetchWithTimeout(`/api/sektor?ticker=${encodeURIComponent(symbol)}&navn=${encodeURIComponent(name)}`)
         .then(r => r.json())
         .then(d => {
           if (d.error) throw new Error(d.error);
-          const html = `<div class="panel-ticker">${esc(symbol)} — ${esc(name)}</div><div>${esc(d.analyse)}</div>`;
+          const html = `<div class="panel-ticker">${sanitizeText(symbol)} — ${sanitizeText(name)}</div><div>${sanitizeWithCitations(d.analyse)}</div>`;
           panel.innerHTML = html;
-          try { localStorage.setItem(key, JSON.stringify({ html })); } catch (_) {}
+          try { localStorage.setItem(key, JSON.stringify({ analyse: d.analyse })); } catch (_) {}
         })
         .catch(e => {
           const msg = e.name === 'AbortError' ? 'Request took too long.' : (e.message || 'Failed to fetch analysis.');
-          panel.innerHTML = `<div class="panel-error">${esc(msg)}</div>`;
+          panel.innerHTML = `<div class="panel-error">${sanitizeText(msg)}</div>`;
         });
     }
 
@@ -250,6 +268,9 @@
       const cached = JSON.parse(localStorage.getItem(CACHE_KEY) || 'null');
       if (cached && Array.isArray(cached)) renderSectors(cached);
     } catch (_) {}
+
+    // Initialize citation handlers
+    initCitationHandlers();
   </script>
   <script src="bg.js"></script>
   <script src="live.js"></script>

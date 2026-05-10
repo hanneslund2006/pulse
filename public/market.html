@@ -8,6 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
+  <script src="sanitize.js"></script>
   <style>
     body { padding: 32px 20px 64px; }
 
@@ -215,6 +216,20 @@
       .verdict-card { flex-direction: column; align-items: flex-start; }
       .verdict-right { text-align: left; }
     }
+
+    /* Citation styling */
+    .citation {
+      cursor: pointer;
+      color: var(--green, #1DB87E);
+      text-decoration: none;
+      border-bottom: 1px dotted currentColor;
+      transition: background 0.2s ease;
+      padding: 0 2px;
+      border-radius: 2px;
+    }
+    .citation:hover {
+      background: rgba(29, 184, 126, 0.1);
+    }
   </style>
 </head>
 <body>
@@ -317,12 +332,6 @@
       return '#1D9E75';
     }
 
-    function esc(str) {
-      return String(str)
-        .replace(/&/g, '&amp;').replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-    }
-
     function animateItems() {
       document.querySelectorAll('#data-sections > *').forEach((el, i) => {
         el.style.opacity = '0';
@@ -399,8 +408,8 @@
           if (el && !el.querySelector('.chip-sub')) {
             el.innerHTML = lastClaudeKeydata.map(kd => `
               <div class="chip">
-                <div class="chip-label">${esc(kd.label)}</div>
-                <div class="chip-value">${esc(kd.value)}</div>
+                <div class="chip-label">${sanitizeText(kd.label)}</div>
+                <div class="chip-value">${sanitizeText(kd.value)}</div>
               </div>`).join('');
           }
         }
@@ -493,8 +502,8 @@
       const keydataEl = document.getElementById('keydata');
       keydataEl.innerHTML = (data.keydata || []).map(kd => `
         <div class="chip">
-          <div class="chip-label">${esc(kd.label)}</div>
-          <div class="chip-value">${esc(kd.value)}</div>
+          <div class="chip-label">${sanitizeText(kd.label)}</div>
+          <div class="chip-value">${sanitizeWithCitations(kd.value)}</div>
         </div>`).join('');
       fetchAndInjectRealPrices(); // overwrite with real data
 
@@ -504,12 +513,12 @@
         return `
           <div class="cat-card" style="border-color:${color}40;background:${color}08;">
             <div class="cat-header">
-              <div class="cat-name">${esc(cat.name)}</div>
+              <div class="cat-name">${sanitizeText(cat.name)}</div>
               <div class="badge" style="color: ${color}; background: ${color}18;">
-                ${esc((cat.sentiment || '').toUpperCase())}
+                ${sanitizeText((cat.sentiment || '').toUpperCase())}
               </div>
             </div>
-            <div class="cat-summary">${esc(cat.summary)}</div>
+            <div class="cat-summary">${sanitizeWithCitations(cat.summary)}</div>
           </div>`;
       }).join('');
 
@@ -683,7 +692,7 @@
         else                        badgeHtml = `<div class="macro-badge future">OM ${e.daysUntil}D</div>`;
 
         return `<div class="macro-row">
-          <div class="macro-name">${esc(e.name)}</div>
+          <div class="macro-name">${sanitizeText(e.name)}</div>
           <div class="macro-date">${dateStr}</div>
           ${badgeHtml}
         </div>`;
@@ -729,11 +738,11 @@
             ? '<div class="gapper-sma below">200SMA ↓</div>'
             : '';
         return `<div class="gapper-row">
-          <div class="gapper-ticker ${cls}">${esc(r.ticker)}</div>
-          <div class="gapper-company">${esc(r.company)}</div>
+          <div class="gapper-ticker ${cls}">${sanitizeText(r.ticker)}</div>
+          <div class="gapper-company">${sanitizeText(r.company)}</div>
           <div class="gapper-gap ${cls}">${sign}${parseFloat(r.gap).toFixed(1)}%</div>
           ${smaBadge}
-          <div class="gapper-vol">${esc(r.volume || '')}</div>
+          <div class="gapper-vol">${sanitizeText(r.volume || '')}</div>
         </div>`;
       }).join('');
 
@@ -801,8 +810,8 @@
           badgeClass = 'pre'; badgeText = 'FØR BØRS';
         }
         return `<div class="earnings-row">
-          <div class="earnings-ticker">${esc(r.ticker)}</div>
-          <div class="earnings-company">${esc(r.company)}</div>
+          <div class="earnings-ticker">${sanitizeText(r.ticker)}</div>
+          <div class="earnings-company">${sanitizeText(r.company)}</div>
           <div class="earnings-date">${fmtDate(r.date)}</div>
           <div class="earnings-badge ${badgeClass}">${badgeText}</div>
         </div>`;
@@ -831,6 +840,9 @@
         }
       }
     }
+
+    // Initialize citation handlers
+    initCitationHandlers();
   </script>
 <script src="bg.js"></script>
 <script src="live.js"></script>

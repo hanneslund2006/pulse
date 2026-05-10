@@ -8,6 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
+  <script src="sanitize.js"></script>
   <style>
     body { padding: 32px 20px 64px; }
     .container { max-width: 600px; margin: 0 auto; }
@@ -61,6 +62,20 @@
     .radar-ticker { font-family: 'Space Mono', monospace; font-weight: 700; font-size: 15px; color: var(--text-data); letter-spacing: 0.08em; }
     .radar-badge { font-family: 'Space Mono', monospace; font-size: 9px; letter-spacing: 0.1em; padding: 3px 7px; border-radius: 3px; }
     .radar-reason { font-size: 13px; color: var(--text-secondary); line-height: 1.55; }
+
+    /* Citation styling */
+    .citation {
+      cursor: pointer;
+      color: var(--green, #1DB87E);
+      text-decoration: none;
+      border-bottom: 1px dotted currentColor;
+      transition: background 0.2s ease;
+      padding: 0 2px;
+      border-radius: 2px;
+    }
+    .citation:hover {
+      background: rgba(29, 184, 126, 0.1);
+    }
   </style>
 </head>
 <body>
@@ -122,13 +137,9 @@
     const LOAD_LABELS = ['SCREENER MARKEDET', 'SJEKKER SHORT FLOAT', 'VURDERER KATALYSATOR', 'VELGER BESTE SETUP'];
     let labelIdx = 0, labelTimer = null;
 
-    function esc(s) {
-      return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-    }
-
     function showError(msg) {
       const el = document.getElementById('error-msg');
-      el.innerHTML = esc(msg);
+      el.innerHTML = sanitizeText(msg);
       el.classList.add('visible');
     }
     function showTimeoutError() {
@@ -151,10 +162,10 @@
         const bg    = BG[dir]    || 'rgba(186,117,23,0.1)';
         return `<div class="radar-card" style="border-color:${color}40;background:${color}08;animation-delay:${i * 80}ms;">
           <div class="radar-header">
-            <div class="radar-ticker">${esc(r.ticker)}</div>
-            <div class="radar-badge" style="color:${color}; background:${bg};">${esc(dir.toUpperCase())}</div>
+            <div class="radar-ticker">${sanitizeText(r.ticker)}</div>
+            <div class="radar-badge" style="color:${color}; background:${bg};">${sanitizeText(dir.toUpperCase())}</div>
           </div>
-          <div class="radar-reason">${esc(r.reason || '')}</div>
+          <div class="radar-reason">${sanitizeWithCitations(r.reason || '')}</div>
         </div>`;
       }).join('');
 
@@ -315,8 +326,8 @@
             changeHtml = `<span class="log-change" style="color:${col};">${sign}${pct.toFixed(1)}%${win ? ' ✓' : ''}</span>`;
           }
           return `<div class="log-pick">
-            <span class="log-ticker">${esc(p.ticker)}</span>
-            <span class="log-badge" style="color:${color};background:${color}18;">${esc(p.direction.toUpperCase())}</span>
+            <span class="log-ticker">${sanitizeText(p.ticker)}</span>
+            <span class="log-badge" style="color:${color};background:${color}18;">${sanitizeText(p.direction.toUpperCase())}</span>
             ${changeHtml}
           </div>`;
         }).join('');
@@ -336,6 +347,9 @@
       if (cached && Array.isArray(cached)) renderRadar(cached);
     } catch (_) {}
     renderLog();
+
+    // Initialize citation handlers
+    initCitationHandlers();
   </script>
   <script src="bg.js"></script>
   <script src="live.js"></script>

@@ -134,7 +134,7 @@
       const chgCls = isVix ? 'ti-vix' : up ? 'ti-up' : dn ? 'ti-dn' : 'ti-val';
       const sign   = up ? '+' : '';
       return `<span class="t-item">
-        <span class="ti-sym">${q.displaySymbol}</span>
+        <span class="ti-sym">${sanitizeText(q.displaySymbol)}</span>
         <span class="ti-val">${fmtPrice(q.price, q.symbol)}</span>
         <span class="${chgCls}">${sign}${q.changePercent.toFixed(2)}%</span>
       </span>`;

@@ -8,6 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
+  <script src="sanitize.js"></script>
   <style>
     body { padding: 32px 20px 80px; }
     .container { max-width: 640px; margin: 0 auto; }
@@ -306,7 +307,7 @@
     }
 
     // ── Helpers ───────────────────────────────────────────────
-    function esc(s) {
+    function sanitizeText(s) {
       if (s == null) return '';
       return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
     }
@@ -385,28 +386,28 @@
         const qualityLabels = ['A+', 'A', 'B', 'C', 'D'];
         const qualLabel = t.quality ? qualityLabels[t.quality - 1] : null;
 
-        return `<div class="trade-card ${cardCls}" style="animation-delay:${renderIdx * 40}ms;" data-id="${esc(t.id)}">
+        return `<div class="trade-card ${cardCls}" style="animation-delay:${renderIdx * 40}ms;" data-id="${sanitizeText(t.id)}">
           <div class="trade-top">
-            <div class="trade-ticker">${esc(t.ticker)}</div>
+            <div class="trade-ticker">${sanitizeText(t.ticker)}</div>
             <div class="trade-dir ${t.direction}">${t.direction === 'long' ? 'LONG' : 'SHORT'}</div>
             <div class="trade-status ${t.status}">${t.status === 'open' ? 'ÅPEN' : 'LUKKET'}</div>
-            ${pnlText ? `<div class="trade-pnl ${pnl >= 0 ? 'pos' : 'neg'}">${esc(pnlText)}</div>` : ''}
+            ${pnlText ? `<div class="trade-pnl ${pnl >= 0 ? 'pos' : 'neg'}">${sanitizeText(pnlText)}</div>` : ''}
           </div>
           <div class="trade-meta">
-            <div class="trade-meta-item">Entry <span>${esc(fmtPrice(t.entry))}</span></div>
-            ${t.exit != null ? `<div class="trade-meta-item">Exit <span>${esc(fmtPrice(t.exit))}</span></div>` : ''}
-            <div class="trade-meta-item">Stop <span>${esc(fmtPrice(t.stop))}</span></div>
-            <div class="trade-meta-item">Size <span>${esc(t.size)}</span></div>
-            ${rrText ? `<div class="trade-meta-item">R:R <span>${esc(rrText)}</span></div>` : ''}
-            ${qualLabel ? `<div class="trade-meta-item">Setup <span>${esc(qualLabel)}</span></div>` : ''}
-            <div class="trade-meta-item">Dato <span>${esc(t.date || '—')}</span></div>
+            <div class="trade-meta-item">Entry <span>${sanitizeText(fmtPrice(t.entry))}</span></div>
+            ${t.exit != null ? `<div class="trade-meta-item">Exit <span>${sanitizeText(fmtPrice(t.exit))}</span></div>` : ''}
+            <div class="trade-meta-item">Stop <span>${sanitizeText(fmtPrice(t.stop))}</span></div>
+            <div class="trade-meta-item">Size <span>${sanitizeText(t.size)}</span></div>
+            ${rrText ? `<div class="trade-meta-item">R:R <span>${sanitizeText(rrText)}</span></div>` : ''}
+            ${qualLabel ? `<div class="trade-meta-item">Setup <span>${sanitizeText(qualLabel)}</span></div>` : ''}
+            <div class="trade-meta-item">Dato <span>${sanitizeText(t.date || '—')}</span></div>
           </div>
-          ${t.notes ? `<div class="trade-notes">${esc(t.notes)}</div>` : ''}
+          ${t.notes ? `<div class="trade-notes">${sanitizeText(t.notes)}</div>` : ''}
           <div class="trade-actions">
             ${t.status === 'open'
-              ? `<button class="btn-close-trade" onclick="openCloseModal('${esc(t.id)}')">LUKK TRADE</button>`
+              ? `<button class="btn-close-trade" onclick="openCloseModal('${sanitizeText(t.id)}')">LUKK TRADE</button>`
               : ''}
-            <button class="btn-delete-trade" onclick="deleteTrade('${esc(t.id)}')">SLETT</button>
+            <button class="btn-delete-trade" onclick="deleteTrade('${sanitizeText(t.id)}')">SLETT</button>
           </div>
         </div>`;
       }).join('');
@@ -526,6 +527,7 @@
 
     load();
     refresh();
+    initCitationHandlers();
   </script>
   <script src="bg.js"></script>
   <script src="live.js"></script>
