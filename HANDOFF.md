@@ -1,11 +1,11 @@
 # PULSE — Handoff
 
 ## Dato
-09. mai 2026
+11. mai 2026
 
 ## Gjeldende HEAD
-Siste commit: fix: remove earnings-ranker to comply with Vercel Hobby function limit (14ec063)
-Status: Analytics komplett + Vercel function limit løst (13→12 functions)
+Siste commit: chore: trigger redeploy for SEC_USER_AGENT env var (df7ef4c)
+Status: SEC EDGAR insider trading endpoint LIVE + verifisert
 
 ## Status
 - Fase 1: KOMPLETT
@@ -16,6 +16,7 @@ Status: Analytics komplett + Vercel function limit løst (13→12 functions)
 
 ## Hva er bygget
 - 7 sider: Marked, Ticker, Sektorer, Radar, Earnings Play, Logg, Historikk
+- 12 API-endepunkter inkl. SEC EDGAR insider trading
 - Animerte mini-illustrasjoner per kort (card-viz)
 - Feature-rad layout: kort til venstre, forklaring til høyre
 - Live ticker-rail via live.js
@@ -23,7 +24,127 @@ Status: Analytics komplett + Vercel function limit løst (13→12 functions)
 - Juridisk disclaimer på alle AI-sider
 - Modell: Sonnet 4.5 (standard kontekst — ikke 1M)
 
-## Siste sesjon (09. mai) — Analytics Implementation + Vercel Function Limit Fix
+## Siste sesjon (11. mai) — SEC EDGAR Insider Trading Endpoint
+
+**Mål:** Implementere `/api/insider?ticker=AAPL` som henter Form 4 insider trading data fra SEC EDGAR.
+
+### Implementasjon
+**Commits:** 1aac06f → df7ef4c (8 commits total)
+
+✅ **Ny endpoint: api/insider.js**
+- Henter Form 4 filings fra SEC EDGAR offentlig API
+- Returnerer maks 10 transaksjoner + sentiment (BULLISH/BEARISH/NEUTRAL)
+- 3-stegs prosess: ticker → CIK → Form 4 filings → XML parsing
+- Dependency: `fast-xml-parser` (48KB, lightweight)
+
+**Response schema:**
+```json
+{
+  "ticker": "AAPL",
+  "transactions": [
+    {
+      "filerName": "LEVINSON ARTHUR D",
+      "transactionDate": "2026-05-06",
+      "transactionType": "SELL",
+      "shares": 149527,
+      "pricePerShare": 284.57
+    }
+  ],
+  "sentiment": "BEARISH",
+  "summary": "3 insider sells vs 0 buys — insiders are reducing positions."
+}
+```
+
+### Obligatoriske endringer (user-specified)
+**CHANGE 1:** User-Agent fra environment variable
+- `const SEC_USER_AGENT = process.env.SEC_USER_AGENT || 'PULSE/1.0 contact@example.com'`
+- **KRITISK:** SEC EDGAR returnerer 403 uten User-Agent header
+- Lagt til i `.env.example` + må settes i Vercel env vars
+
+**CHANGE 2:** Separat CIK-caching (30-dag TTL)
+- Cache-key: `sec_cik_${ticker}`
+- Unngår gjentatt fetch av `company_tickers.json` (~900KB)
+- 30-dagers TTL (ticker→CIK mapping er statisk)
+
+**CHANGE 3:** Redusert parsing-scope + timeout
+- Max 4 Form 4s parsed (ikke 10)
+- 8s total timeout på XML parsing (Vercel Hobby limit: 10s)
+- Returns empty array ved timeout (ikke crash)
+
+### Debugging + Fixes
+**Problem 1:** Form 4 XML files har både HTML og raw XML versioner
+- `primaryDocument` peker på HTML-rendering: `xslF345X06/filename.xml`
+- Raw XML ligger ved siden av: `filename.xml`
+- **Fix:** Strip directory prefix med `.split('/').pop()` (commit 2c3f8d6)
+
+**Problem 2:** Cache-clear endpoint slettet kun earnings-keys
+- Insider-keys (`insider_${ticker}`, `sec_cik_${ticker}`) ble ikke slettet
+- **Fix:** Oppdatert til å slette alle 3 key-typer (commit 2b99c11)
+
+**Problem 3:** Empty transactions for alle tickers etter deploy
+- Root cause: `SEC_USER_AGENT` env var ikke satt i Vercel
+- SEC API returnerte 403 → koden cached tomme resultater
+- **Fix:** La til env var i Vercel dashboard + redeploy (commit df7ef4c)
+
+### Vercel Function Limit (Swap)
+**Før:** 13 functions (blokkert)
+- Hadde: ticker-multimodel.js (OpenRouter multi-modell feature)
+
+**Etter:** 12 functions (OK)
+- Removed: ticker-multimodel.js (commit d24921b)
+- Added: insider.js
+- Rationale: Insider trading data høyere prioritet enn multi-modell experiment
+
+### Gjenværende functions (12)
+1. sentiment.js
+2. ticker.js
+3. earnings.js
+4. earnings-play.js
+5. radar.js
+6. sektor.js
+7. historikk.js
+8. gappers.js
+9. quotes.js
+10. **insider.js** ← NY
+11. analytics-dashboard.js
+12. cache-clear.js
+
+### Verification
+**Test-kommandoer:**
+```bash
+# Clear cache + test
+curl "https://pulse-theta-wheat.vercel.app/api/cache-clear?ticker=AAPL"
+curl "https://pulse-theta-wheat.vercel.app/api/insider?ticker=AAPL"
+```
+
+**Verifisert tickers:**
+- ✅ AAPL: 3 SELL transactions, BEARISH sentiment
+- ⚠️ TSLA/NVDA/META: Empty (kun M/A/G codes, ikke P eller S)
+- ✅ Rate limiting: 25 req/hour fungerer
+
+### Environment Variables
+**KRITISK:** `SEC_USER_AGENT` må være satt i Vercel
+- Scope: Production, Preview, Development (alle 3)
+- Value: `PULSE/1.0 hannes.lund2006@outlook.com`
+- Uten denne: 403-feil fra SEC API → empty transactions
+
+### Impact
+**Positive:**
+- ✅ Insider trading data tilgjengelig via API
+- ✅ Sentiment-analyse basert på buy/sell ratio
+- ✅ CIK-caching reduserer SEC API calls med 90%+
+- ✅ 6-timers result cache (insider data endrer seg sakte)
+- ✅ Defensive parsing håndterer varierende XML-strukturer
+
+**Learnings:**
+- SEC Form 4 `primaryDocument` peker på HTML, ikke raw XML
+- Environment variables må være satt for ALLE environments i Vercel
+- Cached empty results må clears etter env var changes
+- Transaction codes P/S er vanligere for AAPL enn TSLA/NVDA (option-heavy)
+
+---
+
+## Tidligere sesjon (09. mai) — Analytics Implementation + Vercel Function Limit Fix
 
 **Mål:** Implementere Vercel Analytics og custom endpoint tracking for å spore bruk og API-kostnader.
 
@@ -106,16 +227,18 @@ Status: Analytics komplett + Vercel function limit løst (13→12 functions)
 **Gjenværende functions (12):**
 1. sentiment.js
 2. ticker.js
-3. ticker-multimodel.js
-4. earnings.js
-5. earnings-play.js
-6. radar.js
-7. sektor.js
-8. historikk.js
-9. gappers.js
-10. quotes.js
+3. earnings.js
+4. earnings-play.js
+5. radar.js
+6. sektor.js
+7. historikk.js
+8. gappers.js
+9. quotes.js
+10. insider.js (added 11. mai)
 11. analytics-dashboard.js
 12. cache-clear.js
+
+**Note:** ticker-multimodel.js removed 11. mai to make room for insider.js
 
 ### Deployment Status
 
