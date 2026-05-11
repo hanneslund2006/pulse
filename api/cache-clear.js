@@ -9,7 +9,11 @@ module.exports = async (req, res) => {
   }
 
   const today = new Date().toISOString().slice(0, 10);
-  const key = `earnings:${ticker}:${today}`;
+  const keys = [
+    `earnings:${ticker}:${today}`,
+    `insider_${ticker}`,
+    `sec_cik_${ticker}`
+  ];
 
   if (!process.env.KV_REST_API_URL || !process.env.KV_REST_API_TOKEN) {
     return res.status(500).json({ error: 'Redis environment variables missing.' });
@@ -18,9 +22,9 @@ module.exports = async (req, res) => {
   const redis = new Redis({ url: process.env.KV_REST_API_URL, token: process.env.KV_REST_API_TOKEN });
 
   try {
-    await redis.del(key);
-    console.log(`[cache-clear] Deleted: ${key}`);
-    return res.status(200).json({ ok: true, deleted: key });
+    await Promise.all(keys.map(k => redis.del(k)));
+    console.log(`[cache-clear] Deleted: ${keys.join(', ')}`);
+    return res.status(200).json({ ok: true, deleted: keys });
   } catch (e) {
     console.error('[cache-clear] Redis del failed:', e.message);
     return res.status(500).json({ error: 'Failed to delete cache key.' });
