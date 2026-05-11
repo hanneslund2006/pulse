@@ -219,7 +219,9 @@ async function parseForm4XMLs(ticker, cik, filings) {
         // Correct URL pattern: CIK (no leading zeros in URL) + accessionNumber (no dashes) + primaryDocument
         const cikPlain = parseInt(cik, 10); // Remove leading zeros for URL
         const accessionNoDashes = filing.accessionNumber.replace(/-/g, '');
-        const xmlUrl = `https://www.sec.gov/Archives/edgar/data/${cikPlain}/${accessionNoDashes}/${filing.primaryDocument}`;
+        // Strip directory prefix (e.g., "xslF345X06/file.xml" -> "file.xml")
+        const xmlFilename = filing.primaryDocument.split('/').pop();
+        const xmlUrl = `https://www.sec.gov/Archives/edgar/data/${cikPlain}/${accessionNoDashes}/${xmlFilename}`;
 
         const response = await fetchWithTimeout(xmlUrl, {
           headers: { 'User-Agent': SEC_USER_AGENT }
