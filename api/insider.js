@@ -225,6 +225,8 @@ async function parseForm4XMLs(ticker, cik, filings) {
           headers: { 'User-Agent': SEC_USER_AGENT }
         }, SEC_TIMEOUT);
 
+        console.log(`[insider] Fetched ${xmlUrl} - status: ${response.status}`);
+
         if (!response.ok) {
           console.warn(`[insider] Failed to fetch Form 4 XML: ${response.status}`);
           continue; // Skip this filing, try next
@@ -237,6 +239,7 @@ async function parseForm4XMLs(ticker, cik, filings) {
         const xmlContent = xmlStart >= 0 ? xmlText.substring(xmlStart) : xmlText;
 
         const parsed = parser.parse(xmlContent);
+        console.log(`[insider] Parsed XML keys:`, Object.keys(parsed));
         const transactions = extractTransactionsFromXML(parsed, filing.filingDate);
 
         allTransactions.push(...transactions);
@@ -274,6 +277,7 @@ async function parseForm4XMLs(ticker, cik, filings) {
 function extractTransactionsFromXML(xml, filingDate) {
   try {
     const doc = xml.ownershipDocument;
+    console.log(`[insider] ownershipDocument exists:`, !!doc, doc ? `keys: ${Object.keys(doc).slice(0, 5).join(', ')}` : '');
     if (!doc) return [];
 
     const reportingOwner = doc.reportingOwner;
@@ -281,6 +285,7 @@ function extractTransactionsFromXML(xml, filingDate) {
 
     // Non-derivative transactions (stocks)
     const nonDerivTable = doc.nonDerivativeTable?.nonDerivativeTransaction;
+    console.log(`[insider] nonDerivTable exists:`, !!nonDerivTable, `type:`, Array.isArray(nonDerivTable) ? 'array' : typeof nonDerivTable);
     if (!nonDerivTable) return [];
 
     // Handle both single transaction (object) and multiple (array)
@@ -292,6 +297,7 @@ function extractTransactionsFromXML(xml, filingDate) {
 
       const transactionDate = txn.transactionDate?.value || filingDate;
       const transactionCode = txn.transactionCoding?.transactionCode || '';
+      console.log(`[insider] Transaction code:`, transactionCode, `date:`, transactionDate);
 
       // P = Purchase, S = Sale, skip others
       let transactionType = null;
