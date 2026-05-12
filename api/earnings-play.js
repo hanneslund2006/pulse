@@ -5,6 +5,15 @@ const cache = require('./_cache');
 const YahooFinance = require('yahoo-finance2').default;
 const yf = new YahooFinance({ suppressNotices: ['yahooSurvey'] });
 
+const { Redis } = require('@upstash/redis');
+let redis = null;
+if (process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN) {
+  redis = new Redis({
+    url: process.env.KV_REST_API_URL,
+    token: process.env.KV_REST_API_TOKEN,
+  });
+}
+
 async function fetchYahoo(ticker) {
   const [quoteData, summaryData] = await Promise.all([
     yf.quote(ticker).catch(() => null),
@@ -50,9 +59,20 @@ function mapYahooData(ticker, { quoteData, summaryData }) {
   const analystCount = trend0.earningsEstimate?.numberOfAnalysts ?? null;
 
   // earningsDate from quote.earningsTimestamp
-  const earningsDate = q.earningsTimestamp
-    ? new Date(q.earningsTimestamp).toISOString().slice(0, 10)
-    : null;
+  let earningsDate = null;
+  if (q.earningsTimestamp) {
+    try {
+      const d = new Date(q.earningsTimestamp);
+      const normalized = d.toISOString().split('T')[0];
+      if (/^\d{4}-\d{2}-\d{2}$/.test(normalized) && !isNaN(d.getTime())) {
+        earningsDate = normalized;
+      } else {
+        console.warn('[earnings-play] Invalid earningsTimestamp (format):', q.earningsTimestamp);
+      }
+    } catch (e) {
+      console.error('[earnings-play] Invalid earningsTimestamp (parse error):', q.earningsTimestamp, e.message);
+    }
+  }
 
   // Analyst sentiment from financialData
   const fd = s.financialData || {};
@@ -122,6 +142,31 @@ async function claudeInterpret(ticker, mapped) {
   }
 }
 
+async function fetchAndCache(ticker, cacheKey) {
+  const raw = await fetchYahoo(ticker);
+  const mapped = mapYahooData(ticker, raw);
+  const ai = await claudeInterpret(ticker, mapped);
+  console.log('[earnings-play] Claude response:', JSON.stringify(ai));
+
+  const safe = {
+    ...mapped,
+    interpretation: ai.interpretation ?? null,
+    impliedMove: ai.impliedMove != null ? { percent: ai.impliedMove } : null,
+  };
+
+  const shouldCache = safe.estimates.earningsDate === null ||
+                     (typeof safe.estimates.earningsDate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(safe.estimates.earningsDate));
+
+  if (shouldCache) {
+    cache.set(cacheKey, safe, 60 * 60 * 24);
+    console.log(`[earnings-play] Cached: ${cacheKey} (earningsDate: ${safe.estimates.earningsDate || 'none'})`);
+  } else {
+    console.warn(`[earnings-play] Skipping cache: invalid earningsDate format`);
+  }
+
+  return safe;
+}
+
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
@@ -150,26 +195,53 @@ module.exports = async (req, res) => {
   const CACHE_KEY = `earnings:${ticker}:${today}`;
   const cached = await cache.get(CACHE_KEY);
   if (cached) {
-    console.log(`[earnings-play] CACHE HIT: ${ticker}:${today}`);
-    return res.status(200).json(cached);
+    const earningsDate = cached.estimates?.earningsDate;
+
+    if (earningsDate && earningsDate <= today) {
+      console.log(`[earnings-play] STALE: ${ticker} earnings date ${earningsDate} has passed — invalidating cache`);
+
+      const lockKey = `earnings:lock:${ticker}`;
+      let lockAcquired = false;
+
+      if (redis) {
+        try {
+          lockAcquired = await redis.set(lockKey, '1', { ex: 10, nx: true });
+          if (!lockAcquired) {
+            console.log(`[earnings-play] LOCK: ${ticker} refresh already in progress — serving stale data`);
+            return res.status(200).json(cached);
+          }
+        } catch (e) {
+          console.error('[earnings-play] Lock acquire failed:', e.message);
+        }
+      }
+
+      if (redis) {
+        try {
+          await redis.del(`pulse:${CACHE_KEY}`);
+          console.log(`[earnings-play] Deleted stale cache: ${CACHE_KEY}`);
+        } catch (e) {
+          console.error('[earnings-play] Cache delete failed:', e.message);
+        }
+      }
+
+      try {
+        const result = await fetchAndCache(ticker, CACHE_KEY);
+        return res.status(200).json(result);
+      } finally {
+        if (redis && lockAcquired) {
+          redis.del(lockKey).catch(() => {});
+        }
+      }
+    } else {
+      console.log(`[earnings-play] CACHE HIT: ${ticker}:${today}`);
+      return res.status(200).json(cached);
+    }
   }
   console.log(`[earnings-play] CACHE MISS: ${ticker}:${today} — fetching Yahoo Finance`);
 
   try {
-    const raw = await fetchYahoo(ticker);
-    const mapped = mapYahooData(ticker, raw);
-    const ai = await claudeInterpret(ticker, mapped);
-    console.log('[earnings-play] Claude response:', JSON.stringify(ai));
-
-    const safe = {
-      ...mapped,
-      interpretation: ai.interpretation ?? null,
-      impliedMove: ai.impliedMove != null ? { percent: ai.impliedMove } : null,
-    };
-
-    cache.set(CACHE_KEY, safe, 60 * 60 * 24);
-    return res.status(200).json(safe);
-
+    const result = await fetchAndCache(ticker, CACHE_KEY);
+    return res.status(200).json(result);
   } catch (error) {
     console.error('[earnings-play] API error:', error.status, error.message, error);
     const message = error.status === 401
