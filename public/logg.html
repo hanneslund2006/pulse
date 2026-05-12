@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="no">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -180,7 +180,7 @@
     <a href="index.html" class="back anim" style="animation-delay:0ms;">← TILBAKE</a>
 
     <div class="page-title anim" style="animation-delay:40ms;">LOGG</div>
-    <div class="page-subtitle anim" style="animation-delay:80ms;">Log trades, measure setup quality and track PLogg trades, mål setup-kvalitet og følg P&L over tid.L over time.</div>
+    <div class="page-subtitle anim" style="animation-delay:80ms;">Log trades, measure setup quality and track P&L over time.</div>
 
     <!-- Stats -->
     <div class="anim" style="animation-delay:100ms;">
@@ -498,7 +498,7 @@
 
     function confirmClose() {
       const exit = parseFloat(document.getElementById('m-exit').value);
-      if (isNaN(exit) || exit <= 0) { alert('Skriv inn exit-pris'); return; }
+      if (isNaN(exit) || exit <= 0) { alert('Enter exit price'); return; }
       const t = trades.find(t => t.id === closingId);
       if (t) { t.exit = exit; t.status = 'closed'; }
       save();
@@ -508,7 +508,7 @@
 
     // ── Delete ────────────────────────────────────────────────
     function deleteTrade(id) {
-      if (!confirm('Slett denne traden?')) return;
+      if (!confirm('Delete this trade?')) return;
       trades = trades.filter(t => t.id !== id);
       save();
       refresh();

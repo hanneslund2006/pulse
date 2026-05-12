@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="no">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PULSE — Marked</title>
+  <title>PULSE — Market</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
@@ -246,8 +246,8 @@
     <!-- Empty state / CTA card -->
     <div class="empty-state anim" id="empty-state" style="animation-delay: 120ms;">
       <div class="cta-card">
-        <div class="cta-label">DAGLIG MARKEDSANALYSE</div>
-        <div class="cta-title">Hva skjer i markedet i dag?</div>
+        <div class="cta-label">DAILY MARKET ANALYSIS</div>
+        <div class="cta-title">What's happening in the market today?</div>
         <div class="cta-desc">AI-driven sentiment overview with score, sector overview and earnings calendar — in under one minute.</div>
         <button class="btn-ghost" id="fetch-btn" onclick="fetchReport()">ANALYZE MARKET →</button>
       </div>
@@ -687,7 +687,7 @@
         const dateStr = new Date(e.date + 'T12:00:00')
           .toLocaleDateString('no-NO', { day: 'numeric', month: 'short' }).toUpperCase();
         let badgeHtml;
-        if (e.daysUntil === 0)      badgeHtml = `<div class="macro-badge today">I DAG</div>`;
+        if (e.daysUntil === 0)      badgeHtml = `<div class="macro-badge today">TODAY</div>`;
         else if (e.daysUntil <= 3)  badgeHtml = `<div class="macro-badge soon">OM ${e.daysUntil}D</div>`;
         else                        badgeHtml = `<div class="macro-badge future">OM ${e.daysUntil}D</div>`;
 

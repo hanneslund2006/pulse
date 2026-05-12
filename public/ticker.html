@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="no">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -197,7 +197,7 @@
           type="text"
           id="search-input"
           class="search-input"
-          placeholder="Skriv inn ticker — eks. AAPL, NVDA, TSLA"
+          placeholder="Enter ticker — e.g. AAPL, NVDA, TSLA"
           maxlength="6"
           autocomplete="off"
           autocorrect="off"
@@ -302,8 +302,8 @@
           (new Date(entry.date + 'T12:00:00') - new Date()) / 86400000
         );
         if (daysUntil < 0) return null;
-        if (daysUntil === 0) return { text: '⚠ ER I DAG', urgent: true };
-        if (daysUntil <= 3) return { text: `⚠ ER om ${daysUntil}d`, urgent: false };
+        if (daysUntil === 0) return { text: '⚠ ER TODAY', urgent: true };
+        if (daysUntil <= 3) return { text: `⚠ ER in ${daysUntil}d`, urgent: false };
         return null;
       } catch { return null; }
     }

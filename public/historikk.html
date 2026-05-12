@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="no">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -249,7 +249,7 @@
     async function fetchHistorikk() {
       const raw = document.getElementById('ticker-input').value.trim().toUpperCase();
       if (!raw) {
-        showError('Skriv inn et ticker-symbol.');
+        showError('Enter a ticker symbol.');
         return;
       }
       if (!/^[A-Z]{1,6}$/.test(raw)) {
