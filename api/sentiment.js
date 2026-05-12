@@ -2,10 +2,20 @@ const Anthropic = require('@anthropic-ai/sdk');
 const { check: rateCheck } = require('./_ratelimit');
 const cache = require('./_cache');
 
-const SYSTEM_PROMPT = `Search today's market news. Return JSON only:
-{"verdict":"string (max 15 words)","score":0-100,"keydata":[{"label":"string","value":"string"}],"categories":[{"name":"MACRO","sentiment":"Bullish","summary":"string"},{"name":"ENERGY","sentiment":"Bearish","summary":"string"},{"name":"FINANCIALS","sentiment":"Mixed","summary":"string"},{"name":"TECH","sentiment":"Neutral","summary":"string"}]}
+const SYSTEM_PROMPT = `Return JSON only:
+{
+  "verdict": "string (max 15 words)",
+  "score": 0-100,
+  "keydata": [{"label":"string","value":"string"}],
+  "categories": [
+    {"name":"MACRO","sentiment":"Bullish","summary":"string"},
+    {"name":"ENERGY","sentiment":"Bearish","summary":"string"},
+    {"name":"FINANCIALS","sentiment":"Mixed","summary":"string"},
+    {"name":"TECH","sentiment":"Neutral","summary":"string"}
+  ]
+}
 
-keydata: S&P 500, Nasdaq Futures, VIX, US 10Y yield (exact order). sentiment: "Bullish"/"Bearish"/"Mixed"/"Neutral". summary: max 2 sentences, 40 words, no *, #, bullets.`;
+Search today's market news across all categories. Be analytical and specific. No filler phrases. verdict: concise market thesis (max 15 words). score: 0=extreme fear, 100=extreme greed. keydata: S&P 500, Nasdaq Futures, VIX, US 10Y yield (exact order). sentiment: exactly "Bullish"/"Bearish"/"Mixed"/"Neutral". summary: max 40 words, 2 sentences, plain text. No markdown.`;
 
 
 module.exports = async (req, res) => {
@@ -48,7 +58,7 @@ module.exports = async (req, res) => {
     ];
 
     const response = await anthropic.messages.create({
-      model: 'claude-haiku-4-5-20251001',
+      model: 'claude-sonnet-4-5-20250929',
       max_tokens: 900,
       system: SYSTEM_PROMPT,
       tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: 3 }],

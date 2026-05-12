@@ -91,7 +91,7 @@ module.exports = async (req, res) => {
         }]
       });
       const text = response.content.filter(b => b.type === 'text').map(b => b.text).join('').trim();
-      const result = { analysis: text };
+      const result = { analyse: text };
       cache.set(cacheKey, result, 24 * 3600);
       return res.status(200).json(result);
     } catch (e) {

@@ -2,21 +2,15 @@ const Anthropic = require('@anthropic-ai/sdk');
 const { check: rateCheck } = require('./_ratelimit');
 const cache = require('./_cache');
 
-const SYSTEM_PROMPT = `You are a swing trading assistant. Search for US stocks that are good swing trading candidates right now.
+const SYSTEM_PROMPT = `Search US stocks meeting ALL criteria:
+1. High short interest (>15% short float)
+2. Positive price momentum (last week)
+3. Recent positive catalyst (news/earnings/upgrade)
 
-Look for stocks with high short interest (over 15%), positive price momentum last week, and a positive catalyst (news, earnings beat, analyst upgrade). Prioritize stocks above 200 SMA.
+Prioritize stocks above 200-day SMA. Return JSON only:
+[{"ticker":"TSLA","direction":"Bullish","reason":"20-word max rationale"}]
 
-Evaluate these tickers based on short float, momentum and news catalyst. Choose 3-5 best swing candidates.
-
-Return ONLY valid JSON array. No preamble. No markdown. Just the JSON array.
-
-Exact format:
-[
-  {"ticker": "XXXX", "direction": "Bullish", "reason": "Brief rationale max 20 words"},
-  {"ticker": "YYYY", "direction": "Bearish", "reason": "Brief rationale max 20 words"}
-]
-
-Answer ONLY with the JSON array.`;
+Return 3-5 candidates. direction: exactly "Bullish" or "Bearish". reason: max 20 words, include specific catalyst + technical setup. Be analytical and specific. No markdown.`;
 
 
 module.exports = async (req, res) => {
@@ -48,7 +42,7 @@ module.exports = async (req, res) => {
   try {
     const response = await anthropic.messages.create({
       model: 'claude-haiku-4-5-20251001',
-      max_tokens: 600,
+      max_tokens: 500,
       system: SYSTEM_PROMPT,
       tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: 2 }],
       messages: [{ role: 'user', content: 'Find the best swing trading candidates right now based on high short float, positive momentum and catalyst. Return JSON array.' }],

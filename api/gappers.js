@@ -35,21 +35,10 @@ async function enrichWithSma(ticker) {
   } catch (_) { return null; }
 }
 
-const SYSTEM_PROMPT = `You are a market analyst. Search for the largest pre-market gap movers in USA today.
+const SYSTEM_PROMPT = `Search 5 largest pre-market gap movers (USA). Return JSON only:
+[{"ticker":"TSLA","company":"Tesla Inc","gap":5.2,"volume":"1.2M"}]
 
-Find the 5 stocks with largest pre-market gap (both up and down). Gap means percentage price change from yesterday's close to pre-market price today.
-
-Return ONLY valid JSON array. No preamble. No markdown. Just the JSON array.
-
-Exact format:
-[
-  {"ticker": "XXXX", "company": "Company Name", "gap": 8.4, "volume": "2.3M"},
-  {"ticker": "YYYY", "company": "Company Name", "gap": -5.1, "volume": "890K"}
-]
-
-gap: positive for gap up, negative for gap down. Sort by largest absolute gap (mix of up and down is OK).
-volume: formatted as "1.2M" or "450K"
-Return exactly 5 entries. Answer ONLY with the JSON array.`;
+Return exactly 5 stocks. gap: % change from yesterday close to pre-market (positive=up, negative=down). Sort by largest absolute gap. Mix up/down allowed. volume: format "1.2M" or "450K". Be analytical and specific in stock selection. No markdown, no preamble.`;
 
 
 module.exports = async (req, res) => {
@@ -82,7 +71,7 @@ module.exports = async (req, res) => {
 
     const response = await anthropic.messages.create({
       model: 'claude-haiku-4-5-20251001',
-      max_tokens: 300,
+      max_tokens: 280,
       system: SYSTEM_PROMPT,
       tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: 2 }],
       messages,

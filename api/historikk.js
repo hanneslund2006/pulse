@@ -122,16 +122,24 @@ module.exports = async (req, res) => {
 
   console.log(`[historikk] Articles: ${articles.length} total, ${filteredArticles.length} relevant, ${Math.min(filteredArticles.length, 8)} sent to Claude (${articleText.length} chars)`);
 
-  const systemPrompt = `List the 5 most important stock-moving catalysts for ${ticker} from the provided news. Today is ${new Date().toISOString().slice(0, 10)}. Return ONLY valid JSON, no preamble, no markdown:
+  const systemPrompt = `Extract 5 most important stock-moving catalysts for ${ticker}. Return JSON only:
 {"ticker":"${ticker}","catalysts":[{"date":"YYYY-MM-DD","headline":"max 8 words","explanation":"max 1 sentence, 20 words","sentiment":"positive"}]}
-Rules: chronological order oldest first. sentiment: exactly "positive", "negative", or "neutral". CRITICAL: copy dates VERBATIM from the [YYYY-MM-DD] prefix in each article — never use dates from training data. LANGUAGE: All text fields (headline, explanation) MUST be in Norwegian bokmål.`;
+
+Rules:
+- Chronological order (oldest first)
+- sentiment: exactly "positive", "negative", or "neutral"
+- Copy dates VERBATIM from [YYYY-MM-DD] prefix (never infer)
+- All text (headline, explanation) in Norwegian bokmål
+- Focus on price-moving events only
+
+Be analytical and specific. No markdown, no preamble.`;
 
   const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
   try {
     const response = await anthropic.messages.create({
       model: 'claude-haiku-4-5-20251001',
-      max_tokens: 500,
+      max_tokens: 450,
       system: systemPrompt,
       messages: [
         {

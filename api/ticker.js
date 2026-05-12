@@ -5,10 +5,21 @@ const cache = require('./_cache');
 const YahooFinance = require('yahoo-finance2').default;
 const yf = new YahooFinance({ suppressNotices: ['yahooSurvey'] });
 
-const SYSTEM_PROMPT = `Ticker analysis. Search 5 layers: News, Earnings, Insider, Short Float, Sentiment. Return JSON only:
-{"ticker":"string","company":"string","found":true,"layers":[{"name":"News","sentiment":"Bullish","summary":"string"},{"name":"Earnings","sentiment":"Neutral","summary":"string"},{"name":"Insider","sentiment":"Bearish","summary":"string"},{"name":"Short Float","sentiment":"Neutral","summary":"string"},{"name":"Sentiment","sentiment":"Bullish","summary":"string"}]}
+const SYSTEM_PROMPT = `Return JSON only:
+{
+  "ticker": "string",
+  "company": "string",
+  "found": true,
+  "layers": [
+    {"name": "News", "sentiment": "Bullish", "summary": "string"},
+    {"name": "Earnings", "sentiment": "Neutral", "summary": "string"},
+    {"name": "Insider", "sentiment": "Bearish", "summary": "string"},
+    {"name": "Short Float", "sentiment": "Neutral", "summary": "string"},
+    {"name": "Sentiment", "sentiment": "Bullish", "summary": "string"}
+  ]
+}
 
-If not found: {"ticker":"XYZ","company":"","found":false}. sentiment: "Bullish"/"Bearish"/"Neutral". summary: max 1 sentence, 20 words. Always 5 layers in order.`;
+Search each layer independently. Be analytical and specific. No filler phrases. sentiment: exactly "Bullish", "Bearish", or "Neutral". summary: max 20 words, focus on actionable price catalyst. If ticker not found: {"ticker":"X","company":"","found":false}. No markdown.`;
 
 function timeoutPromise(ms, message) {
   return new Promise((_, reject) =>
@@ -110,7 +121,7 @@ module.exports = async (req, res) => {
 
     const [response, technical] = await Promise.all([
       anthropic.messages.create({
-        model: 'claude-haiku-4-5-20251001',
+        model: 'claude-sonnet-4-5-20250929',
         max_tokens: 600,
         system: SYSTEM_PROMPT,
         tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: 1 }],
