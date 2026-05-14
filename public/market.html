@@ -39,12 +39,10 @@
     .verdict-right { flex-shrink: 0; text-align: right; }
     .verdict-score {
       font-family: 'Space Mono', monospace;
-      font-weight: 700; font-size: 52px;
       color: var(--green); line-height: 1;
     }
     .verdict-score-sub {
       font-family: var(--font-body);
-      font-size: 9px; color: var(--text-muted);
       letter-spacing: 0.1em; margin-top: 4px;
     }
 
@@ -285,8 +283,8 @@
           <div class="verdict-text" id="verdict-text">—</div>
         </div>
         <div class="verdict-right">
-          <div class="verdict-score" id="verdict-score">—</div>
-          <div class="verdict-score-sub">/ 100</div>
+          <div class="verdict-score hero-metric" id="verdict-score">—</div>
+          <div class="verdict-score-sub hero-metric-label">/ 100</div>
         </div>
       </div>
 
@@ -510,8 +508,18 @@
       const grid = document.getElementById('cat-grid');
       grid.innerHTML = (data.categories || []).map(cat => {
         const color = SENTIMENT_COLORS[cat.sentiment] || '#444';
+
+        // Use whitelist object for security
+        const TINT_CLASSES = {
+          'Bullish': 'row-bull',
+          'Bearish': 'row-bear',
+          'Mixed': 'row-neutral',
+          'Neutral': 'row-neutral'
+        };
+        const tintClass = TINT_CLASSES[cat.sentiment] || 'row-neutral';
+
         return `
-          <div class="cat-card" style="border-color:${color}40;background:${color}08;">
+          <div class="cat-card ${tintClass}">
             <div class="cat-header">
               <div class="cat-name">${sanitizeText(cat.name)}</div>
               <div class="badge" style="color: ${color}; background: ${color}18;">
@@ -729,18 +737,33 @@
 
       const titleHtml = '<div class="section-title">PRE-MARKET GAPPERS</div>';
       const rowsHtml = rows.map(r => {
-        const up   = r.gap >= 0;
-        const sign = up ? '+' : '';
-        const cls  = up ? 'up' : 'dn';
+        // Security: validate numeric input with Number.isFinite()
+        const gapValue = Number.isFinite(r.gap) ? r.gap : 0;
+        const barWidth = Math.min(Math.abs(gapValue) / 20 * 100, 100); // 20% gap = 100% bar
+
+        // Use whitelist for CSS class
+        const CSS_CLASSES = { 'bull': 'up', 'bear': 'dn' };
+        const clsKey = gapValue > 0 ? 'bull' : 'bear';
+        const cls = CSS_CLASSES[clsKey];
+        const sign = gapValue > 0 ? '+' : '';
+
+        // Use whitelist for tint class
+        const TINT_CLASSES = { 'bull': 'row-bull', 'bear': 'row-bear' };
+        const tintClass = TINT_CLASSES[clsKey];
+
         const smaBadge = r.above200sma === true
           ? '<div class="gapper-sma above">200SMA ↑</div>'
           : r.above200sma === false
             ? '<div class="gapper-sma below">200SMA ↓</div>'
             : '';
-        return `<div class="gapper-row">
+
+        return `<div class="gapper-row ${tintClass}">
           <div class="gapper-ticker ${cls}">${sanitizeText(r.ticker)}</div>
           <div class="gapper-company">${sanitizeText(r.company)}</div>
-          <div class="gapper-gap ${cls}">${sign}${parseFloat(r.gap).toFixed(1)}%</div>
+          <div class="gapper-gap ${cls}">${sign}${parseFloat(gapValue).toFixed(1)}%</div>
+          <div class="inline-bar-wrap">
+            <div class="inline-bar ${cls}" style="width: ${barWidth}%;"></div>
+          </div>
           ${smaBadge}
           <div class="gapper-vol">${sanitizeText(r.volume || '')}</div>
         </div>`;

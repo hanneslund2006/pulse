@@ -151,7 +151,7 @@
     .upgrade-date { font-family: 'Space Mono', monospace; font-size: 9px; color: var(--text-muted); flex-shrink: 0; letter-spacing: 0.06em; }
 
     .implied-center { text-align: center; padding: 10px 0 16px; }
-    .implied-pct { font-family: var(--font-display); font-weight: 600; font-size: 52px; line-height: 1; color: var(--purple); }
+    .implied-pct { font-family: var(--font-display); line-height: 1; color: var(--purple); }
     .implied-sub { font-size: 13px; color: var(--text-secondary); margin-top: 8px; }
     .implied-compare {
       display: flex; justify-content: center; gap: 32px;
@@ -311,8 +311,14 @@
         <div class="ep-card" style="animation-delay:0ms;">
           <div class="section-label">KEY STATS</div>
           <div class="stats-row">
-            <div class="stat-box">
-              <div class="stat-val ${sfCls}">${sanitizeText(sfVal)}</div>
+            <div class="stat-box ${(() => {
+              const TINT_CLASSES = { 'bull': 'row-bull', 'bear': 'row-bear', 'neutral': 'row-neutral' };
+              let tintKey = 'bull';
+              if (sf > 0.15) tintKey = 'bear';
+              else if (sf > 0.08) tintKey = 'neutral';
+              return TINT_CLASSES[tintKey];
+            })()}">
+              <div class="stat-val key-metric ${sfCls}">${sanitizeText(sfVal)}</div>
               <div class="stat-lbl">SHORT FLOAT</div>
             </div>
             <div class="stat-box">
@@ -500,7 +506,7 @@
         <div class="ep-card" style="animation-delay:75ms linear;">
           <div class="section-label">IMPLIED MOVE</div>
           <div class="implied-center">
-            <div class="implied-pct">±${fmt(im.percent, 1)}%</div>
+            <div class="implied-pct hero-metric">±${fmt(im.percent, 1)}%</div>
             <div class="implied-sub">Market prices in ±${fmt(im.percent, 1)}% at earnings</div>
             <div class="implied-badge ${badgeClass}">${badgeText}</div>
           </div>

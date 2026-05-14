@@ -160,7 +160,17 @@
         const dir   = r.direction || 'Bullish';
         const color = COLORS[dir] || '#BA7517';
         const bg    = BG[dir]    || 'rgba(186,117,23,0.1)';
-        return `<div class="radar-card" style="border-color:${color}40;background:${color}08;animation-delay:${i * 80}ms;">
+
+        // Use whitelist object for security
+        const TINT_CLASSES = {
+          'Bullish': 'row-bull',
+          'Bearish': 'row-bear',
+          'Mixed': 'row-neutral',
+          'Neutral': 'row-neutral'
+        };
+        const tintClass = TINT_CLASSES[dir] || 'row-neutral';
+
+        return `<div class="radar-card ${tintClass}" style="animation-delay:${i * 80}ms;">
           <div class="radar-header">
             <div class="radar-ticker">${sanitizeText(r.ticker)}</div>
             <div class="radar-badge" style="color:${color}; background:${bg};">${sanitizeText(dir.toUpperCase())}</div>

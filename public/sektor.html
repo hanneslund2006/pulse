@@ -36,7 +36,7 @@
     .sector-rank { font-family: 'Space Mono', monospace; font-size: 9px; color: var(--text-muted); width: 16px; flex-shrink: 0; text-align: right; }
     .sector-name { font-size: 14px; color: var(--text-primary); flex: 1; }
     .sector-symbol { font-family: 'Space Mono', monospace; font-size: 10px; color: var(--text-muted); letter-spacing: 0.06em; flex-shrink: 0; }
-    .sector-chg { font-family: 'Space Mono', monospace; font-weight: 700; font-size: 13px; flex-shrink: 0; min-width: 60px; text-align: right; }
+    .sector-chg { font-family: 'Space Mono', monospace; flex-shrink: 0; min-width: 60px; text-align: right; }
     .sector-chg.up { color: var(--green); }
     .sector-chg.dn { color: var(--red); }
     .sector-bar-wrap { width: 60px; height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; flex-shrink: 0; }
@@ -145,15 +145,20 @@
         const cls  = up ? 'up' : 'dn';
         const sign = up ? '+' : '';
         const barW = Math.min(Math.abs(s.weeklyChange) / maxAbs * 100, 100);
-        const color = up ? '#1D9E75' : '#E24B4A';
-        return `<div class="sector-row" id="row-${sanitizeText(s.symbol)}"
+
+        // Use whitelist for security
+        const TINT_CLASSES = { 'bull': 'row-bull', 'bear': 'row-bear' };
+        const tintKey = up ? 'bull' : 'bear';
+        const tintClass = TINT_CLASSES[tintKey];
+
+        return `<div class="sector-row ${tintClass}" id="row-${sanitizeText(s.symbol)}"
           onclick="togglePanel('${sanitizeText(s.symbol)}','${sanitizeText(s.name)}')"
-          style="border-color:${color}40;background:${color}08;animation-delay:${i * 50}ms;">
+          style="animation-delay:${i * 50}ms;">
           <div class="sector-rank">${i + 1}</div>
           <div class="sector-name">${sanitizeText(s.name)}</div>
           <div class="sector-symbol">${sanitizeText(s.symbol)}</div>
           <div class="sector-bar-wrap"><div class="sector-bar ${cls}" style="width:${barW}%"></div></div>
-          <div class="sector-chg ${cls}">${sign}${s.weeklyChange.toFixed(2)}%</div>
+          <div class="sector-chg key-metric ${cls}">${sign}${s.weeklyChange.toFixed(2)}%</div>
         </div>
         <div class="sector-panel" id="panel-${sanitizeText(s.symbol)}"></div>`;
       }).join('');

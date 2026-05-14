@@ -413,3 +413,138 @@ body::after {
 }
 
 .error-msg.visible { display: block; }
+
+/* ─── HERO METRICS ───────────────────────────────────────────────────────── */
+
+.hero-metric {
+  font-family: var(--font-data);
+  font-weight: 700;
+  font-size: clamp(40px, 8vw, 64px);
+  line-height: 1;
+  letter-spacing: -0.02em;
+  color: var(--text-data);
+}
+
+.hero-metric-label {
+  font-family: var(--font-body);
+  font-size: 10px;
+  font-weight: 400;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  margin-top: 8px;
+}
+
+.key-metric {
+  font-family: var(--font-data);
+  font-weight: 700;
+  font-size: clamp(24px, 4vw, 32px);
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+}
+
+.key-metric-label {
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.10em;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-metric { font-size: 48px; }
+  .key-metric { font-size: 28px; }
+}
+
+/* ─── SENTIMENT TINTING ──────────────────────────────────────────────────── */
+
+/* Use high specificity instead of !important for security */
+.radar-card.row-bull,
+.sector-row.row-bull,
+.cat-card.row-bull,
+.gapper-row.row-bull,
+.stat-box.row-bull {
+  background: rgba(16,185,129,0.04);
+  border-color: rgba(16,185,129,0.15);
+}
+
+.radar-card.row-bear,
+.sector-row.row-bear,
+.cat-card.row-bear,
+.gapper-row.row-bear,
+.stat-box.row-bear {
+  background: rgba(239,68,68,0.04);
+  border-color: rgba(239,68,68,0.15);
+}
+
+.radar-card.row-neutral,
+.sector-row.row-neutral,
+.cat-card.row-neutral,
+.stat-box.row-neutral {
+  background: rgba(245,158,11,0.04);
+  border-color: rgba(245,158,11,0.15);
+}
+
+.radar-card.row-bull:hover,
+.sector-row.row-bull:hover,
+.cat-card.row-bull:hover,
+.gapper-row.row-bull:hover,
+.stat-box.row-bull:hover {
+  background: rgba(16,185,129,0.06);
+  border-color: rgba(16,185,129,0.25);
+}
+
+.radar-card.row-bear:hover,
+.sector-row.row-bear:hover,
+.cat-card.row-bear:hover,
+.gapper-row.row-bear:hover,
+.stat-box.row-bear:hover {
+  background: rgba(239,68,68,0.06);
+  border-color: rgba(239,68,68,0.25);
+}
+
+.radar-card.row-neutral:hover,
+.sector-row.row-neutral:hover,
+.cat-card.row-neutral:hover,
+.stat-box.row-neutral:hover {
+  background: rgba(245,158,11,0.06);
+  border-color: rgba(245,158,11,0.25);
+}
+
+/* ─── INLINE VISUALIZATIONS ──────────────────────────────────────────────── */
+
+.inline-bar-wrap {
+  width: 60px;
+  height: 4px;
+  background: var(--border);
+  border-radius: 2px;
+  overflow: hidden;
+  flex-shrink: 0;
+  margin: 0 8px;
+}
+
+.inline-bar {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 150ms cubic-bezier(0.16,1,0.3,1);
+}
+
+.inline-bar.up { background: var(--green); }
+.inline-bar.dn { background: var(--red); }
+
+.dir-arrow {
+  font-family: var(--font-data);
+  font-size: 11px;
+  font-weight: 700;
+  margin-left: 6px;
+}
+
+.dir-arrow.up { color: var(--green); }
+.dir-arrow.dn { color: var(--red); }
+
+@media (prefers-reduced-motion: reduce) {
+  .inline-bar {
+    transition: none;
+  }
+}
