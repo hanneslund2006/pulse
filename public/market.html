@@ -6,7 +6,7 @@
   <title>PULSE — Market</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
   <script src="sanitize.js"></script>
   <style>
@@ -22,7 +22,7 @@
     .verdict-card {
       background: var(--surface);
       border: 1px solid var(--green-border);
-      border-radius: 12px;
+      border-radius: var(--radius-lg);
       padding: 20px 24px;
       display: flex;
       justify-content: space-between;
@@ -31,7 +31,7 @@
     }
     .verdict-left { flex: 1; min-width: 0; }
     .verdict-label {
-      font-family: 'DM Sans', sans-serif;
+      font-family: var(--font-body);
       font-size: 9px; color: var(--text-muted);
       letter-spacing: 0.15em; margin-bottom: 8px;
     }
@@ -43,7 +43,7 @@
       color: var(--green); line-height: 1;
     }
     .verdict-score-sub {
-      font-family: 'DM Sans', sans-serif;
+      font-family: var(--font-body);
       font-size: 9px; color: var(--text-muted);
       letter-spacing: 0.1em; margin-top: 4px;
     }
@@ -53,7 +53,7 @@
     .chip {
       background: var(--surface);
       border: 1px solid var(--border);
-      border-radius: 8px; padding: 10px 14px;
+      border-radius: var(--radius-md); padding: 10px 14px;
       flex: 1; min-width: 120px;
     }
     .chip-label {
@@ -79,8 +79,8 @@
     .cat-card {
       background: var(--surface);
       border: 1px solid var(--border);
-      border-radius: 12px; padding: 20px 24px;
-      transition: border-color 200ms ease, box-shadow 200ms ease;
+      border-radius: var(--radius-lg); padding: 20px 24px;
+      transition: border-color 75ms linear ease, box-shadow 75ms linear ease;
     }
     .cat-card:hover { border-color: rgba(29,184,126,0.30); box-shadow: 0 0 0 1px rgba(29,184,126,0.10), 0 0 20px rgba(29,184,126,0.06); }
     .cat-header {
@@ -88,7 +88,7 @@
       align-items: center; margin-bottom: 10px;
     }
     .cat-name {
-      font-family: 'DM Sans', sans-serif;
+      font-family: var(--font-body);
       font-weight: 700; font-size: 11px; letter-spacing: 0.08em;
     }
     .cat-summary { font-size: 13px; color: var(--text-secondary); line-height: 1.55; }
@@ -97,13 +97,13 @@
     .regime-banner {
       background: var(--surface);
       border: 1px solid var(--green-border);
-      border-radius: 12px; padding: 14px 24px;
+      border-radius: var(--radius-lg); padding: 14px 24px;
       display: flex; align-items: center;
       justify-content: space-between; gap: 16px;
     }
     .regime-left { display: flex; flex-direction: column; gap: 3px; }
     .regime-label {
-      font-family: 'DM Sans', sans-serif;
+      font-family: var(--font-body);
       font-size: 9px; color: var(--text-muted); letter-spacing: 0.15em;
     }
     .regime-value {

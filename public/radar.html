@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -24,7 +24,7 @@
     /* Radar log */
     .log-entry {
       background: var(--surface); border: 1px solid var(--border);
-      border-radius: 10px; padding: 14px 18px; margin-bottom: 8px;
+      border-radius: var(--radius-lg); padding: 14px 18px; margin-bottom: 8px;
     }
     .log-date {
       font-family: 'Space Mono', monospace; font-size: 9px;
@@ -40,7 +40,7 @@
     }
     .log-badge {
       font-family: 'Space Mono', monospace; font-size: 9px;
-      padding: 2px 6px; border-radius: 3px;
+      padding: 2px 6px; border-radius: var(--radius-sm);
     }
     .log-change {
       font-family: 'Space Mono', monospace; font-size: 10px;
@@ -52,15 +52,15 @@
     .radar-list.visible { display: flex; }
     .radar-card {
       background: var(--surface); border: 1px solid var(--border);
-      border-radius: 12px;
+      border-radius: var(--radius-lg);
       padding: 20px 24px;
-      opacity: 0; animation: fadeUp 0.4s ease forwards;
-      transition: border-color 200ms ease, box-shadow 200ms ease;
+      opacity: 0; animation: fadeUp 0.1s linear linear forwards;
+      transition: border-color 75ms linear linear, box-shadow 75ms linear linear;
     }
-    .radar-card:hover { border-color: rgba(29,184,126,0.30); box-shadow: 0 0 0 1px rgba(29,184,126,0.10), 0 0 20px rgba(29,184,126,0.06); }
+    .radar-card:hover { border-color: rgba(16,185,129,0.30); box-shadow: 0 0 0 1px rgba(16,185,129,0.10), 0 0 20px rgba(16,185,129,0.06); }
     .radar-header { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
     .radar-ticker { font-family: 'Space Mono', monospace; font-weight: 700; font-size: 15px; color: var(--text-data); letter-spacing: 0.08em; }
-    .radar-badge { font-family: 'Space Mono', monospace; font-size: 9px; letter-spacing: 0.1em; padding: 3px 7px; border-radius: 3px; }
+    .radar-badge { font-family: 'Space Mono', monospace; font-size: 9px; letter-spacing: 0.1em; padding: 3px 7px; border-radius: var(--radius-sm); }
     .radar-reason { font-size: 13px; color: var(--text-secondary); line-height: 1.55; }
 
     /* Citation styling */
@@ -69,7 +69,7 @@
       color: var(--green, #1DB87E);
       text-decoration: none;
       border-bottom: 1px dotted currentColor;
-      transition: background 0.2s ease;
+      transition: background 0.2s linear;
       padding: 0 2px;
       border-radius: 2px;
     }

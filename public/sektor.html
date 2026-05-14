@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -27,12 +27,12 @@
     @keyframes fadeUp2 { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
     .sector-row {
       background: var(--surface); border: 1px solid var(--border);
-      border-radius: 10px;
+      border-radius: var(--radius-lg);
       padding: 14px 18px; display: flex; align-items: center; gap: 14px;
-      transition: border-color 200ms ease, box-shadow 200ms ease;
-      opacity: 0; animation: fadeUp2 0.35s ease forwards;
+      transition: border-color 75ms linear linear, box-shadow 75ms linear linear;
+      opacity: 0; animation: fadeUp2 0.35s linear forwards;
     }
-    .sector-row:hover { border-color: rgba(29,184,126,0.28); box-shadow: 0 0 0 1px rgba(29,184,126,0.08), 0 0 16px rgba(29,184,126,0.05); }
+    .sector-row:hover { border-color: rgba(16,185,129,0.28); box-shadow: 0 0 0 1px rgba(16,185,129,0.08), 0 0 16px rgba(16,185,129,0.05); }
     .sector-rank { font-family: 'Space Mono', monospace; font-size: 9px; color: var(--text-muted); width: 16px; flex-shrink: 0; text-align: right; }
     .sector-name { font-size: 14px; color: var(--text-primary); flex: 1; }
     .sector-symbol { font-family: 'Space Mono', monospace; font-size: 10px; color: var(--text-muted); letter-spacing: 0.06em; flex-shrink: 0; }
@@ -65,7 +65,7 @@
     .sector-panel.visible { display: block; }
     .panel-loading {
       display: flex; align-items: center; gap: 8px;
-      font-family: 'DM Sans', sans-serif;
+      font-family: var(--font-body);
       font-size: 10px; color: var(--text-muted); letter-spacing: 0.04em;
     }
     .panel-ticker {
@@ -80,7 +80,7 @@
       color: var(--green, #1DB87E);
       text-decoration: none;
       border-bottom: 1px dotted currentColor;
-      transition: background 0.2s ease;
+      transition: background 0.2s linear;
       padding: 0 2px;
       border-radius: 2px;
     }

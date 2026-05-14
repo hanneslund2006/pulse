@@ -24,10 +24,10 @@
     return `${r},${g},${b}`;
   }
   const C = {
-    green : hexRgb('#1D9E75'),
-    red   : hexRgb('#E24B4A'),
-    grid  : hexRgb('#1C1F2A'),
-    muted : '72,80,100',
+    green : hexRgb('#10B981'),
+    red   : hexRgb('#EF4444'),
+    grid  : hexRgb('#1F1F23'),
+    muted : '113,113,122',
   };
   const rgba = (c, a) => `rgba(${c},${a})`;
 

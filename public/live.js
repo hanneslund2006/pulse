@@ -22,8 +22,8 @@
     /* Ticker rail */
     .t-rail {
       position: fixed; top: 0; left: 0; right: 0; z-index: 200;
-      height: 32px; background: #0A0C12;
-      border-bottom: 1px solid #1E2130;
+      height: 32px; background: #0A0A0C;
+      border-bottom: 1px solid #1F1F23;
       display: flex; align-items: center; overflow: hidden;
     }
     .t-scroll { flex: 1; overflow: hidden; min-width: 0; }
@@ -38,20 +38,20 @@
     }
     .t-item {
       display: inline-flex; align-items: center; gap: 6px;
-      padding: 0 16px; border-right: 1px solid #1A1D2A;
+      padding: 0 16px; border-right: 1px solid #1F1F23;
       font-family: 'Space Mono', monospace;
       font-size: 10px; letter-spacing: 0.06em; height: 32px;
     }
-    .ti-sym  { color: #4A5166; }
-    .ti-val  { color: #C8D0E0; }
-    .ti-up   { color: #1DB87E; }
-    .ti-dn   { color: #E54B4A; }
-    .ti-vix  { color: #C4821A; }
+    .ti-sym  { color: #71717A; }
+    .ti-val  { color: #E5E7EB; }
+    .ti-up   { color: #10B981; }
+    .ti-dn   { color: #EF4444; }
+    .ti-vix  { color: #F59E0B; }
 
     /* Market status (right side of rail) */
     .t-status {
       flex-shrink: 0; display: flex; align-items: center; gap: 7px;
-      padding: 0 14px; border-left: 1px solid #1E2130;
+      padding: 0 14px; border-left: 1px solid #1F1F23;
       font-family: 'Space Mono', monospace;
       font-size: 9px; letter-spacing: 0.14em; white-space: nowrap;
     }
@@ -60,9 +60,9 @@
       background: currentColor; flex-shrink: 0;
     }
     .ts-time { opacity: 0.45; margin-left: 2px; }
-    .ts-open  { color: #1DB87E; }
-    .ts-amber { color: #C4821A; }
-    .ts-muted { color: #3A3F55; }
+    .ts-open  { color: #10B981; }
+    .ts-amber { color: #F59E0B; }
+    .ts-muted { color: #52525B; }
     .ts-open .ts-dot { animation: ts-pulse 2s ease-in-out infinite; }
     @keyframes ts-pulse { 0%,100%{opacity:1;} 50%{opacity:0.15;} }
   `;

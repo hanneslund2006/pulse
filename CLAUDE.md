@@ -11,10 +11,12 @@ PULSE is an AI-driven market sentiment tool for swing traders. Delivers structur
 **Tech Stack:**
 - Frontend: Vanilla HTML/CSS/JS (no framework)
 - Backend: Vercel serverless functions (/api)
-- AI: Anthropic Claude Sonnet 4.5 with web_search tool
-- Data: yahoo-finance2 for market quotes
+- AI: Anthropic Claude (model tier per endpoint complexity)
+  - Sonnet 4.5: ticker.js, sentiment.js (multi-step synthesis)
+  - Haiku 4.5: all other endpoints (pattern extraction, formatting)
+- Data: yahoo-finance2 for market quotes, Alpaca for news
 - Cache: Two-tier (in-memory + Upstash Redis)
-- Rate limiting: File-based, 10 calls/hour/IP
+- Rate limiting: Redis-backed, 25 calls/hour/IP
 
 ## Development Commands
 
@@ -90,9 +92,9 @@ Vercel serverless functions. Each endpoint is a separate file:
   - TTL-based expiry, `nextMidnightTTL()` helper for daily data
 
 - `_ratelimit.js` — IP-based rate limiting
-  - 10 calls per hour per IP (configurable via MAX_CALLS)
-  - File-based state in /tmp (serverless-compatible)
-  - Sliding window algorithm
+  - 25 calls per hour per IP (configurable via MAX_CALLS)
+  - Redis-backed sliding window (falls back to memory if Redis unavailable)
+  - Keys expire after 1 hour of inactivity
 
 **AI Integration Pattern:**
 
@@ -104,7 +106,7 @@ const cache = require('./_cache');
 
 module.exports = async (req, res) => {
   // 1. Rate limit check
-  const limited = rateCheck(req);
+  const limited = await rateCheck(req);
   if (limited) return res.status(429).json({ error: 'Rate limit', ...limited });
 
   // 2. Cache check
@@ -114,11 +116,11 @@ module.exports = async (req, res) => {
   // 3. Call Anthropic with structured prompt
   const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
   const response = await anthropic.messages.create({
-    model: 'claude-sonnet-4-5-20250514',
-    max_tokens: 4096,
-    system: SYSTEM_PROMPT,  // Structured JSON response format
+    model: 'claude-sonnet-4-5-20250929',  // or 'claude-haiku-4-5-20251001' for simpler endpoints
+    max_tokens: 600,  // Tuned per endpoint: 200-900 range
+    system: SYSTEM_PROMPT,  // Schema-first, directive instructions
     messages: [{ role: 'user', content: userQuery }],
-    tools: [{ type: 'web_search_grounding_beta', search_url: 'auto' }]
+    tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: 1-3 }]
   });
 
   // 4. Parse and cache result
@@ -128,7 +130,23 @@ module.exports = async (req, res) => {
 };
 ```
 
-**Critical:** All AI prompts enforce strict JSON output with exact structure. No markdown, no preamble, no asterisks in text fields. Sentiment values are enum: "Bullish", "Bearish", "Mixed", "Avvent".
+**Model Selection Strategy (as of 2026-05-12):**
+- **Sonnet 4.5** (`claude-sonnet-4-5-20250929`): ticker.js, sentiment.js
+  - Multi-layer analysis requiring nuanced reasoning
+  - 24h/daily cache keeps call volume low (3-5/day)
+  - Cost: ~$1.50-2.50/month with caching
+- **Haiku 4.5** (`claude-haiku-4-5-20251001`): all other endpoints
+  - Pattern extraction, JSON formatting, simple synthesis
+  - Cost-optimized for high-frequency endpoints
+
+**Prompt Engineering Standards:**
+- Schema-first (JSON structure at top of system prompt)
+- Directive instructions ("Extract", "Search" not "analyze", "provide")
+- Quality filter: "Be analytical and specific. No filler phrases."
+- Removed roleplay preambles ("You are a...")
+- max_tokens tuned per endpoint (200-900 range based on output complexity)
+
+**Critical:** All AI prompts enforce strict JSON output with exact structure. No markdown, no preamble, no asterisks in text fields. Sentiment values are enum: "Bullish", "Bearish", "Mixed", "Neutral".
 
 ## Key Implementation Patterns
 
@@ -214,12 +232,13 @@ Frontend shows error toasts via `showErrorToast(message)` function in each HTML 
 
 ## Current State (Last Updated)
 
-- **Date:** 2026-05-04
-- **HEAD:** 7993561 (docs: update HANDOFF.md)
+- **Date:** 2026-05-12
+- **HEAD:** 13418a4 (optimize: upgrade ticker+sentiment to Sonnet, optimize prompts)
 - **Recent work:**
-  - DOM restructure: LIVE pill moved into DXY tile (semantically correct)
-  - Spacing fixes: 56px hero→hiw, 40px between steps, 48px hiw→features
-  - Removed "Se alle verktøy" link from how-it-works section
-  - "Slik fungerer det" 3-step section with animated visuals
-- **Model:** Claude Sonnet 4.5 (standard context, not 1M)
+  - LLM cost optimization: Upgraded ticker.js + sentiment.js to Sonnet 4.5 for quality
+  - Prompt engineering: Schema-first, directive instructions, removed filler across all endpoints
+  - max_tokens optimization: Reduced 3 Haiku endpoints (historikk 500→450, radar 600→500, gappers 300→280)
+  - Fixed sektor.js field name mismatch (analysis → analyse) for frontend compatibility
+  - Cost impact: +$0.30-0.50/month (16-33% increase) for synthesis quality improvement
+- **Models:** Sonnet 4.5 (ticker, sentiment), Haiku 4.5 (all others)
 - **Deployment:** Live at pulse-theta-wheat.vercel.app
