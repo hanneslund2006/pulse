@@ -533,14 +533,14 @@
       // Show regime from cached VIX if available
       if (typeof data.vix === 'number') updateRegime(data.vix);
 
+      fetchEarnings();
+      renderMacroCalendar();
+      fetchGappers();
+
       document.getElementById('empty-state').style.display = 'none';
       const ds = document.getElementById('data-sections');
       ds.classList.add('visible');
       animateItems();
-
-      fetchEarnings();
-      renderMacroCalendar();
-      fetchGappers();
     }
 
     let fetching = false;
@@ -601,24 +601,13 @@
       .toLocaleDateString('no-NO', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
       .toUpperCase();
 
-    // Auto-fetch only on weekdays 08:00–22:00 Oslo time
-    function isMarketHours() {
-      const oslo = new Date().toLocaleString('en-US', { timeZone: 'Europe/Oslo' });
-      const d = new Date(oslo);
-      const day = d.getDay(); // 0=Sun, 6=Sat
-      const hour = d.getHours();
-      return day >= 1 && day <= 5 && hour >= 8 && hour < 22;
-    }
-
-    // Load from cache on init; auto-fetch only during market hours
+    // Load from cache on init
     try {
       const cached = JSON.parse(localStorage.getItem(CACHE_KEY) || 'null');
       if (cached) renderData(cached);
-      else if (isMarketHours()) fetchReport();
       else fetchAndInjectRealPrices();
     } catch (e) {
-      if (isMarketHours()) fetchReport();
-      else fetchAndInjectRealPrices();
+      fetchAndInjectRealPrices();
     }
 
     // ── Regime indicator ─────────────────────────────────────
