@@ -1,11 +1,11 @@
 # PULSE — Handoff
 
 ## Dato
-11. mai 2026
+14. mai 2026
 
 ## Gjeldende HEAD
-Siste commit: chore: trigger redeploy for SEC_USER_AGENT env var (df7ef4c)
-Status: SEC EDGAR insider trading endpoint LIVE + verifisert
+Siste commit: feat: add visual character upgrades (typography, tinting, inline bars) (c51137c)
+Status: CSS/HTML visual enhancements complete — typography hierarchy, sentiment tinting, inline bars
 
 ## Status
 - Fase 1: KOMPLETT
@@ -24,7 +24,44 @@ Status: SEC EDGAR insider trading endpoint LIVE + verifisert
 - Juridisk disclaimer på alle AI-sider
 - Modell: Sonnet 4.5 (standard kontekst — ikke 1M)
 
-## Siste sesjon (11. mai) — SEC EDGAR Insider Trading Endpoint
+## Siste sesjon (14. mai) — Visual Character Upgrades
+
+**Mål:** Deepen visual character inspired by Koyfin/TradingView aesthetic via three CSS/HTML-only upgrades.
+
+**Implementert:**
+- **Typography hierarchy:** Hero metrics (clamp 40-64px) for sentiment score, implied move. Key metrics (clamp 24-32px) for sector changes, short float. Labels whisper (10-11px uppercase muted).
+- **Sentiment tinting:** 4% background tint on rows/cards (bullish=green, bearish=red, neutral=amber). Hover intensifies to 6%. Applied to radar cards, sector rows, category cards, gappers, earnings stats.
+- **Inline visualization:** Horizontal magnitude bars for gappers (20% gap = 100% bar width). CSS-only, no external libraries.
+
+**Security constraints applied:**
+- Whitelist objects for tintClass mapping (no direct string interpolation)
+- Number.isFinite() validation for barWidth calculation
+- CSS specificity over !important for tinting classes
+
+**Filer endret:**
+- `public/style.css` (+120 lines: hero-metric, key-metric, row-bull/bear/neutral, inline-bar-wrap)
+- `public/market.html` (sentiment score hero-metric, category cards + gappers tinting/bars)
+- `public/radar.html` (cards tinting via whitelist)
+- `public/sektor.html` (% change key-metric, rows tinting)
+- `public/earnings-play.html` (implied move hero-metric, short float key-metric, stat boxes tinting)
+
+**Commit:** c51137c
+
+**Testing required before deploy:**
+- [ ] All 9 HTML pages load without errors
+- [ ] Chrome, Safari, Firefox compatibility
+- [ ] Responsive (375px, 390px, 412px widths)
+- [ ] prefers-reduced-motion: animations disabled, clamp() → fixed sizes
+- [ ] Hover states: tint intensifies, no layout shift
+- [ ] Sentiment colors: green=bullish, red=bearish, amber=neutral
+
+**Next steps:**
+- Run `/deploy` before any production push (mandatory per pulse.md rules)
+- Visual QA in live browser
+
+---
+
+## Tidligere sesjon (11. mai) — SEC EDGAR Insider Trading Endpoint
 
 **Mål:** Implementere `/api/insider?ticker=AAPL` som henter Form 4 insider trading data fra SEC EDGAR.
 
