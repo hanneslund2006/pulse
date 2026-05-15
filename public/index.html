@@ -141,7 +141,7 @@
     /* ─── MARKET STRIP ─── */
     .market-strip {
       position: relative;
-      height: 72px;
+      height: 96px;
       margin-bottom: 0;
     }
     .market-live-pill {
@@ -184,7 +184,7 @@
       flex-direction: column;
       justify-content: center;
       gap: 2px;
-      border-right: 1px solid rgba(255,255,255,0.06);
+      border-right: 1px solid rgba(255,255,255,0.12);
       padding: 0 12px;
       opacity: 0;
       animation: marketTileFadeIn 0.1s linear linear forwards;
@@ -240,8 +240,8 @@
         grid-template-rows: repeat(2, 1fr);
       }
       .market-tile {
-        border-right: 1px solid rgba(255,255,255,0.06);
-        border-bottom: 1px solid rgba(255,255,255,0.06);
+        border-right: 1px solid rgba(255,255,255,0.12);
+        border-bottom: 1px solid rgba(255,255,255,0.12);
       }
       .market-tile:nth-child(3),
       .market-tile:nth-child(6) {
@@ -1222,6 +1222,43 @@
       }
     }
 
+    /* ─── PARTICLE CANVAS ─── */
+    #particle-bg {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ─── TICKER VALUE FLASH ─── */
+    @keyframes valuePulsePos {
+      0%   { color: var(--text-primary); }
+      20%  { color: #10B981; }
+      100% { color: var(--text-primary); }
+    }
+    @keyframes valuePulseNeg {
+      0%   { color: var(--text-primary); }
+      20%  { color: #EF4444; }
+      100% { color: var(--text-primary); }
+    }
+    .value-flash-pos .market-tile-value {
+      animation: valuePulsePos 400ms ease-out forwards;
+    }
+    .value-flash-neg .market-tile-value {
+      animation: valuePulseNeg 400ms ease-out forwards;
+    }
+
+    /* ─── MARKET TILE TIME ─── */
+    .market-tile-time {
+      font-family: 'Space Mono', monospace;
+      font-size: 8px;
+      letter-spacing: 0.06em;
+      color: var(--text-muted);
+      opacity: 0.5;
+    }
+
   </style>
 </head>
 <body>
@@ -1236,15 +1273,15 @@
   <!-- HERO SECTION -->
   <section class="hero-section">
 
-    <div class="hero-kicker hero-in hi-0">— Market Sentiment —</div>
+    <div class="hero-kicker hero-in hi-0">— For Swing Traders —</div>
 
     <h1 class="hero-title">
-      Read the market.<br>
-      <em class="hero-payoff" style="opacity:0">Faster.</em>
+      6 tabs. Still not sure what to trade.<br>
+      <em class="hero-payoff" style="opacity:0">One page. Clear signal.</em>
     </h1>
 
     <p class="hero-desc" style="opacity:0">
-      PULSE uses AI to read the market for you — news, futures and sector data in real time. You get what actually matters, structured and clear.
+      Every session starts the same — futures, sectors, news, scattered across tabs with no clear answer. <strong>PULSE structures it into a single score, sector rotation and trade candidates — ready when you are.</strong>
     </p>
 
     <div class="hero-in hi-3">
@@ -1258,31 +1295,37 @@
           <div class="market-tile-ticker">SPX</div>
           <div class="market-tile-value">5234</div>
           <div class="market-tile-change positive">+0.4%</div>
+          <div class="market-tile-time">--:--</div>
         </div>
         <div class="market-tile" data-ticker="NDX" data-delay="1">
           <div class="market-tile-ticker">NDX</div>
           <div class="market-tile-value">18424</div>
           <div class="market-tile-change positive">+0.6%</div>
+          <div class="market-tile-time">--:--</div>
         </div>
         <div class="market-tile" data-ticker="VIX" data-delay="2">
           <div class="market-tile-ticker">VIX</div>
           <div class="market-tile-value">16.2</div>
           <div class="market-tile-change negative">-0.8%</div>
+          <div class="market-tile-time">--:--</div>
         </div>
         <div class="market-tile" data-ticker="GOLD" data-delay="3">
           <div class="market-tile-ticker">GOLD</div>
           <div class="market-tile-value">2345</div>
           <div class="market-tile-change positive">+0.3%</div>
+          <div class="market-tile-time">--:--</div>
         </div>
         <div class="market-tile" data-ticker="BTC" data-delay="4">
           <div class="market-tile-ticker">BTC</div>
           <div class="market-tile-value">67240</div>
           <div class="market-tile-change positive">+1.2%</div>
+          <div class="market-tile-time">--:--</div>
         </div>
         <div class="market-tile" data-ticker="DXY" data-delay="5">
           <div class="market-tile-ticker">DXY</div>
           <div class="market-tile-value">104.8</div>
           <div class="market-tile-change negative">-0.1%</div>
+          <div class="market-tile-time">--:--</div>
         </div>
       </div>
     </div>
@@ -1975,23 +2018,23 @@
       const randomIndex = Math.floor(Math.random() * tiles.length);
       const tile = tiles[randomIndex];
 
-      // Add flickering class
       tile.classList.add('flickering');
 
-      // After fade-out completes, update value and fade back in
       setTimeout(() => {
         tile.classList.remove('flickering');
 
-        // Add micro-jitter to change element
         const changeEl = tile.querySelector('.market-tile-change');
         if (changeEl) {
           changeEl.classList.add('jitter');
           setTimeout(() => changeEl.classList.remove('jitter'), 200);
+
+          const flashClass = changeEl.classList.contains('positive') ? 'value-flash-pos' : 'value-flash-neg';
+          tile.classList.add(flashClass);
+          setTimeout(() => tile.classList.remove(flashClass), 400);
         }
       }, 240);
 
-      // Schedule next flicker
-      const nextDelay = 3000 + Math.random() * 2000; // 3-5s
+      const nextDelay = 3000 + Math.random() * 2000;
       setTimeout(flickerRandomTile, nextDelay);
     }
 
@@ -2048,6 +2091,79 @@
 </script>
 
 <script src="bg.js"></script>
+<script>
+(function () {
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+  const canvas = document.createElement('canvas');
+  canvas.id = 'particle-bg';
+  document.body.appendChild(canvas);
+  const ctx = canvas.getContext('2d');
+  const PC = '6,182,212';
+  const COUNT = 50;
+  let W, H, mouse = { x: 0, y: 0 };
+
+  function resize() {
+    W = canvas.width  = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+    mouse.x = W / 2;
+    mouse.y = H / 2;
+  }
+  window.addEventListener('resize', resize);
+  resize();
+  window.addEventListener('mousemove', e => { mouse.x = e.clientX; mouse.y = e.clientY; });
+
+  const particles = Array.from({ length: COUNT }, () => ({
+    x: Math.random() * W,
+    y: Math.random() * H,
+    vx: (Math.random() - 0.5) * 0.8,
+    vy: (Math.random() - 0.5) * 0.8,
+  }));
+
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+
+    for (let i = 0; i < COUNT; i++) {
+      const p = particles[i];
+      p.vx += (mouse.x - p.x) * 0.0008;
+      p.vy += (mouse.y - p.y) * 0.0008;
+      const spd = Math.sqrt(p.vx * p.vx + p.vy * p.vy);
+      if (spd > 1.2) { p.vx = p.vx / spd * 1.2; p.vy = p.vy / spd * 1.2; }
+      p.x += p.vx;
+      p.y += p.vy;
+      if (p.x < 0) p.x += W; else if (p.x > W) p.x -= W;
+      if (p.y < 0) p.y += H; else if (p.y > H) p.y -= H;
+    }
+
+    ctx.lineWidth = 0.5;
+    for (let i = 0; i < COUNT; i++) {
+      for (let j = i + 1; j < COUNT; j++) {
+        const dx = particles[i].x - particles[j].x;
+        const dy = particles[i].y - particles[j].y;
+        const d = Math.sqrt(dx * dx + dy * dy);
+        if (d < 120) {
+          ctx.beginPath();
+          ctx.moveTo(particles[i].x, particles[i].y);
+          ctx.lineTo(particles[j].x, particles[j].y);
+          ctx.strokeStyle = `rgba(${PC},${(0.07 * (1 - d / 120)).toFixed(3)})`;
+          ctx.stroke();
+        }
+      }
+    }
+
+    for (let i = 0; i < COUNT; i++) {
+      ctx.beginPath();
+      ctx.arc(particles[i].x, particles[i].y, 1.5, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(${PC},0.18)`;
+      ctx.fill();
+    }
+
+    requestAnimationFrame(draw);
+  }
+
+  requestAnimationFrame(draw);
+})();
+</script>
 <script src="sanitize.js"></script>
 <script src="live.js"></script>
 <script defer src="/_vercel/insights/script.js"></script>

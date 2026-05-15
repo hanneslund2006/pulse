@@ -42,7 +42,7 @@ Local dev works without Redis (falls back to in-memory cache only).
 
 ### Frontend Structure (/public)
 
-9 HTML pages, each self-contained with inline CSS and JS:
+10 HTML pages, each self-contained with inline CSS and JS:
 - `index.html` — Landing page with hero, "how it works" section, features overview
 - `market.html` — Daily market sentiment with 0-100 score
 - `ticker.html` — Single stock analysis (5-layer: news, earnings, insider, short, sentiment)
@@ -52,6 +52,7 @@ Local dev works without Redis (falls back to in-memory cache only).
 - `logg.html` — Trade logging
 - `historikk.html` — Trade history
 - `gappers.html` — Pre-market gap scanner
+- `screener.html` — Free-text investment case screener (AI web search)
 
 **Shared frontend modules:**
 - `public/live.js` — Live market data ticker (top rail, auto-refreshing quotes)
@@ -82,7 +83,7 @@ Vercel serverless functions. Each endpoint is a separate file:
 - `quotes.js` — Yahoo Finance quote proxy
 - `gappers.js` — Pre-market gap scanner
 - `historikk.js` — Trade history retrieval
-- `cache-clear.js` — Manual cache invalidation endpoint
+- `screener.js` — Free-text investment case screener (Haiku + web_search, 300s cache)
 
 **Shared utilities:**
 - `_cache.js` — Two-tier caching (in-memory + Redis)
@@ -153,8 +154,14 @@ module.exports = async (req, res) => {
 ### Caching Strategy
 
 - **Sentiment data:** Cache until midnight Oslo time (`nextMidnightTTL()`)
-- **Ticker analysis:** Cache 5 minutes (data changes frequently)
-- **Earnings data:** Cache 1 hour (relatively static during day)
+- **Ticker analysis:** 24h (86400s) — Sonnet cost is amortized over a full day
+- **Earnings / earnings-play:** 6h (21600s) — relatively static during trading day
+- **Radar:** Until midnight (`nextMidnightTTL()`) — daily screening
+- **Gappers:** 4h (14400s)
+- **Historikk:** 24h (86400s)
+- **Insider:** 6h (21600s)
+- **Sektor (sector list):** 6h (21600s); per-ticker analysis 24h
+- **Screener:** 5 min (300s) — case-specific, low reuse
 - **Quotes:** No cache (always fresh)
 
 ### Error Handling
