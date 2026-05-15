@@ -6,7 +6,7 @@
   <title>PULSE — Market Sentiment for Swing Traders</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
   <script>document.documentElement.classList.add('js')</script>
   <noscript><style>.feature-card, .feature-explain { opacity: 1 !important; transform: none !important; }</style></noscript>
@@ -1799,6 +1799,40 @@
       </div>
     </div>
 
+    <!-- Feature 8: Screener -->
+    <div class="feature-row">
+      <a class="feature-card" href="screener.html" aria-label="Go to Screener to find stocks matching a free-text investment case using AI search">
+        <div class="card-viz" aria-hidden="true">
+          <div class="vr-item" style="top:11px; animation:rowSlide 4s ease-out 0ms infinite">
+            <span class="vr-sym">JNJ</span>
+            <span class="vr-muted">DEFENSIVE</span>
+            <span class="vr-auto vr-pos">BULLISH</span>
+          </div>
+          <div class="vr-item" style="top:35px; animation:rowSlide 4s ease-out 160ms infinite">
+            <span class="vr-sym">PG</span>
+            <span class="vr-muted">STAPLES</span>
+            <span class="vr-auto vr-pos">BULLISH</span>
+          </div>
+          <div class="vr-item" style="top:58px; animation:rowSlide 4s ease-out 320ms infinite">
+            <span class="vr-sym">KO</span>
+            <span class="vr-muted">DIVIDEND</span>
+            <span class="vr-auto vr-amb">NEUTRAL</span>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="card-tag">AI SCREENER</div>
+          <div class="card-chip">AI · WEB SEARCH</div>
+          <div class="card-title">Screener</div>
+          <div class="card-desc">Describe your investment case in plain English — get 3–7 matching stocks with rationale.</div>
+          <div class="card-cta">SEARCH STOCKS →</div>
+        </div>
+      </a>
+      <div class="feature-explain">
+        <div class="fe-num">08</div>
+        <div class="fe-body">Type your thesis: <strong>"safe stocks in uncertain times"</strong> or <strong>"high-growth tech momentum."</strong> AI searches live and returns matching US stocks with rationale — no filter menus, no manual screening.</div>
+      </div>
+    </div>
+
   </section>
 
   <!-- FOOTER -->
@@ -2002,7 +2036,8 @@
       'r': 'radar.html',
       'e': 'earnings-play.html',
       'l': 'logg.html',
-      'h': 'historikk.html'
+      'h': 'historikk.html',
+      'c': 'screener.html'
     };
 
     if (shortcuts[e.key]) {

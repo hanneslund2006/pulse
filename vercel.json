@@ -7,11 +7,11 @@
     "api/quotes.js":    { "maxDuration": 10 },
     "api/sektor.js":    { "maxDuration": 20 },
     "api/radar.js":     { "maxDuration": 60 },
+    "api/screener.js":  { "maxDuration": 60 },
     "api/gappers.js":      { "maxDuration": 60 },
     "api/earnings-play.js": { "maxDuration": 60 },
     "api/historikk.js":     { "maxDuration": 60 },
     "api/insider.js":       { "maxDuration": 30 },
-    "api/cache-clear.js":   { "maxDuration": 10 },
     "api/analytics-dashboard.js": { "maxDuration": 10 }
   },
   "routes": [

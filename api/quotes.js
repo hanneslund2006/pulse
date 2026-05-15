@@ -2,6 +2,7 @@
 // Always use query1 (not query2) and set User-Agent
 
 const { fetchWithTimeout } = require('./_fetch');
+const cache = require('./_cache');
 
 const DISPLAY_MAP = {
   '^GSPC'   : 'SPX',

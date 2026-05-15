@@ -101,6 +101,14 @@ module.exports = async (req, res) => {
   }
 
   // ── Sektor-liste (Yahoo Finance) ──────────────────────────
+  const SECTOR_LIST_KEY = 'sektor:list';
+  const cachedList = await cache.get(SECTOR_LIST_KEY);
+  if (cachedList) {
+    console.log('[sektor] CACHE HIT: sector list');
+    return res.status(200).json(cachedList);
+  }
+  console.log('[sektor] CACHE MISS: sector list — fetching Yahoo Finance');
+
   try {
     const results = await Promise.all(
       SECTORS.map(async s => {
@@ -114,6 +122,7 @@ module.exports = async (req, res) => {
       .filter(Boolean)
       .sort((a, b) => b.weeklyChange - a.weeklyChange);
 
+    cache.set(SECTOR_LIST_KEY, sectors, 6 * 3600);
     return res.status(200).json(sectors);
   } catch (error) {
     console.error('Sektor API error:', error);
