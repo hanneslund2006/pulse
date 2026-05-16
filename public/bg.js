@@ -176,10 +176,10 @@
       const cY = candleAreaY + c.close * candleAreaH;
       const hY = candleAreaY + c.high  * candleAreaH;
       const lY = candleAreaY + c.low   * candleAreaH;
-      const col = c.bull ? rgba(C.green, 0.11) : rgba(C.red, 0.08);
+      const col = c.bull ? rgba(C.green, 0.22) : rgba(C.red, 0.16);
 
       ctx.strokeStyle = col;
-      ctx.lineWidth = 0.5;
+      ctx.lineWidth = 1.0;
       ctx.beginPath();
       ctx.moveTo(x + CW / 2, hY);
       ctx.lineTo(x + CW / 2, lY);

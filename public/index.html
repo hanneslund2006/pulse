@@ -262,8 +262,8 @@
     .hero-ticker {
       overflow: hidden;
       margin-top: 32px;
-      border-top: 1px solid var(--border);
-      border-bottom: 1px solid var(--border);
+      border-top: 1.5px solid var(--border);
+      border-bottom: 1.5px solid var(--border);
       padding: 10px 0;
       min-height: 38px;
     }
@@ -275,12 +275,12 @@
     }
     .hero-ticker:hover .hero-ticker-track { animation-play-state: paused; }
     .hero-tick-item {
-      padding: 0 24px;
+      padding: 4px 28px;
       font-family: 'Space Mono', monospace;
-      font-size: 10px;
+      font-size: 12px;
       letter-spacing: 0.06em;
       color: var(--text-secondary);
-      border-right: 1px solid var(--border);
+      border-right: 1.5px solid var(--border);
       white-space: nowrap;
     }
 
@@ -1224,13 +1224,14 @@
       display: grid;
       grid-template-columns: 1fr 1.35fr;
       gap: 48px;
-      align-items: center;
+      align-items: stretch;
       padding: 32px 0 48px;
     }
 
     .hero-score-col {
       display: flex;
       flex-direction: column;
+      justify-content: center;
     }
 
     .hs-top-label {
@@ -1244,7 +1245,7 @@
     .hs-number {
       font-family: 'Space Mono', monospace;
       font-weight: 700;
-      font-size: clamp(64px, 11vw, 96px);
+      font-size: clamp(140px, 22vw, 220px);
       line-height: 1;
       letter-spacing: -0.05em;
       color: var(--text-primary);
@@ -1256,12 +1257,22 @@
       50%       { opacity: 0.38; }
     }
 
+    @keyframes hs-glow-bull {
+      0%, 100% { box-shadow: 0 0 24px rgba(16,185,129,0.28), 0 0 64px rgba(16,185,129,0.12); }
+      50%       { box-shadow: 0 0 48px rgba(16,185,129,0.52), 0 0 120px rgba(16,185,129,0.24); }
+    }
+
+    @keyframes hs-glow-bear {
+      0%, 100% { box-shadow: 0 0 24px rgba(239,68,68,0.28), 0 0 64px rgba(239,68,68,0.12); }
+      50%       { box-shadow: 0 0 48px rgba(239,68,68,0.52), 0 0 120px rgba(239,68,68,0.24); }
+    }
+
     .hs-number.loading {
       animation: hs-flicker 1.8s ease-in-out infinite;
     }
 
-    .hs-number.bullish { color: var(--green); }
-    .hs-number.bearish { color: var(--red); }
+    .hs-number.bullish { color: var(--green); animation: hs-glow-bull 2.8s ease-in-out infinite; }
+    .hs-number.bearish { color: var(--red);   animation: hs-glow-bear 2.8s ease-in-out infinite; }
 
     .hs-label {
       display: flex;
@@ -1290,6 +1301,7 @@
     .hero-copy-col {
       display: flex;
       flex-direction: column;
+      justify-content: space-between;
     }
 
     .hero-cta-wrap {
@@ -1369,12 +1381,10 @@
       <!-- HERO COPY + CTA -->
       <div class="hero-copy-col">
         <h1 class="hero-title">
-          6 tabs.<br>Still not sure<br>what to trade.<br>
-          <em class="hero-payoff" style="opacity:0">One page. Clear signal.</em>
+          <span id="hero-typewriter"></span><br>
+          <em class="hero-payoff" id="hero-payoff" style="opacity:0">Trade with clarity.</em>
         </h1>
-        <p class="hero-desc" style="opacity:0">
-          Every session starts the same — futures, sectors, news, scattered across tabs with no clear answer. <strong>PULSE structures it into a single score, sector rotation and trade candidates — ready when you are.</strong>
-        </p>
+        <p class="hero-desc" style="opacity:0">Every session starts the same. PULSE ends it faster.</p>
         <div class="hero-cta-wrap">
           <a href="market.html" class="morgen-btn">GET TODAY'S REPORT →</a>
         </div>
@@ -2002,31 +2012,20 @@
 
   /* ─── HERO FADE-IN ANIMATION ─── */
   function initHeroFadeIn() {
-    // Check for reduced motion preference
+    const desc = document.querySelector('.hero-desc');
+
+    // Desc fades in after 400ms; payoff is managed by typewriter JS
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
       const payoff = document.querySelector('.hero-payoff');
-      const desc = document.querySelector('.hero-desc');
       if (payoff) payoff.style.opacity = '1';
       if (desc) desc.style.opacity = '1';
       return;
     }
 
-    const payoff = document.querySelector('.hero-payoff');
-    const desc = document.querySelector('.hero-desc');
-
-    // "Faster." fade in after 75ms linear
-    if (payoff) {
-      setTimeout(() => {
-        payoff.style.opacity = '1';
-        payoff.style.transition = 'opacity 75ms linear ease-out';
-      }, 200);
-    }
-
-    // Hero-desc fade in after 400ms
     if (desc) {
       setTimeout(() => {
         desc.style.opacity = '1';
-        desc.style.transition = 'opacity 75ms linear ease-out';
+        desc.style.transition = 'opacity 600ms cubic-bezier(0.16,1,0.3,1)';
       }, 400);
     }
   }
@@ -2212,6 +2211,31 @@
       numEl.textContent = '--';
       textEl.textContent = 'NO DATA';
     });
+})();
+</script>
+<script>
+/* ─── HERO TYPEWRITER ─── */
+(function () {
+  var target  = document.getElementById('hero-typewriter');
+  var payoff  = document.getElementById('hero-payoff');
+  if (!target || !payoff) return;
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    target.textContent = 'The market, decoded.';
+    payoff.style.opacity = '1';
+    return;
+  }
+  var text = 'The market, decoded.';
+  var i = 0;
+  function type() {
+    if (i < text.length) {
+      target.textContent = text.slice(0, ++i);
+      setTimeout(type, 50);
+    } else {
+      payoff.style.transition = 'opacity 700ms cubic-bezier(0.16,1,0.3,1)';
+      payoff.style.opacity = '1';
+    }
+  }
+  setTimeout(type, 300);
 })();
 </script>
 <script src="sanitize.js"></script>
