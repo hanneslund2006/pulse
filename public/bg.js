@@ -164,18 +164,19 @@
 
     // ── 4. Candlesticks (slow scroll) ──
     const totalCandleW = candles.length * CTOTAL;
-    const candleAreaY  = H * 0.50;
-    const candleAreaH  = H * 0.30;
+    const candleAreaY  = H * 0.48;
+    const candleAreaH  = H * 0.34;
 
     candles.forEach((c, i) => {
-      const x = ((i * CTOTAL - (cScroll % totalCandleW)) + totalCandleW) % totalCandleW;
+      const rawX = i * CTOTAL - (cScroll % totalCandleW);
+      const x = ((rawX % totalCandleW) + totalCandleW) % totalCandleW;
       if (x > W + CW) return;
 
       const oY = candleAreaY + c.open  * candleAreaH;
       const cY = candleAreaY + c.close * candleAreaH;
       const hY = candleAreaY + c.high  * candleAreaH;
       const lY = candleAreaY + c.low   * candleAreaH;
-      const col = c.bull ? rgba(C.green, 0.06) : rgba(C.red, 0.06);
+      const col = c.bull ? rgba(C.green, 0.11) : rgba(C.red, 0.08);
 
       ctx.strokeStyle = col;
       ctx.lineWidth = 0.5;
@@ -197,31 +198,7 @@
       ctx.fillRect(i * volBarW, H - bh, volBarW - 1, bh);
     });
 
-    // ── 6. Geo contour lines ──
-    ctx.strokeStyle = rgba(C.muted, 0.14);
-    ctx.lineWidth = 0.8;
-    geoLines.forEach(line => {
-      ctx.beginPath();
-      ctx.moveTo(line[0][0] * W, line[0][1] * H);
-      for (let i = 1; i < line.length - 1; i++) {
-        const mx = ((line[i][0] + line[i + 1][0]) / 2) * W;
-        const my = ((line[i][1] + line[i + 1][1]) / 2) * H;
-        ctx.quadraticCurveTo(line[i][0] * W, line[i][1] * H, mx, my);
-      }
-      const last = line[line.length - 1];
-      ctx.lineTo(last[0] * W, last[1] * H);
-      ctx.stroke();
-    });
-
-    // ── 7. Floating data dots ──
-    dots.forEach(d => {
-      ctx.beginPath();
-      ctx.arc(d.x * W, d.y * H, d.r, 0, Math.PI * 2);
-      ctx.fillStyle = rgba(C.muted, d.op);
-      ctx.fill();
-    });
-
-    // ── 8. Scattered text labels ──
+    // ── 6. Scattered text labels ──
     labels.forEach(lbl => {
       ctx.font = `${lbl.sz}px 'Space Mono', monospace`;
       ctx.fillStyle = rgba(lbl.col, lbl.op);

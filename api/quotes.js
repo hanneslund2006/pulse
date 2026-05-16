@@ -28,10 +28,6 @@ const NAME_MAP = {
   '^TNX'    : '10Y Treasury',
 };
 
-// Module-level 60s cache
-let _cache = null;
-let _cacheKey = '';
-let _cachedAt = 0;
 
 async function fetchQuote(symbol) {
   const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=1d&range=1d`;
@@ -84,22 +80,11 @@ module.exports = async (req, res) => {
     cache.set(analyticsKey, currentCount + 1, 30 * 24 * 3600);
   } catch (e) { /* analytics must never crash endpoint */ }
 
-  // Cache hit (same symbol set, within 60s)
-  const cacheKey = symbols.slice().sort().join(',');
-  if (_cache && _cacheKey === cacheKey && Date.now() - _cachedAt < 60_000) {
-    return res.status(200).json(_cache);
-  }
-
   try {
     const results = await Promise.all(
       symbols.map(sym => fetchQuote(sym).catch(() => null))
     );
     const data = results.filter(Boolean);
-
-    _cache = data;
-    _cacheKey = cacheKey;
-    _cachedAt = Date.now();
-
     return res.status(200).json(data);
   } catch (error) {
     console.error('Quotes API error:', error);
