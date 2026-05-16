@@ -4,8 +4,8 @@
 16. mai 2026
 
 ## Gjeldende HEAD
-Siste commit: feat: hero animation overhaul — three-layer composition replaces score display (8c256e3)
-Status: Score number removed. Hero now has: SVG morphing chart (bull/bear loop), radar pulse rings, floating data cards (position:fixed on body)
+Siste commit: style: canvas price-action chart + hero-title italic bold shadow (69f6988)
+Status: Layer 1 er nå canvas-basert self-drawing price-action linje (erstatter SVG morph). hero-title er italic weight 700 med text-shadow.
 
 ## Status
 - Fase 1: KOMPLETT
@@ -37,6 +37,14 @@ Status: Score number removed. Hero now has: SVG morphing chart (bull/bear loop),
 - **Bevart:** Typewriter-animasjon, ticker-strip, market-strip, keyboard shortcuts, alle seksjoner under hero.
 
 **Deploy:** commit 8c256e3, pushed to main, Vercel auto-deploy triggered.
+
+## Siste sesjon (16. mai) — Phase 4: Canvas chart + typografi
+
+**Implementert:**
+- **Layer 1 erstattet:** SVG morphing chart → canvas self-drawing price-action linje. Random walk ±3px/frame, 2% sjanse for ±18px sprang. Tegner venstre→høyre ved 1.5px/frame, resetter sømløst. Glow via ctx.shadowBlur=10, teal rgba(16,185,129,0.75/0.52).
+- **Typografi:** `.hero-title` font-weight 700, font-style italic. text-shadow: 0 4px 60px rgba(0,0,0,0.9) på title og em.payoff.
+
+**Deploy:** commit 69f6988, pushed to main, Vercel auto-deploy triggered.
 
 ---
 
