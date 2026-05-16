@@ -4,8 +4,8 @@
 16. mai 2026
 
 ## Gjeldende HEAD
-Siste commit: feat: hero redesign with live sentiment score, candlestick bg, fix quotes cache (9dec45d)
-Status: Hero redesign deployed — live sentiment score in two-column layout, bg.js candlestick focus, quotes.js cache bug fixed
+Siste commit: style: hero overhaul — score dominance, glow, typewriter, canvas intensity (19e54f6)
+Status: Hero overhaul deployed — 220px score with pulsing glow, typewriter copy, heavier candlestick canvas, layout symmetry
 
 ## Status
 - Fase 1: KOMPLETT
@@ -23,6 +23,23 @@ Status: Hero redesign deployed — live sentiment score in two-column layout, bg
 - Rate limiting, caching, feilhåndtering på alle API-endepunkter
 - Juridisk disclaimer på alle AI-sider
 - Modell: Sonnet 4.5 (standard kontekst — ikke 1M)
+
+## Siste sesjon (16. mai) — Hero Overhaul: Score Dominance + Typewriter
+
+**Mål:** 6 koordinerte endringer for visuell dominans og symmetri i hero.
+
+**Implementert:**
+- **Score størrelse:** `clamp(140px, 22vw, 220px)` — 3x større, visuelt anker
+- **Pulserende glow:** CSS `box-shadow` @keyframes — grønn (bullish), rød (bearish), animert 2.8s
+- **Typewriter:** "The market, decoded." skrives ut 50ms/tegn, deretter fades "Trade with clarity." inn
+- **Canvas intensitet:** Candle opacity 0.11→0.22 (bull), 0.08→0.16 (bear), wick 0.5→1.0px
+- **Layout symmetri:** `align-items:stretch` på `.hero-main`, `justify-content:space-between` på `.hero-copy-col`
+- **Desc tekst:** "Every session starts the same. PULSE ends it faster." (12 ord, ingen strong-tags)
+- **Ticker strip:** font 12px, padding 4px 28px, borders 1.5px solid
+
+**Deploy:** commit 19e54f6, pushed to main, Vercel auto-deploy triggered.
+
+---
 
 ## Siste sesjon (16. mai) — Hero Redesign + Live Sentiment Score
 
