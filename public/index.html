@@ -84,16 +84,19 @@
 
     .hero-title {
       font-family: var(--font-display);
-      font-weight: 600;
+      font-weight: 700;
+      font-style: italic;
       font-size: clamp(32px, 5vw, 48px);
       line-height: 1.2;
       letter-spacing: -0.01em;
       color: var(--text-primary);
       margin-bottom: 28px;
+      text-shadow: 0 4px 60px rgba(0,0,0,0.9);
     }
     .hero-title em {
       font-style: italic;
       color: var(--green);
+      text-shadow: 0 4px 60px rgba(0,0,0,0.9);
     }
 
     /* ─── HERO PAYOFF FADE ─── */
@@ -2145,87 +2148,62 @@
   'use strict';
   var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  /* ── LAYER 1: SVG morphing price chart ── */
+  /* ── LAYER 1: Canvas self-drawing price-action chart ── */
   if (!reduced) {
     var wrap = document.querySelector('.hero-canvas-wrap');
     if (wrap) {
-      var NS = 'http://www.w3.org/2000/svg';
-      var svg = document.createElementNS(NS, 'svg');
-      svg.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;pointer-events:none;';
+      var cvs = document.createElement('canvas');
+      cvs.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;pointer-events:none;';
+      wrap.insertBefore(cvs, wrap.firstChild);
+      var ctx2 = cvs.getContext('2d');
 
-      var defs = document.createElementNS(NS, 'defs');
-      var filt = document.createElementNS(NS, 'filter');
-      filt.setAttribute('id', 'cglow');
-      filt.setAttribute('x', '-20%'); filt.setAttribute('y', '-20%');
-      filt.setAttribute('width', '140%'); filt.setAttribute('height', '140%');
-      var blur = document.createElementNS(NS, 'feGaussianBlur');
-      blur.setAttribute('in', 'SourceGraphic');
-      blur.setAttribute('stdDeviation', '2.5');
-      blur.setAttribute('result', 'blur');
-      var merge = document.createElementNS(NS, 'feMerge');
-      var mn1 = document.createElementNS(NS, 'feMergeNode'); mn1.setAttribute('in', 'blur');
-      var mn2 = document.createElementNS(NS, 'feMergeNode'); mn2.setAttribute('in', 'SourceGraphic');
-      merge.appendChild(mn1); merge.appendChild(mn2);
-      filt.appendChild(blur); filt.appendChild(merge);
-      defs.appendChild(filt);
-      svg.appendChild(defs);
+      var pts = [];
+      var curX = 0, curY = 0;
+      var SPEED = 1.5;
 
-      var cp = document.createElementNS(NS, 'path');
-      cp.setAttribute('fill', 'none');
-      cp.setAttribute('stroke-width', '1.5');
-      cp.setAttribute('filter', 'url(#cglow)');
-      svg.appendChild(cp);
-      wrap.insertBefore(svg, wrap.firstChild);
-
-      /* Bull = price rising (Y falls in SVG), Bear = price falling */
-      var bullY = [0.72,0.68,0.62,0.60,0.50,0.47,0.40,0.38,0.28];
-      var bearY = [0.28,0.34,0.30,0.42,0.48,0.44,0.56,0.55,0.68];
-      var NP = bullY.length;
-      var cW = 0, cH = 0, t0 = null;
-      var MORPH = 5000, HOLD = 2000, CYCLE = (MORPH + HOLD) * 2;
-
-      function ease(t) { return t < 0.5 ? 2*t*t : -1+(4-2*t)*t; }
-      function lrp(a, b, t) { return a + (b-a)*t; }
-
-      function strokeCol(t, ts) {
-        var r = Math.round(lrp(16,239,t));
-        var g = Math.round(lrp(185,68,t));
-        var b = Math.round(lrp(129,68,t));
-        var a = (0.28 + 0.08*Math.sin(ts/900)).toFixed(2);
-        return 'rgba('+r+','+g+','+b+','+a+')';
+      function resizeCvs() {
+        cvs.width  = cvs.offsetWidth;
+        cvs.height = cvs.offsetHeight;
+        curY = cvs.height * 0.48;
+        pts  = [{x:0, y:curY}];
+        curX = 0;
       }
 
-      function buildD(ys) {
-        var d = '';
-        for (var i = 0; i < NP; i++) {
-          var x = (i/(NP-1))*cW;
-          var y = ys[i]*cH;
-          d += (i===0?'M ':' L ')+x.toFixed(1)+','+y.toFixed(1);
+      function drawPrice() {
+        var W = cvs.width, H = cvs.height;
+        curX += SPEED;
+
+        /* micro-volatility with occasional larger moves */
+        var delta = (Math.random() - 0.49) * 3;
+        if (Math.random() < 0.02) delta += (Math.random() - 0.5) * 18;
+        curY = Math.max(H * 0.08, Math.min(H * 0.92, curY + delta));
+        pts.push({x: curX, y: curY});
+
+        /* seamless reset at right edge */
+        if (curX >= W) {
+          curX = 0;
+          curY = H * (0.4 + Math.random() * 0.2);
+          pts  = [{x:0, y:curY}];
         }
-        return d;
+
+        ctx2.clearRect(0, 0, W, H);
+        ctx2.save();
+        ctx2.shadowColor  = 'rgba(16,185,129,0.75)';
+        ctx2.shadowBlur   = 10;
+        ctx2.strokeStyle  = 'rgba(16,185,129,0.52)';
+        ctx2.lineWidth    = 1.5;
+        ctx2.lineJoin     = 'round';
+        ctx2.beginPath();
+        pts.forEach(function(p, i) { i===0 ? ctx2.moveTo(p.x,p.y) : ctx2.lineTo(p.x,p.y); });
+        ctx2.stroke();
+        ctx2.restore();
+
+        requestAnimationFrame(drawPrice);
       }
 
-      function frame(ts) {
-        if (!t0) t0 = ts;
-        var e = (ts-t0) % CYCLE;
-        var t = e < MORPH              ? ease(e/MORPH)
-              : e < MORPH+HOLD         ? 1
-              : e < MORPH*2+HOLD       ? 1-ease((e-MORPH-HOLD)/MORPH)
-              :                          0;
-        var ys = bullY.map(function(b,i){ return lrp(b,bearY[i],t); });
-        cp.setAttribute('d', buildD(ys));
-        cp.setAttribute('stroke', strokeCol(t, ts));
-        requestAnimationFrame(frame);
-      }
-
-      function rsz() {
-        var r = svg.getBoundingClientRect();
-        cW = r.width; cH = r.height;
-        svg.setAttribute('viewBox', '0 0 '+cW+' '+cH);
-      }
-      window.addEventListener('resize', rsz);
-      rsz();
-      requestAnimationFrame(frame);
+      window.addEventListener('resize', resizeCvs);
+      resizeCvs();
+      requestAnimationFrame(drawPrice);
     }
   }
 
