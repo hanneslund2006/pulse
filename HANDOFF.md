@@ -4,8 +4,8 @@
 16. mai 2026
 
 ## Gjeldende HEAD
-Siste commit: style: hero overhaul — score dominance, glow, typewriter, canvas intensity (19e54f6)
-Status: Hero overhaul deployed — 220px score with pulsing glow, typewriter copy, heavier candlestick canvas, layout symmetry
+Siste commit: feat: hero animation overhaul — three-layer composition replaces score display (8c256e3)
+Status: Score number removed. Hero now has: SVG morphing chart (bull/bear loop), radar pulse rings, floating data cards (position:fixed on body)
 
 ## Status
 - Fase 1: KOMPLETT
@@ -23,6 +23,22 @@ Status: Hero overhaul deployed — 220px score with pulsing glow, typewriter cop
 - Rate limiting, caching, feilhåndtering på alle API-endepunkter
 - Juridisk disclaimer på alle AI-sider
 - Modell: Sonnet 4.5 (standard kontekst — ikke 1M)
+
+## Siste sesjon (16. mai) — Hero Animation Overhaul: Three-Layer Composition
+
+**Mål:** Fjerne score-tallet fra hero og erstatte med tre koordinerte animasjonslag.
+
+**Implementert:**
+- **Fjernet:** Sentiment score-tall, glow-animasjoner, to-kolonne grid, all score CSS
+- **Layer 1 (bakgrunn):** SVG morfende priskurve. Bull (stigende, teal) ↔ Bear (fallende, rød) på 12s loop. CSS feGaussianBlur glow-filter.
+- **Layer 2 (midtgrunn):** Radar pulse-ringer. 3 staggerede ekspanderende sirkler, teal 0.10 opacity.
+- **Layer 3 (forgrunn):** Flytende datakort. `position:fixed` på `document.body`. Koordinater beregnes fra `hero-section.getBoundingClientRect()` per spawn. Venstre/høyre sone 2-9% av hero-bredde. 10-korts pool (SPX, NVDA, VIX, etc.), sykler kontinuerlig. Aldri på midten av siden.
+- **Layout:** Enkelt sentrert kolonne. `hero-section` fikk `overflow:hidden` + `align-items:center`. `.hero-centered` z-index:3, max-width:520px.
+- **Bevart:** Typewriter-animasjon, ticker-strip, market-strip, keyboard shortcuts, alle seksjoner under hero.
+
+**Deploy:** commit 8c256e3, pushed to main, Vercel auto-deploy triggered.
+
+---
 
 ## Siste sesjon (16. mai) — Hero Overhaul: Score Dominance + Typewriter
 
