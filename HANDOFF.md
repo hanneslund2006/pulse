@@ -1,11 +1,11 @@
 # PULSE — Handoff
 
 ## Dato
-14. mai 2026
+16. mai 2026
 
 ## Gjeldende HEAD
-Siste commit: feat: add visual character upgrades (typography, tinting, inline bars) (c51137c)
-Status: CSS/HTML visual enhancements complete — typography hierarchy, sentiment tinting, inline bars
+Siste commit: feat: hero redesign with live sentiment score, candlestick bg, fix quotes cache (9dec45d)
+Status: Hero redesign deployed — live sentiment score in two-column layout, bg.js candlestick focus, quotes.js cache bug fixed
 
 ## Status
 - Fase 1: KOMPLETT
@@ -23,6 +23,21 @@ Status: CSS/HTML visual enhancements complete — typography hierarchy, sentimen
 - Rate limiting, caching, feilhåndtering på alle API-endepunkter
 - Juridisk disclaimer på alle AI-sider
 - Modell: Sonnet 4.5 (standard kontekst — ikke 1M)
+
+## Siste sesjon (16. mai) — Hero Redesign + Live Sentiment Score
+
+**Mål:** Full hero redesign — live product value visible within 2 seconds, no click required.
+
+**Implementert:**
+- **Two-column hero layout:** Score column (left, 1fr) + copy+CTA column (right, 1.35fr). Score is the first visual element the eye hits.
+- **Live sentiment score:** Fetches `/api/sentiment` (POST) on page load. Displays 0-100 in Space Mono bold at clamp(64px-96px). BULLISH (green) or BEARISH (red) label with pulsing dot. Loading state flickers; shows '--' and 'NO DATA' on API failure — no broken layout.
+- **Candlestick background:** Removed duplicate inline particle IIFE (was creating two stacked canvas elements — the source of the accumulation bug). bg.js now runs solo with increased candle opacity (0.11 green / 0.08 red), cleaner wrap modulo, and geo/dot noise layers removed.
+- **Bug fix — quotes.js cache:** Removed undocumented 60s module-level cache (`_cache`, `_cacheKey`, `_cachedAt`) that violated the "always fresh" rule. quotes.js now returns data directly.
+- Responsive: single-column stacked layout at <=560px, score always on top.
+
+**Deployet:** commit 9dec45d, pushed to main, Vercel auto-deploy triggered.
+
+---
 
 ## Siste sesjon (14. mai) — Visual Character Upgrades
 
