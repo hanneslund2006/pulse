@@ -4,9 +4,35 @@
 17. mai 2026
 
 ## Gjeldende HEAD
+Siste commit: polish: animation timing, transform transitions, nav shortcut hint, cache TTL fix (ba9cb4c)
+
+## Siste sesjon (17. mai) — Impeccable Audit + Polish Pass
+
+**Commit:** ba9cb4c — pushed to main, Vercel auto-deploy triggered.
+
+**Impeccable critique score:** 27/40 (above average). No AI slop detected — teal accent + Cormorant Garamond + Space Mono data type forms coherent terminal identity.
+
+**Fixes applied:**
+- **Animation timing:** All `fadeUp 0.1s linear` instances upgraded to `0.3s var(--ease-out-expo)` across style.css and 4 HTML files. Fixed `linear linear` CSS syntax error in radar/historikk/gappers/earnings-play.
+- **Performance:** Replaced `transition: width` with `transform: scaleX()` on `.load-bar` (4 pages: ticker, market, radar, screener) and `.inline-bar` (market.html gapper template). JS updated throughout to use `style.transform = 'scaleX(0.88)'` instead of `style.width`.
+- **Nav shortcut hint:** Added `?` button to all 10 nav bars — visible teal hover, opens keyboard shortcut overlay on click. Discoverability fix.
+- **Cache TTL fix:** `earnings-play.js` corrected from 86400s (24h) to 21600s (6h) to match CLAUDE.md spec.
+
+**Pre-flight:** pulse-deploy-guard PASS on second run (first run caught earnings-play TTL mismatch — fixed before deploy).
+
+**Non-blocking notes:**
+- `quotes.js` analytics counter (`cache.set` for hit counts) technically violates "cache-free" rule but doesn't affect quote freshness — intentional.
+- `screener.js` lacks analytics counter unlike all other endpoints — minor gap, not blocking.
+
+## Neste sesjon starter med
+All polish complete and deployed. Consider: screener.js analytics counter parity, or next feature work.
+
+---
+
+## Forrige HEAD
 Siste commit: style: full design system redesign across all 10 HTML pages (0729c20)
 
-## Siste sesjon (17. mai) — Full Design System Redesign
+## Forrige sesjon (17. mai) — Full Design System Redesign
 
 **Commit:** 0729c20 — pushed to main, Vercel auto-deploy triggered.
 
