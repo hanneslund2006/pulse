@@ -61,6 +61,15 @@
       gap: 0;
     }
 
+    .hero-section::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.55) 100%);
+      pointer-events: none;
+      z-index: 1;
+    }
+
     .hero-kicker {
       font-family: var(--font-body);
       font-size: 10px;
@@ -71,6 +80,8 @@
       align-items: center;
       justify-content: center;
       gap: 10px;
+      position: relative;
+      z-index: 2;
     }
     .hero-kicker::before,
     .hero-kicker::after {
@@ -144,12 +155,33 @@
       outline-offset: 4px;
     }
 
+    .live-dot {
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #10B981;
+      flex-shrink: 0;
+      animation: liveDotPulse 1.8s ease-in-out infinite;
+    }
+    @keyframes liveDotPulse {
+      0%, 100% { transform: scale(1);   opacity: 1;   }
+      50%       { transform: scale(1.4); opacity: 0.4; }
+    }
+    .live-label {
+      font-family: 'Space Mono', monospace;
+      font-size: 8px;
+      letter-spacing: 0.14em;
+    }
+
     /* ─── MARKET PROMPT ─── */
     /* ─── MARKET STRIP ─── */
     .market-strip {
       position: relative;
       height: 96px;
       margin-bottom: 0;
+      overflow: hidden;
+      z-index: 2;
     }
     .market-live-pill {
       position: absolute;
@@ -179,11 +211,16 @@
       0%, 100% { opacity: 1; }
       50%       { opacity: 0.3; }
     }
+    @keyframes stripScroll {
+      from { transform: translateX(0); }
+      to   { transform: translateX(-50%); }
+    }
     .market-strip-grid {
-      display: grid;
-      grid-template-columns: repeat(6, 1fr);
+      display: flex;
+      width: max-content;
       height: 100%;
       gap: 0;
+      animation: stripScroll 25s linear infinite;
     }
     .market-tile {
       position: relative;
@@ -191,8 +228,10 @@
       flex-direction: column;
       justify-content: center;
       gap: 2px;
-      border-right: 1px solid rgba(255,255,255,0.12);
-      padding: 0 12px;
+      border-right: 1px solid rgba(255,255,255,0.15);
+      padding: 16px 24px;
+      flex-shrink: 0;
+      font-size: 13px;
       opacity: 0;
       animation: marketTileFadeIn 0.1s linear linear forwards;
     }
@@ -242,22 +281,8 @@
       animation: microJitter 0.2s ease;
     }
     @media (max-width: 720px) {
-      .market-strip-grid {
-        grid-template-columns: repeat(3, 1fr);
-        grid-template-rows: repeat(2, 1fr);
-      }
       .market-tile {
-        border-right: 1px solid rgba(255,255,255,0.12);
-        border-bottom: 1px solid rgba(255,255,255,0.12);
-      }
-      .market-tile:nth-child(3),
-      .market-tile:nth-child(6) {
-        border-right: none;
-      }
-      .market-tile:nth-child(4),
-      .market-tile:nth-child(5),
-      .market-tile:nth-child(6) {
-        border-bottom: none;
+        border-right: 1px solid rgba(255,255,255,0.15);
       }
     }
 
@@ -273,6 +298,8 @@
       border-bottom: 1.5px solid var(--border);
       padding: 10px 0;
       min-height: 38px;
+      position: relative;
+      z-index: 2;
     }
     .hero-ticker-track {
       display: flex;
@@ -1315,6 +1342,36 @@
       opacity: 0.5;
     }
 
+    /* ─── SCROLL INDICATOR ─── */
+    .scroll-indicator {
+      position: absolute;
+      bottom: 32px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 4;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      animation: scrollFade 2s ease-in-out infinite;
+      pointer-events: none;
+    }
+    .scroll-line {
+      width: 1px;
+      height: 40px;
+      background: #14B8A6;
+    }
+    .scroll-text {
+      font-family: 'Space Mono', monospace;
+      font-size: 8px;
+      letter-spacing: 0.1em;
+      color: #14B8A6;
+    }
+    @keyframes scrollFade {
+      0%, 100% { opacity: 1;   }
+      50%       { opacity: 0.3; }
+    }
+
   </style>
 </head>
 <body>
@@ -1346,7 +1403,7 @@
       </h1>
       <p class="hero-desc" style="opacity:0">Every session starts the same. PULSE ends it faster.</p>
       <div class="hero-cta-wrap">
-        <a href="market.html" class="morgen-btn">GET TODAY'S REPORT →</a>
+        <a href="market.html" class="morgen-btn"><span class="live-dot"></span>GET TODAY'S REPORT →<span class="live-label">LIVE</span></a>
       </div>
     </div>
 
@@ -1389,6 +1446,42 @@
           <div class="market-tile-change negative">-0.1%</div>
           <div class="market-tile-time">--:--</div>
         </div>
+        <div class="market-tile" aria-hidden="true">
+          <div class="market-tile-ticker">SPX</div>
+          <div class="market-tile-value">5234</div>
+          <div class="market-tile-change positive">+0.4%</div>
+          <div class="market-tile-time">--:--</div>
+        </div>
+        <div class="market-tile" aria-hidden="true">
+          <div class="market-tile-ticker">NDX</div>
+          <div class="market-tile-value">18424</div>
+          <div class="market-tile-change positive">+0.6%</div>
+          <div class="market-tile-time">--:--</div>
+        </div>
+        <div class="market-tile" aria-hidden="true">
+          <div class="market-tile-ticker">VIX</div>
+          <div class="market-tile-value">16.2</div>
+          <div class="market-tile-change negative">-0.8%</div>
+          <div class="market-tile-time">--:--</div>
+        </div>
+        <div class="market-tile" aria-hidden="true">
+          <div class="market-tile-ticker">GOLD</div>
+          <div class="market-tile-value">2345</div>
+          <div class="market-tile-change positive">+0.3%</div>
+          <div class="market-tile-time">--:--</div>
+        </div>
+        <div class="market-tile" aria-hidden="true">
+          <div class="market-tile-ticker">BTC</div>
+          <div class="market-tile-value">67240</div>
+          <div class="market-tile-change positive">+1.2%</div>
+          <div class="market-tile-time">--:--</div>
+        </div>
+        <div class="market-tile" aria-hidden="true">
+          <div class="market-tile-ticker">DXY</div>
+          <div class="market-tile-value">104.8</div>
+          <div class="market-tile-change negative">-0.1%</div>
+          <div class="market-tile-time">--:--</div>
+        </div>
       </div>
     </div>
 
@@ -1397,6 +1490,12 @@
       <div class="hero-ticker-track">
         <div class="hero-tick-item" style="opacity:0.3">Loading market data...</div>
       </div>
+    </div>
+
+    <!-- SCROLL INDICATOR -->
+    <div class="scroll-indicator">
+      <div class="scroll-line"></div>
+      <div class="scroll-text">SCROLL</div>
     </div>
 
   </section>
@@ -2162,8 +2261,8 @@
       var SPEED = 1.5;
 
       function resizeCvs() {
-        cvs.width  = cvs.offsetWidth;
-        cvs.height = cvs.offsetHeight;
+        cvs.width  = wrap.offsetWidth;
+        cvs.height = document.querySelector('.hero-section').offsetHeight;
         curY = cvs.height * 0.48;
         pts  = [{x:0, y:curY}];
         curX = 0;
@@ -2235,12 +2334,13 @@
         '<div class="hdc-value">'+d.v+'</div>'+
         '<div class="hdc-change '+(d.pos?'pos':'neg')+'">'+d.c+'</div>';
 
+      var vw = window.innerWidth;
       var useLeft = Math.random() < 0.5;
-      var pct = 0.02 + Math.random() * 0.07;
+      var pct = 0.02 + Math.random() * 0.10;
       var topPx = hr.top + hr.height * (0.08 + Math.random() * 0.67);
       var leftPx = useLeft
-        ? hr.left + hr.width * pct
-        : hr.right - hr.width * pct - 96;
+        ? vw * pct
+        : vw * (1 - pct) - 96;
 
       card.style.cssText =
         'position:fixed;z-index:100;width:96px;pointer-events:none;' +
