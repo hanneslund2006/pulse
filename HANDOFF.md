@@ -4,6 +4,52 @@
 17. mai 2026
 
 ## Gjeldende HEAD
+Siste commit: style: full design system redesign across all 10 HTML pages (0729c20)
+
+## Siste sesjon (17. mai) — Full Design System Redesign
+
+**Commit:** 0729c20 — pushed to main, Vercel auto-deploy triggered.
+
+**Scope:** Complete redesign applying PULSE-DESIGN-SYSTEM.md spec across all 10 HTML pages + style.css.
+
+**style.css** — full rewrite:
+- CSS variable system with new names (`--bg-base`, `--teal`, `--bullish`, etc.) + legacy aliases
+- Sticky `.pulse-nav` component (backdrop-filter exception, only allowed use)
+- `.pulse-footer` component
+- Badge system (`.badge.bullish/.bearish/.neutral`)
+- Skeleton loading shimmer animation
+- Empty state pattern (`.empty-state`, `.empty-icon`, `.empty-title`, `.empty-desc`)
+- Keyboard shortcut overlay (`.shortcut-overlay`, `.shortcut-modal`)
+- All legacy card/row/chip components preserved
+
+**All 10 HTML pages** received:
+- `.pulse-nav` with page name + market status dot
+- `.pulse-footer`
+- Shortcut overlay HTML (`?` key trigger, Escape closes, M/S/T/E/H/R/L/C nav)
+- `setMarketStatus()` JS (UTC-based, 13:30–20:00 weekdays = open)
+- Norwegian UI text → English: labels, error messages, date locales (`no-NO` → `en-US`), MACRO_EVENTS names, timeout strings, modal text
+
+**logg.html** — full structural overhaul (previously had no nav/footer/shortcuts):
+- Added nav (TRADE LOG), footer, shortcut overlay, setMarketStatus
+- Removed `← TILBAKE` back link
+- Translated all labels: DATO→DATE, RETNING→DIRECTION, ENTRY PRIS→ENTRY PRICE, SETUP-KVALITET→SETUP QUALITY, NOTATER→NOTES, LOGG TRADE→LOG TRADE, ALLE TRADES→ALL TRADES, LUKK TRADE→CLOSE TRADE, AVBRYT→CANCEL
+- Fixed renderTrades(): ÅPEN→OPEN, LUKKET→CLOSED, Dato→Date, SLETT→DELETE
+- Upgraded empty state to full `.empty-state` pattern
+
+**earnings-play.html** — full structural overhaul:
+- Added nav (EARNINGS PLAY), footer, shortcut overlay, setMarketStatus
+- Removed `← TILBAKE` back link
+- Translated: Oppjustert→Raised, Nedjustert→Lowered, Uendret→Unchanged, ANALYTIKERE→ANALYSTS, UPSIDE TIL TARGET→UPSIDE TO TARGET, NORMALT PRISET→FAIRLY PRICED, PRISET INN LAVT→PRICED IN LOW, PRISET INN HØYT→PRICED IN HIGH, HIST. SNITT MOVE→HIST. AVG MOVE, NESTE EARNINGS→NEXT EARNINGS, FØR BØRS→PRE-MARKET, ETTER BØRS→POST-MARKET
+- Replaced inline "NOT FINANCIAL ADVICE" div with proper `.pulse-footer`
+
+**Pre-flight:** pulse-deploy-guard PASS (all 5 layers green, 0 blockers).
+
+## Neste sesjon starter med
+Design system fully deployed. Consider impeccable /polish or /critique pass on the new nav/footer/shortcut components for final quality check.
+
+---
+
+## Forrige HEAD
 Siste commit: fix: canvas dimensions sourced from hero-section element directly (54511ea)
 Status: Layer 1 er nå canvas-basert self-drawing price-action linje (erstatter SVG morph). hero-title er italic weight 700 med text-shadow.
 
