@@ -18,7 +18,7 @@
       background: var(--green); flex-shrink: 0;
       animation: ls-pulse 1.2s ease-in-out infinite;
     }
-    .load-bar { height: 100%; background: var(--green); width: 0%; transition: width 20s linear; }
+    .load-bar { height: 100%; background: var(--green); width: 100%; transform-origin: left center; transform: scaleX(0); transition: transform 20s linear; }
 
     .case-input {
       width: 100%;
@@ -102,6 +102,7 @@
     <div class="nav-market-status">
       <span class="nav-status-dot"></span>
       <span class="nav-status-text">MARKET CLOSED</span>
+      <button class="nav-shortcut-hint" onclick="openShortcuts()">?</button>
     </div>
   </nav>
 
@@ -197,14 +198,14 @@
         labelIdx = (labelIdx + 1) % LOAD_LABELS.length;
         document.getElementById('load-label').textContent = LOAD_LABELS[labelIdx];
       }, 5000);
-      requestAnimationFrame(() => { document.getElementById('load-bar').style.width = '88%'; });
+      requestAnimationFrame(() => { document.getElementById('load-bar').style.transform = 'scaleX(0.88)'; });
     }
 
     function stopLoadLabels() {
       clearInterval(labelTimer);
       const bar = document.getElementById('load-bar');
       bar.style.transition = 'none';
-      bar.style.width = '0%';
+      bar.style.transform = 'scaleX(0)';
     }
 
     function renderResults(data) {

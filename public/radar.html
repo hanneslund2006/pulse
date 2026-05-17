@@ -18,7 +18,7 @@
       background: var(--green); flex-shrink: 0;
       animation: ls-pulse 1.2s ease-in-out infinite;
     }
-    .load-bar { height: 100%; background: var(--green); width: 0%; transition: width 25s linear; }
+    .load-bar { height: 100%; background: var(--green); width: 100%; transform-origin: left center; transform: scaleX(0); transition: transform 25s linear; }
 
     /* Radar log */
     .log-entry {
@@ -53,8 +53,8 @@
       background: var(--surface); border: 1px solid var(--border);
       border-radius: var(--radius-lg);
       padding: 20px 24px;
-      opacity: 0; animation: fadeUp 0.1s linear linear forwards;
-      transition: border-color 75ms linear linear, box-shadow 75ms linear linear;
+      opacity: 0; animation: fadeUp 0.3s var(--ease-out-expo) forwards;
+      transition: border-color 75ms linear, box-shadow 75ms linear;
     }
     .radar-card:hover { border-color: rgba(16,185,129,0.30); box-shadow: 0 0 0 1px rgba(16,185,129,0.10), 0 0 20px rgba(16,185,129,0.06); }
     .radar-header { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
@@ -84,6 +84,7 @@
     <div class="nav-market-status">
       <span class="nav-status-dot"></span>
       <span class="nav-status-text">MARKET CLOSED</span>
+      <button class="nav-shortcut-hint" onclick="openShortcuts()">?</button>
     </div>
   </nav>
 
@@ -243,14 +244,14 @@
         document.getElementById('load-label').textContent = LOAD_LABELS[labelIdx];
       }, 6000);
       const bar = document.getElementById('load-bar');
-      requestAnimationFrame(() => { bar.style.width = '88%'; });
+      requestAnimationFrame(() => { bar.style.transform = 'scaleX(0.88)'; });
     }
 
     function stopLoadLabels() {
       clearInterval(labelTimer);
       const bar = document.getElementById('load-bar');
       bar.style.transition = 'none';
-      bar.style.width = '0%';
+      bar.style.transform = 'scaleX(0)';
     }
 
     let fetching = false;

@@ -158,7 +158,7 @@ async function fetchAndCache(ticker, cacheKey) {
                      (typeof safe.estimates.earningsDate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(safe.estimates.earningsDate));
 
   if (shouldCache) {
-    cache.set(cacheKey, safe, 60 * 60 * 24);
+    cache.set(cacheKey, safe, 60 * 60 * 6);
     console.log(`[earnings-play] Cached: ${cacheKey} (earningsDate: ${safe.estimates.earningsDate || 'none'})`);
   } else {
     console.warn(`[earnings-play] Skipping cache: invalid earningsDate format`);
