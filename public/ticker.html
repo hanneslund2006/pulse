@@ -1,13 +1,12 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PULSE — Ticker</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <title>TICKER — PULSE</title>
   <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=DM+Sans:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
   <script src="sanitize.js"></script>
   <style>
     body { padding: 32px 20px 64px; }
@@ -178,9 +177,16 @@
   </style>
 </head>
 <body>
-  <div class="container">
+<nav class="pulse-nav">
+  <a href="index.html" class="nav-logo">PULSE</a>
+  <span class="nav-page-name">TICKER</span>
+  <div class="nav-market-status">
+    <span class="nav-status-dot"></span>
+    <span class="nav-status-text">MARKET CLOSED</span>
+  </div>
+</nav>
 
-    <a href="index.html" class="back anim" style="animation-delay: 0ms;">← TILBAKE</a>
+  <div class="container">
 
     <div class="page-title anim" style="animation-delay: 40ms;">TICKER</div>
     <div class="page-subtitle anim" style="animation-delay: 80ms;">Analyze a stock in five layers.</div>
@@ -204,7 +210,7 @@
           autocapitalize="characters"
           spellcheck="false"
         >
-        <button id="add-btn" class="add-btn" onclick="addToWatchlist()" disabled title="Kjør analyse først">+</button>
+        <button id="add-btn" class="add-btn" onclick="addToWatchlist()" disabled title="Run analysis first">+</button>
       </div>
     </div>
 
@@ -230,7 +236,7 @@
       <div id="multi-model-section" style="display:none; margin-bottom:10px;">
         <div class="layer-card" style="border-color:#7F77DD40;background:#7F77DD08;">
           <div class="layer-header">
-            <div class="layer-name">ANDRE MODELLER</div>
+            <div class="layer-name">OTHER MODELS</div>
             <div id="multi-model-status" style="font-family:'DM Sans',sans-serif;font-size:10px;color:var(--text-muted);">LOADING...</div>
           </div>
           <div id="multi-model-content"></div>
@@ -238,7 +244,7 @@
       </div>
 
       <div class="rr-card" id="rr-calc" style="display:none;">
-        <div class="rr-title">R/R KALKULATOR</div>
+        <div class="rr-title">R/R CALCULATOR</div>
         <div class="rr-inputs">
           <div class="rr-field">
             <div class="rr-label">ENTRY $</div>
@@ -260,8 +266,32 @@
       </div>
     </div>
 
-    <div style="text-align:center;padding:32px 0 0;font-family:'DM Sans',sans-serif;font-size:11px;color:var(--text-muted);letter-spacing:0.08em;">NOT FINANCIAL ADVICE</div>
   </div>
+
+<footer class="pulse-footer">
+  <span>NOT FINANCIAL ADVICE</span>
+  <span>PULSE © 2026</span>
+</footer>
+
+<div class="shortcut-overlay" id="shortcut-overlay">
+  <div class="shortcut-modal">
+    <div class="shortcut-header">
+      <span class="data-label">Keyboard shortcuts</span>
+      <button class="shortcut-close" onclick="closeShortcuts()">ESC</button>
+    </div>
+    <div class="shortcut-list">
+      <div class="shortcut-row"><kbd>M</kbd><span>Market report</span></div>
+      <div class="shortcut-row"><kbd>S</kbd><span>Sectors</span></div>
+      <div class="shortcut-row"><kbd>T</kbd><span>Ticker analysis</span></div>
+      <div class="shortcut-row"><kbd>E</kbd><span>Earnings play</span></div>
+      <div class="shortcut-row"><kbd>H</kbd><span>History</span></div>
+      <div class="shortcut-row"><kbd>R</kbd><span>Radar</span></div>
+      <div class="shortcut-row"><kbd>L</kbd><span>Trade log</span></div>
+      <div class="shortcut-row"><kbd>C</kbd><span>Screener</span></div>
+      <div class="shortcut-row"><kbd>?</kbd><span>This overlay</span></div>
+    </div>
+  </div>
+</div>
 
   <script>
     // ── Fetch with timeout ─────────────────────────────────────
@@ -354,7 +384,7 @@
       if (!lastFoundTicker) return;
       const list = getWatchlist();
       if (list.includes(lastFoundTicker)) return;
-      if (list.length >= 10) { alert('Watchlist er full (maks 10 tickers).'); return; }
+      if (list.length >= 10) { alert('Watchlist is full (max 10 tickers).'); return; }
       list.push(lastFoundTicker);
       saveWatchlist(list);
       renderWatchlist();
@@ -375,7 +405,7 @@
     const BADGE_BG          = { 'Bullish': 'rgba(16,185,129,0.10)', 'Bearish': 'rgba(239,68,68,0.10)', 'Nøytral': 'rgba(74,81,102,0.12)' };
 
     // ── Multi-step loading ─────────────────────────────────────
-    const LOAD_STEPS = ['SØKER NYHETER', 'SJEKKER EARNINGS', 'SJEKKER INSIDER', 'BEREGNER SENTIMENT'];
+    const LOAD_STEPS = ['SEARCHING NEWS', 'CHECKING EARNINGS', 'CHECKING INSIDER', 'CALCULATING SENTIMENT'];
     const loadState  = { stepTimer: null, elapsedTimer: null, startTime: 0, stepIdx: 0 };
 
     function startLoading() {
@@ -448,7 +478,7 @@
 
         bar.innerHTML = `<span class="price-bar-val">$${priceStr}</span>
           <span class="price-bar-chg ${cls}">${sign}${q.changePercent.toFixed(2)}%</span>
-          <span class="price-bar-delay">15-MIN FORSINKET</span>`;
+          <span class="price-bar-delay">15-MIN DELAYED</span>`;
         bar.classList.add('visible');
       } catch (e) {
         if (e.name === 'AbortError') {
@@ -516,7 +546,7 @@
         const pvs      = (t.priceVsSma200pct >= 0 ? '+' : '') + t.priceVsSma200pct + '%';
         techCard.innerHTML = `<div class="technical-card" style="border-color:${trendHex}40;background:${trendHex}08;">
           <div class="technical-header">
-            <div class="technical-title">TEKNISK ANALYSE</div>
+            <div class="technical-title">TECHNICAL ANALYSIS</div>
             <div class="badge" style="color: ${trendHex}; background: ${trendBg};">${sanitizeText(t.trend.toUpperCase())}</div>
           </div>
           <div class="tech-grid">
@@ -551,7 +581,7 @@
       const addBtn = document.getElementById('add-btn');
       const inList = getWatchlist().includes(data.ticker);
       addBtn.disabled = inList;
-      addBtn.title = inList ? 'Allerede i watchlist' : 'Legg til i watchlist';
+      addBtn.title = inList ? 'Already in watchlist' : 'Add to watchlist';
 
       fetchRealPrice(data.ticker);
     }
@@ -564,7 +594,7 @@
     }
     function setTimeoutError(ticker) {
       const el = document.getElementById('error-msg');
-      el.innerHTML = 'Forespørselen tok for lang tid. <button onclick="runSearch(\'' + sanitizeText(ticker) + '\')" style="background:none;border:1px solid var(--green);color:var(--green);font-family:\'DM Sans\',sans-serif;font-size:11px;letter-spacing:0.04em;cursor:pointer;padding:4px 10px;border-radius:3px;margin-left:8px;">TRY AGAIN</button>';
+      el.innerHTML = 'Request timed out. <button onclick="runSearch(\'' + sanitizeText(ticker) + '\')" style="background:none;border:1px solid var(--green);color:var(--green);font-family:\'DM Sans\',sans-serif;font-size:11px;letter-spacing:0.04em;cursor:pointer;padding:4px 10px;border-radius:3px;margin-left:8px;">TRY AGAIN</button>';
       el.classList.add('visible');
     }
 
@@ -651,7 +681,7 @@
 
         if (!valid.length) { section.style.display = 'none'; return; }
 
-        status.textContent = 'FULLFØRT';
+        status.textContent = 'COMPLETE';
         content.innerHTML = valid.map(o => {
           const color = COLORS[o.verdict] || '#4A5166';
           return `<div style="display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-top:1px solid var(--border);">
@@ -710,6 +740,43 @@
     input.addEventListener('keydown', e => {
       if (e.key === 'Enter') { const v = input.value.trim(); if (v) runSearch(v); }
     });
+
+    function setMarketStatus() {
+      const now = new Date();
+      const day = now.getUTCDay();
+      const hour = now.getUTCHours();
+      const min = now.getUTCMinutes();
+      const isWeekday = day >= 1 && day <= 5;
+      const afterOpen = hour > 13 || (hour === 13 && min >= 30);
+      const beforeClose = hour < 20;
+      const isOpen = isWeekday && afterOpen && beforeClose;
+      const dot = document.querySelector('.nav-status-dot');
+      const text = document.querySelector('.nav-status-text');
+      if (dot && text) {
+        dot.classList.toggle('open', isOpen);
+        text.textContent = isOpen ? 'MARKET OPEN' : 'MARKET CLOSED';
+        text.style.color = isOpen ? 'var(--green)' : 'var(--text-muted)';
+      }
+    }
+
+    function openShortcuts() {
+      document.getElementById('shortcut-overlay').classList.add('active');
+    }
+
+    function closeShortcuts() {
+      document.getElementById('shortcut-overlay').classList.remove('active');
+    }
+
+    document.addEventListener('keydown', function(e) {
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+      const key = e.key.toLowerCase();
+      if (key === '?') { e.preventDefault(); openShortcuts(); return; }
+      if (key === 'escape') { closeShortcuts(); return; }
+      const nav = { m: 'market.html', s: 'sektor.html', t: 'ticker.html', e: 'earnings-play.html', h: 'historikk.html', r: 'radar.html', l: 'logg.html', c: 'screener.html' };
+      if (nav[key]) window.location.href = nav[key];
+    });
+
+    setMarketStatus();
   </script>
 <script src="bg.js"></script>
 <script src="live.js"></script>

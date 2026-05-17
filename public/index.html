@@ -3,11 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PULSE — Market Sentiment for Swing Traders</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <title>HOME — PULSE</title>
   <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=DM+Sans:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
   <script>document.documentElement.classList.add('js')</script>
   <noscript><style>.feature-card, .feature-explain { opacity: 1 !important; transform: none !important; }</style></noscript>
   <style>
@@ -21,13 +20,13 @@
       padding: 0 24px 100px;
     }
 
-    /* ─── NAV ─── */
-    nav {
+    /* ─── NAV (inline, non-sticky, hidden by pulse-nav replacement) ─── */
+    nav.legacy-nav {
       display: flex;
       align-items: center;
       padding: 32px 0 0;
     }
-    .nav-logo {
+    .nav-logo-legacy {
       font-family: var(--font-body);
       font-weight: 700;
       font-size: 13px;
@@ -128,7 +127,7 @@
       font-weight: 500;
     }
 
-    /* ─── MORGENBRIEF BUTTON ─── */
+    /* ─── MORNING BRIEF BUTTON ─── */
     .morgen-btn {
       display: inline-flex;
       align-items: center;
@@ -1196,7 +1195,6 @@
         font-size: 44px;
         margin-bottom: 60px;
       }
-
       .hiw-step {
         margin-bottom: 64px;
       }
@@ -1372,16 +1370,87 @@
       50%       { opacity: 0.3; }
     }
 
+    /* ─── SHORTCUT OVERLAY ─── */
+    .shortcut-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.72);
+      z-index: 9000;
+      align-items: center;
+      justify-content: center;
+    }
+    .shortcut-overlay.active {
+      display: flex;
+    }
+    .shortcut-modal {
+      background: var(--bg-surface, var(--surface));
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 28px;
+      min-width: 280px;
+      box-shadow: 0 24px 80px rgba(0,0,0,0.7);
+    }
+    .shortcut-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+    .shortcut-close {
+      font-family: 'Space Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 0.12em;
+      color: var(--text-muted);
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 4px 8px;
+      cursor: pointer;
+    }
+    .shortcut-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .shortcut-row {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .shortcut-row kbd {
+      font-family: 'Space Mono', monospace;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-primary);
+      background: rgba(255,255,255,0.06);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 4px 10px;
+      min-width: 28px;
+      text-align: center;
+    }
+    .shortcut-row span {
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
   </style>
 </head>
 <body>
 
-<div class="page">
+<nav class="pulse-nav">
+  <a href="index.html" class="nav-logo">PULSE</a>
+  <span class="nav-page-name">HOME</span>
+  <div class="nav-market-status">
+    <span class="nav-status-dot"></span>
+    <span class="nav-status-text">MARKET CLOSED</span>
+  </div>
+</nav>
 
-  <!-- NAV -->
-  <nav>
-    <div class="nav-logo">PULSE</div>
-  </nav>
+<div class="page">
 
   <!-- HERO SECTION -->
   <section class="hero-section">
@@ -1403,7 +1472,7 @@
       </h1>
       <p class="hero-desc" style="opacity:0">Every session starts the same. PULSE ends it faster.</p>
       <div class="hero-cta-wrap">
-        <a href="market.html" class="morgen-btn"><span class="live-dot"></span>GET TODAY'S REPORT →<span class="live-label">LIVE</span></a>
+        <a href="market.html" class="morgen-btn"><span class="live-dot"></span>MORNING BRIEF →<span class="live-label">LIVE</span></a>
       </div>
     </div>
 
@@ -1518,7 +1587,7 @@
 
       <div class="hiw-visual-card">
         <div class="hiw-card-header">
-          <div class="hiw-card-label">SENTIMENT · I DAG</div>
+          <div class="hiw-card-label">SENTIMENT · TODAY</div>
           <div class="hiw-card-status">LIVE</div>
         </div>
 
@@ -1571,7 +1640,7 @@
 
       <div class="hiw-visual-card">
         <div class="hiw-card-header">
-          <div class="hiw-card-label">NVDA · 5-LAGS ANALYSE</div>
+          <div class="hiw-card-label">NVDA · 5-LAYER ANALYSIS</div>
           <div class="hiw-card-status">RADAR</div>
         </div>
 
@@ -2040,9 +2109,9 @@
   </section>
 
   <!-- FOOTER -->
-  <footer>
-    <div class="footer-brand">PULSE · 2026</div>
-    <div class="footer-note">Not financial advice</div>
+  <footer class="pulse-footer">
+    <span>NOT FINANCIAL ADVICE</span>
+    <span>PULSE © 2026</span>
   </footer>
 
 </div>
@@ -2098,7 +2167,7 @@
     if (!rail || !rail.querySelectorAll('.t-item').length) {
       tickerRetries++;
       if (tickerRetries > 10) {
-        track.innerHTML = '<div class="hero-tick-item" style="opacity:0.5">Markedsdata utilgjengelig</div>';
+        track.innerHTML = '<div class="hero-tick-item" style="opacity:0.5">Market data unavailable</div>';
         showErrorToast('Could not load market data. Try reloading the page.');
         console.error('Ticker initialization failed after 10 retries');
         return;
@@ -2115,7 +2184,7 @@
     if (!hasValidContent) {
       tickerRetries++;
       if (tickerRetries > 10) {
-        track.innerHTML = '<div class="hero-tick-item" style="opacity:0.5">Markedsdata utilgjengelig</div>';
+        track.innerHTML = '<div class="hero-tick-item" style="opacity:0.5">Market data unavailable</div>';
         showErrorToast('Could not load market data. Try reloading the page.');
         console.error('Ticker initialization failed: invalid content after 10 retries');
         return;
@@ -2216,28 +2285,43 @@
 
   document.querySelectorAll('.feature-row').forEach(r => featureIO.observe(r));
 
-  /* ─── KEYBOARD SHORTCUTS ─── */
-  document.addEventListener('keydown', (e) => {
-    // Skip if modifier keys are pressed (Ctrl, Cmd, Alt) or input is focused
-    if (e.ctrlKey || e.metaKey || e.altKey) return;
-    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) return;
-
-    const shortcuts = {
-      'm': 'market.html',
-      't': 'ticker.html',
-      's': 'sektor.html',
-      'r': 'radar.html',
-      'e': 'earnings-play.html',
-      'l': 'logg.html',
-      'h': 'historikk.html',
-      'c': 'screener.html'
-    };
-
-    if (shortcuts[e.key]) {
-      e.preventDefault();
-      window.location.href = shortcuts[e.key];
+  /* ─── MARKET STATUS ─── */
+  function setMarketStatus() {
+    const now = new Date();
+    const day = now.getUTCDay();
+    const hour = now.getUTCHours();
+    const min = now.getUTCMinutes();
+    const isWeekday = day >= 1 && day <= 5;
+    const afterOpen = hour > 13 || (hour === 13 && min >= 30);
+    const beforeClose = hour < 20;
+    const isOpen = isWeekday && afterOpen && beforeClose;
+    const dot = document.querySelector('.nav-status-dot');
+    const text = document.querySelector('.nav-status-text');
+    if (dot && text) {
+      dot.classList.toggle('open', isOpen);
+      text.textContent = isOpen ? 'MARKET OPEN' : 'MARKET CLOSED';
+      text.style.color = isOpen ? 'var(--green)' : 'var(--text-muted)';
     }
+  }
+
+  function openShortcuts() {
+    document.getElementById('shortcut-overlay').classList.add('active');
+  }
+
+  function closeShortcuts() {
+    document.getElementById('shortcut-overlay').classList.remove('active');
+  }
+
+  document.addEventListener('keydown', function(e) {
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+    const key = e.key.toLowerCase();
+    if (key === '?') { e.preventDefault(); openShortcuts(); return; }
+    if (key === 'escape') { closeShortcuts(); return; }
+    const nav = { m: 'market.html', s: 'sektor.html', t: 'ticker.html', e: 'earnings-play.html', h: 'historikk.html', r: 'radar.html', l: 'logg.html', c: 'screener.html' };
+    if (nav[key]) window.location.href = nav[key];
   });
+
+  setMarketStatus();
 </script>
 
 <script src="bg.js"></script>
@@ -2397,6 +2481,25 @@
   setTimeout(type, 300);
 })();
 </script>
+<div class="shortcut-overlay" id="shortcut-overlay">
+  <div class="shortcut-modal">
+    <div class="shortcut-header">
+      <span class="data-label">Keyboard shortcuts</span>
+      <button class="shortcut-close" onclick="closeShortcuts()">ESC</button>
+    </div>
+    <div class="shortcut-list">
+      <div class="shortcut-row"><kbd>M</kbd><span>Market report</span></div>
+      <div class="shortcut-row"><kbd>S</kbd><span>Sectors</span></div>
+      <div class="shortcut-row"><kbd>T</kbd><span>Ticker analysis</span></div>
+      <div class="shortcut-row"><kbd>E</kbd><span>Earnings play</span></div>
+      <div class="shortcut-row"><kbd>H</kbd><span>History</span></div>
+      <div class="shortcut-row"><kbd>R</kbd><span>Radar</span></div>
+      <div class="shortcut-row"><kbd>L</kbd><span>Trade log</span></div>
+      <div class="shortcut-row"><kbd>C</kbd><span>Screener</span></div>
+      <div class="shortcut-row"><kbd>?</kbd><span>This overlay</span></div>
+    </div>
+  </div>
+</div>
 <script src="sanitize.js"></script>
 <script src="live.js"></script>
 <script defer src="/_vercel/insights/script.js"></script>

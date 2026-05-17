@@ -1,13 +1,12 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PULSE — Radar</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <title>RADAR — PULSE</title>
   <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=DM+Sans:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
   <script src="sanitize.js"></script>
   <style>
     body { padding: 32px 20px 64px; }
@@ -79,9 +78,16 @@
   </style>
 </head>
 <body>
-  <div class="container">
+  <nav class="pulse-nav">
+    <a href="index.html" class="nav-logo">PULSE</a>
+    <span class="nav-page-name">RADAR</span>
+    <div class="nav-market-status">
+      <span class="nav-status-dot"></span>
+      <span class="nav-status-text">MARKET CLOSED</span>
+    </div>
+  </nav>
 
-    <a href="index.html" class="back anim" style="animation-delay:0ms;">← TILBAKE</a>
+  <div class="container">
 
     <div class="page-title anim" style="animation-delay:40ms;">RADAR</div>
     <div class="page-subtitle anim" style="animation-delay:80ms;">Daily swing setup screening — short float, momentum and catalyst.</div>
@@ -100,14 +106,20 @@
     <div class="load-wrap" id="load-wrap">
       <div class="load-step">
         <div class="ls-dot"></div>
-        <span id="load-label">SCREENER MARKEDET</span>
+        <span id="load-label">SCANNING MARKET</span>
       </div>
       <div class="load-bar-wrap"><div class="load-bar" id="load-bar"></div></div>
     </div>
 
     <div id="results-wrap" style="display:none;">
-      <div class="section-title">SWING-KANDIDATER</div>
-      <div class="radar-list" id="radar-list"></div>
+      <div class="section-title">SWING CANDIDATES</div>
+      <div class="radar-list" id="radar-list">
+        <div class="empty-state" id="radar-empty" style="display:none;">
+          <div class="empty-icon">—</div>
+          <p class="empty-title">No candidates</p>
+          <p class="empty-desc">No trade setups match current criteria.</p>
+        </div>
+      </div>
       <div style="margin-top:14px;">
         <button class="btn" onclick="clearAndRefetch()">RUN NEW SCREENING</button>
       </div>
@@ -115,11 +127,35 @@
 
     <!-- Radar log -->
     <div id="radar-log-section" style="margin-top:32px; display:none;">
-      <div class="section-title" style="margin-bottom:10px;">HISTORIKK</div>
+      <div class="section-title" style="margin-bottom:10px;">HISTORY</div>
       <div id="radar-log-list"></div>
     </div>
 
-    <div style="text-align:center;padding:32px 0 0;font-family:'DM Sans',sans-serif;font-size:11px;color:var(--text-muted);letter-spacing:0.08em;">NOT FINANCIAL ADVICE</div>
+  </div>
+
+  <footer class="pulse-footer">
+    <span>NOT FINANCIAL ADVICE</span>
+    <span>PULSE © 2026</span>
+  </footer>
+
+  <div class="shortcut-overlay" id="shortcut-overlay">
+    <div class="shortcut-modal">
+      <div class="shortcut-header">
+        <span class="data-label">Keyboard shortcuts</span>
+        <button class="shortcut-close" onclick="closeShortcuts()">ESC</button>
+      </div>
+      <div class="shortcut-list">
+        <div class="shortcut-row"><kbd>M</kbd><span>Market report</span></div>
+        <div class="shortcut-row"><kbd>S</kbd><span>Sectors</span></div>
+        <div class="shortcut-row"><kbd>T</kbd><span>Ticker analysis</span></div>
+        <div class="shortcut-row"><kbd>E</kbd><span>Earnings play</span></div>
+        <div class="shortcut-row"><kbd>H</kbd><span>History</span></div>
+        <div class="shortcut-row"><kbd>R</kbd><span>Radar</span></div>
+        <div class="shortcut-row"><kbd>L</kbd><span>Trade log</span></div>
+        <div class="shortcut-row"><kbd>C</kbd><span>Screener</span></div>
+        <div class="shortcut-row"><kbd>?</kbd><span>This overlay</span></div>
+      </div>
+    </div>
   </div>
 
   <script>
@@ -134,7 +170,7 @@
     const TODAY     = new Date().toISOString().slice(0, 10);
     const CACHE_KEY = 'pulse_radar_' + TODAY;
 
-    const LOAD_LABELS = ['SCREENER MARKEDET', 'SJEKKER SHORT FLOAT', 'VURDERER KATALYSATOR', 'VELGER BESTE SETUP'];
+    const LOAD_LABELS = ['SCANNING MARKET', 'CHECKING SHORT FLOAT', 'EVALUATING CATALYST', 'SELECTING BEST SETUP'];
     let labelIdx = 0, labelTimer = null;
 
     function showError(msg) {
@@ -144,7 +180,7 @@
     }
     function showTimeoutError() {
       const el = document.getElementById('error-msg');
-      el.innerHTML = 'Forespørselen tok for lang tid. <button onclick="fetchRadar()" style="background:none;border:1px solid var(--green);color:var(--green);font-family:\'DM Sans\',sans-serif;font-size:11px;letter-spacing:0.04em;cursor:pointer;padding:4px 10px;border-radius:3px;margin-left:8px;">TRY AGAIN</button>';
+      el.innerHTML = 'Request timed out. <button onclick="fetchRadar()" style="background:none;border:1px solid var(--green);color:var(--green);font-family:\'DM Sans\',sans-serif;font-size:11px;letter-spacing:0.04em;cursor:pointer;padding:4px 10px;border-radius:3px;margin-left:8px;">TRY AGAIN</button>';
       el.classList.add('visible');
     }
     function clearError() {
@@ -156,7 +192,20 @@
 
     function renderRadar(data) {
       const list = document.getElementById('radar-list');
-      list.innerHTML = data.map((r, i) => {
+
+      if (!data || data.length === 0) {
+        document.getElementById('radar-empty').style.display = 'flex';
+        list.classList.add('visible');
+        document.getElementById('empty-state').style.display = 'none';
+        document.getElementById('load-wrap').classList.remove('visible');
+        document.getElementById('results-wrap').style.display = 'block';
+        stopLoadLabels();
+        return;
+      }
+
+      document.getElementById('radar-empty').style.display = 'none';
+
+      list.innerHTML = '<div class="empty-state" id="radar-empty" style="display:none;"><div class="empty-icon">—</div><p class="empty-title">No candidates</p><p class="empty-desc">No trade setups match current criteria.</p></div>' + data.map((r, i) => {
         const dir   = r.direction || 'Bullish';
         const color = COLORS[dir] || '#BA7517';
         const bg    = BG[dir]    || 'rgba(186,117,23,0.1)';
@@ -321,7 +370,7 @@
 
       list.innerHTML = past.slice(0, 7).map(entry => {
         const dateLbl = new Date(entry.date + 'T12:00:00')
-          .toLocaleDateString('no-NO', { weekday: 'short', day: 'numeric', month: 'short' })
+          .toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short' })
           .toUpperCase();
 
         const picksHtml = entry.picks.map(p => {
@@ -360,6 +409,43 @@
 
     // Initialize citation handlers
     initCitationHandlers();
+
+    function setMarketStatus() {
+      const now = new Date();
+      const day = now.getUTCDay();
+      const hour = now.getUTCHours();
+      const min = now.getUTCMinutes();
+      const isWeekday = day >= 1 && day <= 5;
+      const afterOpen = hour > 13 || (hour === 13 && min >= 30);
+      const beforeClose = hour < 20;
+      const isOpen = isWeekday && afterOpen && beforeClose;
+      const dot = document.querySelector('.nav-status-dot');
+      const text = document.querySelector('.nav-status-text');
+      if (dot && text) {
+        dot.classList.toggle('open', isOpen);
+        text.textContent = isOpen ? 'MARKET OPEN' : 'MARKET CLOSED';
+        text.style.color = isOpen ? 'var(--green)' : 'var(--text-muted)';
+      }
+    }
+
+    function openShortcuts() {
+      document.getElementById('shortcut-overlay').classList.add('active');
+    }
+
+    function closeShortcuts() {
+      document.getElementById('shortcut-overlay').classList.remove('active');
+    }
+
+    document.addEventListener('keydown', function(e) {
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+      const key = e.key.toLowerCase();
+      if (key === '?') { e.preventDefault(); openShortcuts(); return; }
+      if (key === 'escape') { closeShortcuts(); return; }
+      const nav = { m: 'market.html', s: 'sektor.html', t: 'ticker.html', e: 'earnings-play.html', h: 'historikk.html', r: 'radar.html', l: 'logg.html', c: 'screener.html' };
+      if (nav[key]) window.location.href = nav[key];
+    });
+
+    setMarketStatus();
   </script>
   <script src="bg.js"></script>
   <script src="live.js"></script>

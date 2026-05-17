@@ -3,11 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PULSE — Market</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <title>MARKET — PULSE</title>
   <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=DM+Sans:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
   <script src="sanitize.js"></script>
   <style>
     body { padding: 32px 20px 64px; }
@@ -231,11 +230,18 @@
   </style>
 </head>
 <body>
+<nav class="pulse-nav">
+  <a href="index.html" class="nav-logo">PULSE</a>
+  <span class="nav-page-name">MARKET</span>
+  <div class="nav-market-status">
+    <span class="nav-status-dot"></span>
+    <span class="nav-status-text">MARKET CLOSED</span>
+  </div>
+</nav>
+
   <div class="container">
 
-    <a href="index.html" class="back anim" style="animation-delay: 0ms;">← TILBAKE</a>
-
-    <div class="page-title anim" style="animation-delay: 40ms;">MARKED</div>
+    <div class="page-title anim" style="animation-delay: 40ms;">MARKET</div>
     <div class="page-date anim" id="page-date" style="animation-delay: 80ms;">—</div>
 
     <!-- Always-visible live chips -->
@@ -266,7 +272,7 @@
       <!-- Feature 1: Regime banner -->
       <div class="regime-banner" id="regime-banner" style="display:none;">
         <div class="regime-left">
-          <div class="regime-label">MARKEDSREGIME</div>
+          <div class="regime-label">MARKET REGIME</div>
           <div class="regime-value" id="regime-value">—</div>
         </div>
         <div class="regime-vix" id="regime-vix"></div>
@@ -279,7 +285,7 @@
 
       <div class="verdict-card" id="verdict-card">
         <div class="verdict-left">
-          <div class="verdict-label">KONKLUSJON</div>
+          <div class="verdict-label">CONCLUSION</div>
           <div class="verdict-text" id="verdict-text">—</div>
         </div>
         <div class="verdict-right">
@@ -292,19 +298,43 @@
 
       <!-- Earnings calendar -->
       <div class="earnings-section" id="earnings-section" style="display:none;">
-        <div class="section-title">EARNINGS DENNE UKEN</div>
+        <div class="section-title">EARNINGS THIS WEEK</div>
         <div id="earnings-list"></div>
       </div>
 
       <!-- Feature 2: Macro calendar -->
       <div class="macro-section" id="macro-section" style="display:none;"></div>
 
-      <button class="btn" id="refresh-btn" onclick="clearAndRefetch()">HENT NY RAPPORT</button>
+      <button class="btn" id="refresh-btn" onclick="clearAndRefetch()">REFRESH REPORT</button>
 
     </div>
 
-    <div style="text-align:center;padding:32px 0 0;font-family:'DM Sans',sans-serif;font-size:11px;color:var(--text-muted);letter-spacing:0.08em;">NOT FINANCIAL ADVICE</div>
   </div>
+
+<footer class="pulse-footer">
+  <span>NOT FINANCIAL ADVICE</span>
+  <span>PULSE © 2026</span>
+</footer>
+
+<div class="shortcut-overlay" id="shortcut-overlay">
+  <div class="shortcut-modal">
+    <div class="shortcut-header">
+      <span class="data-label">Keyboard shortcuts</span>
+      <button class="shortcut-close" onclick="closeShortcuts()">ESC</button>
+    </div>
+    <div class="shortcut-list">
+      <div class="shortcut-row"><kbd>M</kbd><span>Market report</span></div>
+      <div class="shortcut-row"><kbd>S</kbd><span>Sectors</span></div>
+      <div class="shortcut-row"><kbd>T</kbd><span>Ticker analysis</span></div>
+      <div class="shortcut-row"><kbd>E</kbd><span>Earnings play</span></div>
+      <div class="shortcut-row"><kbd>H</kbd><span>History</span></div>
+      <div class="shortcut-row"><kbd>R</kbd><span>Radar</span></div>
+      <div class="shortcut-row"><kbd>L</kbd><span>Trade log</span></div>
+      <div class="shortcut-row"><kbd>C</kbd><span>Screener</span></div>
+      <div class="shortcut-row"><kbd>?</kbd><span>This overlay</span></div>
+    </div>
+  </div>
+</div>
 
   <script>
     // ── Fetch with timeout ─────────────────────────────────────
@@ -347,7 +377,7 @@
 
     // ── Live price chips ─────────────────────────────────────
     const LIVE_SYMS   = ['^GSPC', '^NDX', '^VIX', '^TNX'];
-    const LIVE_LABELS = { '^GSPC': 'S&P 500', '^NDX': 'NDX 100', '^VIX': 'VIX', '^TNX': '10-ÅRS' };
+    const LIVE_LABELS = { '^GSPC': 'S&P 500', '^NDX': 'NDX 100', '^VIX': 'VIX', '^TNX': '10-YR' };
     let lastClaudeKeydata = null;
 
     function fmtChipPrice(p, sym) {
@@ -418,7 +448,7 @@
     window.__onQuotesReady = () => fetchAndInjectRealPrices();
 
     // ── Multi-step loading ───────────────────────────────────
-    const LOAD_STEPS = ['SØKER NYHETER', 'ANALYZING SEKTORER', 'SCORER SENTIMENT', 'FORMATERER RAPPORT'];
+    const LOAD_STEPS = ['SEARCHING NEWS', 'ANALYZING SECTORS', 'SCORING SENTIMENT', 'FORMATTING REPORT'];
     const loadState  = { stepTimer: null, elapsedTimer: null, startTime: 0, stepIdx: 0 };
 
     function startLoading() {
@@ -473,7 +503,7 @@
     }
     function showTimeoutError() {
       const el = document.getElementById('error-msg');
-      el.innerHTML = 'Forespørselen tok for lang tid. <button onclick="fetchReport()" style="background:none;border:1px solid var(--green);color:var(--green);font-family:\'DM Sans\',sans-serif;font-size:11px;letter-spacing:0.04em;cursor:pointer;padding:4px 10px;border-radius:3px;margin-left:8px;">TRY AGAIN</button>';
+      el.innerHTML = 'Request timed out. <button onclick="fetchReport()" style="background:none;border:1px solid var(--green);color:var(--green);font-family:\'DM Sans\',sans-serif;font-size:11px;letter-spacing:0.04em;cursor:pointer;padding:4px 10px;border-radius:3px;margin-left:8px;">TRY AGAIN</button>';
       el.classList.add('visible');
     }
     function clearError() {
@@ -553,7 +583,7 @@
       const btn  = document.getElementById('fetch-btn');
       const rbtn = document.getElementById('refresh-btn');
       if (btn)  btn.disabled  = true;
-      if (rbtn) { rbtn.disabled = true; rbtn.textContent = 'HENTER...'; }
+      if (rbtn) { rbtn.disabled = true; rbtn.textContent = 'LOADING...'; }
 
       startLoading();
 
@@ -587,7 +617,7 @@
       } finally {
         fetching = false;
         if (btn)  btn.disabled  = false;
-        if (rbtn) { rbtn.disabled = false; rbtn.textContent = 'HENT NY RAPPORT'; }
+        if (rbtn) { rbtn.disabled = false; rbtn.textContent = 'REFRESH REPORT'; }
       }
     }
 
@@ -598,7 +628,7 @@
 
     // Set date label
     document.getElementById('page-date').textContent = new Date()
-      .toLocaleDateString('no-NO', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
+      .toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
       .toUpperCase();
 
     // Load from cache on init
@@ -631,37 +661,37 @@
 
     // ── Macro calendar ────────────────────────────────────────
     const MACRO_EVENTS = [
-      { name: 'FOMC-møte',           date: '2026-04-29', type: 'FOMC' },
-      { name: 'PCE (kjerneinflasjon)', date: '2026-04-30', type: 'PCE' },
-      { name: 'NFP (sysselsetting)',  date: '2026-05-01', type: 'NFP' },
-      { name: 'CPI (inflasjon)',      date: '2026-05-12', type: 'CPI' },
-      { name: 'PCE (kjerneinflasjon)', date: '2026-05-29', type: 'PCE' },
-      { name: 'NFP (sysselsetting)',  date: '2026-06-05', type: 'NFP' },
-      { name: 'CPI (inflasjon)',      date: '2026-06-10', type: 'CPI' },
-      { name: 'FOMC-møte',           date: '2026-06-17', type: 'FOMC' },
-      { name: 'PCE (kjerneinflasjon)', date: '2026-06-26', type: 'PCE' },
-      { name: 'NFP (sysselsetting)',  date: '2026-07-10', type: 'NFP' },
-      { name: 'CPI (inflasjon)',      date: '2026-07-14', type: 'CPI' },
-      { name: 'FOMC-møte',           date: '2026-07-29', type: 'FOMC' },
-      { name: 'PCE (kjerneinflasjon)', date: '2026-07-31', type: 'PCE' },
-      { name: 'NFP (sysselsetting)',  date: '2026-08-07', type: 'NFP' },
-      { name: 'CPI (inflasjon)',      date: '2026-08-12', type: 'CPI' },
-      { name: 'PCE (kjerneinflasjon)', date: '2026-08-28', type: 'PCE' },
-      { name: 'NFP (sysselsetting)',  date: '2026-09-04', type: 'NFP' },
-      { name: 'CPI (inflasjon)',      date: '2026-09-09', type: 'CPI' },
-      { name: 'FOMC-møte',           date: '2026-09-16', type: 'FOMC' },
-      { name: 'PCE (kjerneinflasjon)', date: '2026-09-25', type: 'PCE' },
-      { name: 'NFP (sysselsetting)',  date: '2026-10-02', type: 'NFP' },
-      { name: 'CPI (inflasjon)',      date: '2026-10-13', type: 'CPI' },
-      { name: 'PCE (kjerneinflasjon)', date: '2026-10-30', type: 'PCE' },
-      { name: 'FOMC-møte',           date: '2026-11-04', type: 'FOMC' },
-      { name: 'NFP (sysselsetting)',  date: '2026-11-06', type: 'NFP' },
-      { name: 'CPI (inflasjon)',      date: '2026-11-10', type: 'CPI' },
-      { name: 'PCE (kjerneinflasjon)', date: '2026-11-25', type: 'PCE' },
-      { name: 'NFP (sysselsetting)',  date: '2026-12-04', type: 'NFP' },
-      { name: 'CPI (inflasjon)',      date: '2026-12-09', type: 'CPI' },
-      { name: 'FOMC-møte',           date: '2026-12-16', type: 'FOMC' },
-      { name: 'PCE (kjerneinflasjon)', date: '2026-12-23', type: 'PCE' },
+      { name: 'FOMC Meeting',          date: '2026-04-29', type: 'FOMC' },
+      { name: 'PCE (Core Inflation)',  date: '2026-04-30', type: 'PCE' },
+      { name: 'NFP (Jobs Report)',     date: '2026-05-01', type: 'NFP' },
+      { name: 'CPI (Inflation)',       date: '2026-05-12', type: 'CPI' },
+      { name: 'PCE (Core Inflation)',  date: '2026-05-29', type: 'PCE' },
+      { name: 'NFP (Jobs Report)',     date: '2026-06-05', type: 'NFP' },
+      { name: 'CPI (Inflation)',       date: '2026-06-10', type: 'CPI' },
+      { name: 'FOMC Meeting',          date: '2026-06-17', type: 'FOMC' },
+      { name: 'PCE (Core Inflation)',  date: '2026-06-26', type: 'PCE' },
+      { name: 'NFP (Jobs Report)',     date: '2026-07-10', type: 'NFP' },
+      { name: 'CPI (Inflation)',       date: '2026-07-14', type: 'CPI' },
+      { name: 'FOMC Meeting',          date: '2026-07-29', type: 'FOMC' },
+      { name: 'PCE (Core Inflation)',  date: '2026-07-31', type: 'PCE' },
+      { name: 'NFP (Jobs Report)',     date: '2026-08-07', type: 'NFP' },
+      { name: 'CPI (Inflation)',       date: '2026-08-12', type: 'CPI' },
+      { name: 'PCE (Core Inflation)',  date: '2026-08-28', type: 'PCE' },
+      { name: 'NFP (Jobs Report)',     date: '2026-09-04', type: 'NFP' },
+      { name: 'CPI (Inflation)',       date: '2026-09-09', type: 'CPI' },
+      { name: 'FOMC Meeting',          date: '2026-09-16', type: 'FOMC' },
+      { name: 'PCE (Core Inflation)',  date: '2026-09-25', type: 'PCE' },
+      { name: 'NFP (Jobs Report)',     date: '2026-10-02', type: 'NFP' },
+      { name: 'CPI (Inflation)',       date: '2026-10-13', type: 'CPI' },
+      { name: 'PCE (Core Inflation)',  date: '2026-10-30', type: 'PCE' },
+      { name: 'FOMC Meeting',          date: '2026-11-04', type: 'FOMC' },
+      { name: 'NFP (Jobs Report)',     date: '2026-11-06', type: 'NFP' },
+      { name: 'CPI (Inflation)',       date: '2026-11-10', type: 'CPI' },
+      { name: 'PCE (Core Inflation)',  date: '2026-11-25', type: 'PCE' },
+      { name: 'NFP (Jobs Report)',     date: '2026-12-04', type: 'NFP' },
+      { name: 'CPI (Inflation)',       date: '2026-12-09', type: 'CPI' },
+      { name: 'FOMC Meeting',          date: '2026-12-16', type: 'FOMC' },
+      { name: 'PCE (Core Inflation)',  date: '2026-12-23', type: 'PCE' },
     ];
 
     function renderMacroCalendar() {
@@ -682,11 +712,11 @@
 
       const rows = upcoming.map(e => {
         const dateStr = new Date(e.date + 'T12:00:00')
-          .toLocaleDateString('no-NO', { day: 'numeric', month: 'short' }).toUpperCase();
+          .toLocaleDateString('en-US', { day: 'numeric', month: 'short' }).toUpperCase();
         let badgeHtml;
         if (e.daysUntil === 0)      badgeHtml = `<div class="macro-badge today">TODAY</div>`;
-        else if (e.daysUntil <= 3)  badgeHtml = `<div class="macro-badge soon">OM ${e.daysUntil}D</div>`;
-        else                        badgeHtml = `<div class="macro-badge future">OM ${e.daysUntil}D</div>`;
+        else if (e.daysUntil <= 3)  badgeHtml = `<div class="macro-badge soon">IN ${e.daysUntil}D</div>`;
+        else                        badgeHtml = `<div class="macro-badge future">IN ${e.daysUntil}D</div>`;
 
         return `<div class="macro-row">
           <div class="macro-name">${sanitizeText(e.name)}</div>
@@ -695,7 +725,7 @@
         </div>`;
       }).join('');
 
-      section.innerHTML = `<div class="section-title">MAKROKALENDER</div>${rows}`;
+      section.innerHTML = `<div class="section-title">MACRO CALENDAR</div>${rows}`;
       section.style.display = 'flex';
     }
 
@@ -717,7 +747,7 @@
       if (!wrap || !section) return;
 
       if (!isGappersWindow()) {
-        section.innerHTML = '<div class="gappers-closed">Market is open — gap-data ikke relevant</div>';
+        section.innerHTML = '<div class="gappers-closed">Market is open — gap data not relevant</div>';
         wrap.style.display = 'block';
         return;
       }
@@ -797,7 +827,7 @@
     function fmtDate(iso) {
       if (!iso) return '—';
       const d = new Date(iso + 'T12:00:00');
-      return d.toLocaleDateString('no-NO', { weekday: 'short', day: 'numeric', month: 'short' }).toUpperCase();
+      return d.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short' }).toUpperCase();
     }
 
     function isPast(iso) {
@@ -809,17 +839,17 @@
       const section = document.getElementById('earnings-section');
       const list    = document.getElementById('earnings-list');
       if (!rows || rows.length === 0) {
-        list.innerHTML = '<div class="earnings-empty">Ingen relevante earnings denne uken</div>';
+        list.innerHTML = '<div class="earnings-empty">No relevant earnings this week</div>';
         section.style.display = 'flex';
         return;
       }
       list.innerHTML = rows.map(r => {
         const past = isPast(r.date);
         const timeKey = (r.time || '').toLowerCase();
-        let badgeClass = 'post', badgeText = 'ETTER BØRS';
-        if (past) { badgeClass = 'past'; badgeText = 'AVHOLDT'; }
+        let badgeClass = 'post', badgeText = 'POST-MARKET';
+        if (past) { badgeClass = 'past'; badgeText = 'PAST'; }
         else if (timeKey.includes('før') || timeKey.includes('pre') || timeKey.includes('before')) {
-          badgeClass = 'pre'; badgeText = 'FØR BØRS';
+          badgeClass = 'pre'; badgeText = 'PRE-MARKET';
         }
         return `<div class="earnings-row">
           <div class="earnings-ticker">${sanitizeText(r.ticker)}</div>
@@ -855,6 +885,43 @@
 
     // Initialize citation handlers
     initCitationHandlers();
+
+    function setMarketStatus() {
+      const now = new Date();
+      const day = now.getUTCDay();
+      const hour = now.getUTCHours();
+      const min = now.getUTCMinutes();
+      const isWeekday = day >= 1 && day <= 5;
+      const afterOpen = hour > 13 || (hour === 13 && min >= 30);
+      const beforeClose = hour < 20;
+      const isOpen = isWeekday && afterOpen && beforeClose;
+      const dot = document.querySelector('.nav-status-dot');
+      const text = document.querySelector('.nav-status-text');
+      if (dot && text) {
+        dot.classList.toggle('open', isOpen);
+        text.textContent = isOpen ? 'MARKET OPEN' : 'MARKET CLOSED';
+        text.style.color = isOpen ? 'var(--green)' : 'var(--text-muted)';
+      }
+    }
+
+    function openShortcuts() {
+      document.getElementById('shortcut-overlay').classList.add('active');
+    }
+
+    function closeShortcuts() {
+      document.getElementById('shortcut-overlay').classList.remove('active');
+    }
+
+    document.addEventListener('keydown', function(e) {
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+      const key = e.key.toLowerCase();
+      if (key === '?') { e.preventDefault(); openShortcuts(); return; }
+      if (key === 'escape') { closeShortcuts(); return; }
+      const nav = { m: 'market.html', s: 'sektor.html', t: 'ticker.html', e: 'earnings-play.html', h: 'historikk.html', r: 'radar.html', l: 'logg.html', c: 'screener.html' };
+      if (nav[key]) window.location.href = nav[key];
+    });
+
+    setMarketStatus();
   </script>
 <script src="bg.js"></script>
 <script src="live.js"></script>

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PULSE — Logg</title>
+  <title>TRADE LOG — PULSE</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
@@ -175,11 +175,18 @@
   </style>
 </head>
 <body>
+  <nav class="pulse-nav">
+    <a href="index.html" class="nav-logo">PULSE</a>
+    <span class="nav-page-name">TRADE LOG</span>
+    <div class="nav-market-status">
+      <span class="nav-status-dot"></span>
+      <span class="nav-status-text">MARKET CLOSED</span>
+    </div>
+  </nav>
+
   <div class="container">
 
-    <a href="index.html" class="back anim" style="animation-delay:0ms;">← TILBAKE</a>
-
-    <div class="page-title anim" style="animation-delay:40ms;">LOGG</div>
+    <div class="page-title anim" style="animation-delay:40ms;">TRADE LOG</div>
     <div class="page-subtitle anim" style="animation-delay:80ms;">Log trades, measure setup quality and track P&L over time.</div>
 
     <!-- Stats -->
@@ -207,7 +214,7 @@
     <!-- Add trade form -->
     <div class="form-card anim" style="animation-delay:75ms linear;">
       <div class="form-toggle" id="form-toggle" onclick="toggleForm()">
-        <div class="form-toggle-title">+ LEGG TIL TRADE</div>
+        <div class="form-toggle-title">+ ADD TRADE</div>
         <div class="form-toggle-icon" id="form-icon">+</div>
       </div>
       <div class="form-body" id="form-body">
@@ -218,13 +225,13 @@
             <input type="text" id="f-ticker" placeholder="AAPL" maxlength="10" autocapitalize="characters" spellcheck="false"/>
           </div>
           <div>
-            <label>DATO</label>
+            <label>DATE</label>
             <input type="date" id="f-date"/>
           </div>
         </div>
 
         <div class="form-row-1">
-          <label>RETNING</label>
+          <label>DIRECTION</label>
           <div class="dir-toggle">
             <button class="dir-btn active-long" id="dir-long"  onclick="setDir('long')">LONG</button>
             <button class="dir-btn"             id="dir-short" onclick="setDir('short')">SHORT</button>
@@ -233,7 +240,7 @@
 
         <div class="form-row-3">
           <div>
-            <label>ENTRY PRIS</label>
+            <label>ENTRY PRICE</label>
             <input type="number" id="f-entry" placeholder="0.00" step="0.01" min="0"/>
           </div>
           <div>
@@ -247,7 +254,7 @@
         </div>
 
         <div class="form-row-1">
-          <label>SETUP-KVALITET</label>
+          <label>SETUP QUALITY</label>
           <div class="quality-row" id="quality-row">
             <button class="q-btn" onclick="setQuality(1)">A+</button>
             <button class="q-btn" onclick="setQuality(2)">A</button>
@@ -258,33 +265,38 @@
         </div>
 
         <div class="form-row-1">
-          <label>NOTATER (valgfritt)</label>
-          <textarea id="f-notes" placeholder="Setup-beskrivelse, catalyst, triggers..."></textarea>
+          <label>NOTES (optional)</label>
+          <textarea id="f-notes" placeholder="Setup description, catalyst, triggers..."></textarea>
         </div>
 
-        <button class="btn-submit" onclick="addTrade()">LOGG TRADE →</button>
+        <button class="btn-submit" onclick="addTrade()">LOG TRADE →</button>
       </div>
     </div>
 
     <!-- Trade list -->
     <div class="anim" style="animation-delay:75ms linear;">
-      <div class="section-label" id="list-label">ALLE TRADES</div>
+      <div class="section-label" id="list-label">ALL TRADES</div>
       <div class="trade-list" id="trade-list"></div>
     </div>
 
   </div>
 
+  <footer class="pulse-footer">
+    <span>NOT FINANCIAL ADVICE</span>
+    <span>PULSE © 2026</span>
+  </footer>
+
   <!-- Close modal -->
   <div class="modal-overlay" id="close-modal">
     <div class="modal">
-      <div class="modal-title">Lukk trade</div>
+      <div class="modal-title">Close trade</div>
       <div class="form-row-1">
-        <label>EXIT PRIS</label>
+        <label>EXIT PRICE</label>
         <input type="number" id="m-exit" placeholder="0.00" step="0.01" min="0"/>
       </div>
       <div class="modal-actions">
-        <button class="btn-modal-confirm" onclick="confirmClose()">LUKK TRADE</button>
-        <button class="btn-modal-cancel"  onclick="closeModal()">AVBRYT</button>
+        <button class="btn-modal-confirm" onclick="confirmClose()">CLOSE TRADE</button>
+        <button class="btn-modal-cancel"  onclick="closeModal()">CANCEL</button>
       </div>
     </div>
   </div>
@@ -372,7 +384,7 @@
       const sorted = [...trades].sort((a, b) => new Date(b.date) - new Date(a.date));
 
       if (!sorted.length) {
-        list.innerHTML = '<div class="empty-state">NO TRADES LOGGED YET</div>';
+        list.innerHTML = '<div class="empty-state"><div class="empty-icon">—</div><p class="empty-title">No trades logged yet</p><p class="empty-desc">Log your first trade using the form above.</p></div>';
         return;
       }
 
@@ -390,7 +402,7 @@
           <div class="trade-top">
             <div class="trade-ticker">${sanitizeText(t.ticker)}</div>
             <div class="trade-dir ${t.direction}">${t.direction === 'long' ? 'LONG' : 'SHORT'}</div>
-            <div class="trade-status ${t.status}">${t.status === 'open' ? 'ÅPEN' : 'LUKKET'}</div>
+            <div class="trade-status ${t.status}">${t.status === 'open' ? 'OPEN' : 'CLOSED'}</div>
             ${pnlText ? `<div class="trade-pnl ${pnl >= 0 ? 'pos' : 'neg'}">${sanitizeText(pnlText)}</div>` : ''}
           </div>
           <div class="trade-meta">
@@ -400,14 +412,14 @@
             <div class="trade-meta-item">Size <span>${sanitizeText(t.size)}</span></div>
             ${rrText ? `<div class="trade-meta-item">R:R <span>${sanitizeText(rrText)}</span></div>` : ''}
             ${qualLabel ? `<div class="trade-meta-item">Setup <span>${sanitizeText(qualLabel)}</span></div>` : ''}
-            <div class="trade-meta-item">Dato <span>${sanitizeText(t.date || '—')}</span></div>
+            <div class="trade-meta-item">Date <span>${sanitizeText(t.date || '—')}</span></div>
           </div>
           ${t.notes ? `<div class="trade-notes">${sanitizeText(t.notes)}</div>` : ''}
           <div class="trade-actions">
             ${t.status === 'open'
-              ? `<button class="btn-close-trade" onclick="openCloseModal('${sanitizeText(t.id)}')">LUKK TRADE</button>`
+              ? `<button class="btn-close-trade" onclick="openCloseModal('${sanitizeText(t.id)}')">CLOSE TRADE</button>`
               : ''}
-            <button class="btn-delete-trade" onclick="deleteTrade('${sanitizeText(t.id)}')">SLETT</button>
+            <button class="btn-delete-trade" onclick="deleteTrade('${sanitizeText(t.id)}')">DELETE</button>
           </div>
         </div>`;
       }).join('');
@@ -528,6 +540,51 @@
     load();
     refresh();
     initCitationHandlers();
+  </script>
+  <div class="shortcut-overlay" id="shortcut-overlay">
+    <div class="shortcut-modal">
+      <div class="shortcut-header">
+        <span class="data-label">Keyboard shortcuts</span>
+        <button class="shortcut-close" onclick="closeShortcuts()">ESC</button>
+      </div>
+      <div class="shortcut-list">
+        <div class="shortcut-row"><kbd>M</kbd><span>Market report</span></div>
+        <div class="shortcut-row"><kbd>S</kbd><span>Sectors</span></div>
+        <div class="shortcut-row"><kbd>T</kbd><span>Ticker analysis</span></div>
+        <div class="shortcut-row"><kbd>E</kbd><span>Earnings play</span></div>
+        <div class="shortcut-row"><kbd>H</kbd><span>History</span></div>
+        <div class="shortcut-row"><kbd>R</kbd><span>Radar</span></div>
+        <div class="shortcut-row"><kbd>L</kbd><span>Trade log</span></div>
+        <div class="shortcut-row"><kbd>C</kbd><span>Screener</span></div>
+        <div class="shortcut-row"><kbd>?</kbd><span>This overlay</span></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function setMarketStatus() {
+      const now = new Date();
+      const day = now.getUTCDay(), hour = now.getUTCHours(), min = now.getUTCMinutes();
+      const isOpen = day >= 1 && day <= 5 && (hour > 13 || (hour === 13 && min >= 30)) && hour < 20;
+      const dot = document.querySelector('.nav-status-dot');
+      const text = document.querySelector('.nav-status-text');
+      if (dot && text) {
+        dot.classList.toggle('open', isOpen);
+        text.textContent = isOpen ? 'MARKET OPEN' : 'MARKET CLOSED';
+        text.style.color = isOpen ? 'var(--green)' : 'var(--text-muted)';
+      }
+    }
+    function openShortcuts() { document.getElementById('shortcut-overlay').classList.add('active'); }
+    function closeShortcuts() { document.getElementById('shortcut-overlay').classList.remove('active'); }
+    document.addEventListener('keydown', function(e) {
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+      const key = e.key.toLowerCase();
+      if (key === '?') { e.preventDefault(); openShortcuts(); return; }
+      if (key === 'escape') { closeShortcuts(); return; }
+      const nav = { m:'market.html', s:'sektor.html', t:'ticker.html', e:'earnings-play.html', h:'historikk.html', r:'radar.html', l:'logg.html', c:'screener.html' };
+      if (nav[key]) window.location.href = nav[key];
+    });
+    setMarketStatus();
   </script>
   <script src="bg.js"></script>
   <script src="live.js"></script>

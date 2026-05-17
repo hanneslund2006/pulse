@@ -1,13 +1,12 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PULSE — Historikk</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <title>HISTORY — PULSE</title>
   <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=DM+Sans:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
   <script src="sanitize.js"></script>
   <style>
     body { padding: 32px 20px 80px; }
@@ -138,12 +137,19 @@
   </style>
 </head>
 <body>
+  <nav class="pulse-nav">
+    <a href="index.html" class="nav-logo">PULSE</a>
+    <span class="nav-page-name">HISTORY</span>
+    <div class="nav-market-status">
+      <span class="nav-status-dot"></span>
+      <span class="nav-status-text">MARKET CLOSED</span>
+    </div>
+  </nav>
+
   <div class="container">
 
-    <a href="index.html" class="back anim" style="animation-delay:0ms;">← TILBAKE</a>
-
-    <div class="page-title anim" style="animation-delay:40ms;">HISTORIKK</div>
-    <div class="page-subtitle anim" style="animation-delay:80ms;">AI-generert tidslinje over de viktigste katalysatorene bak kursbevegelsene.</div>
+    <div class="page-title anim" style="animation-delay:40ms;">HISTORY</div>
+    <div class="page-subtitle anim" style="animation-delay:80ms;">AI-generated timeline of the key catalysts behind price movements.</div>
 
     <div class="anim" style="animation-delay:120ms;">
       <div class="search-row">
@@ -151,7 +157,7 @@
           type="text"
           id="ticker-input"
           class="ticker-input"
-          placeholder="Ticker (f.eks. NVDA)"
+          placeholder="Ticker (e.g. NVDA)"
           maxlength="10"
           autocomplete="off"
           autocapitalize="characters"
@@ -171,10 +177,10 @@
 
     <div class="load-wrap" id="load-wrap">
       <div class="load-pulse"></div>
-      <div class="load-text" id="load-text">ANALYZING HISTORIKK…</div>
+      <div class="load-text" id="load-text">ANALYZING HISTORY…</div>
     </div>
 
-    <div class="empty-msg" id="empty-msg">INGEN NYHETER FUNNET FOR DENNE PERIODEN</div>
+    <div class="empty-msg" id="empty-msg">NO NEWS FOUND FOR THIS PERIOD</div>
 
     <div id="results" style="display:none;">
       <div class="ticker-label" id="ticker-label"></div>
@@ -183,7 +189,31 @@
       </div>
     </div>
 
-    <div style="text-align:center;padding:32px 0 0;font-family:'DM Sans',sans-serif;font-size:11px;color:var(--text-muted);letter-spacing:0.08em;">NOT FINANCIAL ADVICE</div>
+  </div>
+
+  <footer class="pulse-footer">
+    <span>NOT FINANCIAL ADVICE</span>
+    <span>PULSE © 2026</span>
+  </footer>
+
+  <div class="shortcut-overlay" id="shortcut-overlay">
+    <div class="shortcut-modal">
+      <div class="shortcut-header">
+        <span class="data-label">Keyboard shortcuts</span>
+        <button class="shortcut-close" onclick="closeShortcuts()">ESC</button>
+      </div>
+      <div class="shortcut-list">
+        <div class="shortcut-row"><kbd>M</kbd><span>Market report</span></div>
+        <div class="shortcut-row"><kbd>S</kbd><span>Sectors</span></div>
+        <div class="shortcut-row"><kbd>T</kbd><span>Ticker analysis</span></div>
+        <div class="shortcut-row"><kbd>E</kbd><span>Earnings play</span></div>
+        <div class="shortcut-row"><kbd>H</kbd><span>History</span></div>
+        <div class="shortcut-row"><kbd>R</kbd><span>Radar</span></div>
+        <div class="shortcut-row"><kbd>L</kbd><span>Trade log</span></div>
+        <div class="shortcut-row"><kbd>C</kbd><span>Screener</span></div>
+        <div class="shortcut-row"><kbd>?</kbd><span>This overlay</span></div>
+      </div>
+    </div>
   </div>
 
   <script>
@@ -204,7 +234,7 @@
     }
     function showTimeoutError() {
       const el = document.getElementById('error-msg');
-      el.innerHTML = 'Forespørselen tok for lang tid. <button onclick="fetchHistorikk()" style="background:none;border:1px solid var(--green);color:var(--green);font-family:\'DM Sans\',sans-serif;font-size:11px;letter-spacing:0.04em;cursor:pointer;padding:4px 10px;border-radius:3px;margin-left:8px;">TRY AGAIN</button>';
+      el.innerHTML = 'Request timed out. <button onclick="fetchHistorikk()" style="background:none;border:1px solid var(--green);color:var(--green);font-family:\'DM Sans\',sans-serif;font-size:11px;letter-spacing:0.04em;cursor:pointer;padding:4px 10px;border-radius:3px;margin-left:8px;">TRY AGAIN</button>';
       el.classList.add('visible');
     }
     function clearError() {
@@ -214,7 +244,7 @@
     function formatDate(iso) {
       if (!iso) return '—';
       try {
-        return new Date(iso).toLocaleDateString('no-NO', { day: 'numeric', month: 'short', year: 'numeric' });
+        return new Date(iso).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
       } catch (_) { return iso.slice(0, 10); }
     }
 
@@ -222,7 +252,7 @@
       const timeline = document.getElementById('timeline');
       const label = document.getElementById('ticker-label');
 
-      label.innerHTML = `<span>${sanitizeText(data.ticker)}</span> — ${selectedMonths} måneder`;
+      label.innerHTML = `<span>${sanitizeText(data.ticker)}</span> — ${selectedMonths} months`;
 
       const items = (data.catalysts || []);
       const entries = items.map((c, i) => {
@@ -275,7 +305,7 @@
       const btn = document.getElementById('fetch-btn');
       btn.disabled = true;
       const loadText = document.getElementById('load-text');
-      loadText.textContent = `ANALYZING ${raw} HISTORIKK…`;
+      loadText.textContent = `ANALYZING ${raw} HISTORY…`;
       document.getElementById('load-wrap').classList.add('visible');
 
       const ctrl = new AbortController();
@@ -326,6 +356,43 @@
 
     // Initialize citation handlers
     initCitationHandlers();
+
+    function setMarketStatus() {
+      const now = new Date();
+      const day = now.getUTCDay();
+      const hour = now.getUTCHours();
+      const min = now.getUTCMinutes();
+      const isWeekday = day >= 1 && day <= 5;
+      const afterOpen = hour > 13 || (hour === 13 && min >= 30);
+      const beforeClose = hour < 20;
+      const isOpen = isWeekday && afterOpen && beforeClose;
+      const dot = document.querySelector('.nav-status-dot');
+      const text = document.querySelector('.nav-status-text');
+      if (dot && text) {
+        dot.classList.toggle('open', isOpen);
+        text.textContent = isOpen ? 'MARKET OPEN' : 'MARKET CLOSED';
+        text.style.color = isOpen ? 'var(--green)' : 'var(--text-muted)';
+      }
+    }
+
+    function openShortcuts() {
+      document.getElementById('shortcut-overlay').classList.add('active');
+    }
+
+    function closeShortcuts() {
+      document.getElementById('shortcut-overlay').classList.remove('active');
+    }
+
+    document.addEventListener('keydown', function(e) {
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+      const key = e.key.toLowerCase();
+      if (key === '?') { e.preventDefault(); openShortcuts(); return; }
+      if (key === 'escape') { closeShortcuts(); return; }
+      const nav = { m: 'market.html', s: 'sektor.html', t: 'ticker.html', e: 'earnings-play.html', h: 'historikk.html', r: 'radar.html', l: 'logg.html', c: 'screener.html' };
+      if (nav[key]) window.location.href = nav[key];
+    });
+
+    setMarketStatus();
   </script>
   <script src="bg.js"></script>
   <script src="live.js"></script>
