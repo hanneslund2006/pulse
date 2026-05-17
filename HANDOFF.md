@@ -1,10 +1,10 @@
 # PULSE — Handoff
 
 ## Dato
-16. mai 2026
+17. mai 2026
 
 ## Gjeldende HEAD
-Siste commit: style: canvas price-action chart + hero-title italic bold shadow (69f6988)
+Siste commit: style: hero section visual overhaul — bug fixes + 4 improvements (3931b4e)
 Status: Layer 1 er nå canvas-basert self-drawing price-action linje (erstatter SVG morph). hero-title er italic weight 700 med text-shadow.
 
 ## Status
@@ -23,6 +23,22 @@ Status: Layer 1 er nå canvas-basert self-drawing price-action linje (erstatter 
 - Rate limiting, caching, feilhåndtering på alle API-endepunkter
 - Juridisk disclaimer på alle AI-sider
 - Modell: Sonnet 4.5 (standard kontekst — ikke 1M)
+
+## Siste sesjon (17. mai) — Hero Visual Polish: Bug Fixes + 4 Improvements
+
+**Commit:** 3931b4e — pushed to main, Vercel auto-deploy triggered.
+
+**Bug fixes:**
+- Canvas height now uses `document.querySelector('.hero-section').offsetHeight` — fixes chart drawing only in bottom 20%
+- Floating cards enforce viewport-based zones: left 2–12% of vw, right 88–98% of vw (was relative to hero rect, could drift toward center)
+
+**Improvements:**
+1. **Ticker strip scroll** — `.market-strip-grid` converted to flex + `stripScroll` CSS animation (25s linear infinite). 6 HTML clone tiles added for seamless loop. Tile padding 16px 24px, font-size 13px, separator opacity 0.15.
+2. **CTA live dot** — 6px #10B981 pulsing dot + "LIVE" Space Mono label added to GET TODAY'S REPORT button. `liveDotPulse` keyframe: scale 1→1.4→1, opacity 1→0.4→1, 1.8s infinite.
+3. **Hero vignette** — `.hero-section::before` radial-gradient: transparent at 40% center → rgba(0,0,0,0.55) at edges. z-index:1. All hero content elements given z-index:2+ to remain above vignette.
+4. **Scroll indicator** — Centered at hero bottom: 1px teal vertical line (40px) + "SCROLL" Space Mono 8px. `scrollFade` animation opacity 1→0.3→1, 2s infinite. z-index:4, position:absolute, bottom:32px.
+
+---
 
 ## Siste sesjon (16. mai) — Hero Animation Overhaul: Three-Layer Composition
 
