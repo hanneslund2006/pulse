@@ -4,7 +4,7 @@
 17. mai 2026
 
 ## Gjeldende HEAD
-Siste commit: style: hero section visual overhaul — bug fixes + 4 improvements (3931b4e)
+Siste commit: fix: canvas dimensions sourced from hero-section element directly (54511ea)
 Status: Layer 1 er nå canvas-basert self-drawing price-action linje (erstatter SVG morph). hero-title er italic weight 700 med text-shadow.
 
 ## Status
@@ -23,6 +23,14 @@ Status: Layer 1 er nå canvas-basert self-drawing price-action linje (erstatter 
 - Rate limiting, caching, feilhåndtering på alle API-endepunkter
 - Juridisk disclaimer på alle AI-sider
 - Modell: Sonnet 4.5 (standard kontekst — ikke 1M)
+
+## Siste sesjon (17. mai) — Canvas height fix (follow-up)
+
+**Commit:** 54511ea — pushed to main, Vercel auto-deploy triggered.
+
+Stored `heroSection = document.querySelector('.hero-section')` as a variable alongside `wrap`. `resizeCvs()` now uses `heroSection.offsetWidth` and `heroSection.offsetHeight` for both the initial call and the resize listener. Previous fix used `wrap.offsetWidth` for width (functionally equivalent but less explicit). Bug: canvas drawing in bottom portion of hero.
+
+---
 
 ## Siste sesjon (17. mai) — Hero Visual Polish: Bug Fixes + 4 Improvements
 
