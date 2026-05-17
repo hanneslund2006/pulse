@@ -2259,10 +2259,11 @@
       var pts = [];
       var curX = 0, curY = 0;
       var SPEED = 1.5;
+      var heroSection = document.querySelector('.hero-section');
 
       function resizeCvs() {
-        cvs.width  = wrap.offsetWidth;
-        cvs.height = document.querySelector('.hero-section').offsetHeight;
+        cvs.width  = heroSection.offsetWidth;
+        cvs.height = heroSection.offsetHeight;
         curY = cvs.height * 0.48;
         pts  = [{x:0, y:curY}];
         curX = 0;
