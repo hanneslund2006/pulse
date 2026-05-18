@@ -181,7 +181,7 @@
     <div class="nav-market-status">
       <span class="nav-status-dot"></span>
       <span class="nav-status-text">MARKET CLOSED</span>
-      <button class="nav-shortcut-hint" onclick="openShortcuts()">?</button>
+      <button class="nav-shortcut-hint" onclick="openShortcuts()" aria-label="Keyboard shortcuts">?</button>
     </div>
   </nav>
 
@@ -542,7 +542,7 @@
     refresh();
     initCitationHandlers();
   </script>
-  <div class="shortcut-overlay" id="shortcut-overlay">
+  <div class="shortcut-overlay" id="shortcut-overlay" role="dialog" aria-modal="true" aria-label="Keyboard shortcuts">
     <div class="shortcut-modal">
       <div class="shortcut-header">
         <span class="data-label">Keyboard shortcuts</span>
