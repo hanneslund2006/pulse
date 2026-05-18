@@ -28,7 +28,7 @@ Returns daily market overview with sentiment analysis across 4 categories.
 }
 ```
 
-**Cache:** 6 hours  
+**Cache:** Until midnight UTC (nextMidnightTTL)  
 **Model:** Sonnet 4.5 (55-word system prompt)
 
 ---
@@ -119,7 +119,7 @@ Top 8 upcoming earnings with AI analysis.
 }
 ```
 
-**Cache:** 24 hours (global, not per-ticker)  
+**Cache:** 6 hours (global, not per-ticker)  
 **Model:** Haiku 4.5 (web search + formatting)
 
 ---
@@ -143,7 +143,7 @@ Pre-earnings trade setup analysis.
 }
 ```
 
-**Cache:** 24 hours  
+**Cache:** 6 hours  
 **Model:** Haiku 4.5
 
 ---
@@ -196,7 +196,7 @@ Swing trade opportunities (5-15 day setups).
 }
 ```
 
-**Cache:** 6 hours  
+**Cache:** Until midnight UTC (nextMidnightTTL)  
 **Model:** Sonnet 4.5
 
 ---
@@ -220,7 +220,7 @@ Pre-market gap analysis with trade setups.
 }
 ```
 
-**Cache:** 1 hour (volatile data)  
+**Cache:** 4 hours  
 **Model:** Sonnet 4.5
 
 ---
@@ -276,7 +276,7 @@ Real-time index quotes (SPX, NDX, DXY, BTC, 10Y).
 }
 ```
 
-**Cache:** 60 seconds  
+**Cache:** None (always fresh)  
 **Model:** None (yahoo-finance2 library)  
 **Rate limit:** None (high-frequency endpoint)
 
@@ -304,7 +304,33 @@ Internal analytics (requires auth).
 
 ---
 
-### 12. Cache Clear
+### 12. Screener
+**GET** `/api/screener?case=safe+stocks+in+uncertain+times`
+
+Free-text investment case screener. Returns 3-7 matching US stocks with rationale.
+
+**Parameters:**
+- `case` (required): Investment thesis in plain text (max 200 characters)
+
+**Response:**
+```json
+{
+  "stocks": [
+    {
+      "ticker": "JNJ",
+      "company": "Johnson & Johnson",
+      "why_it_fits": "Defensive healthcare with stable dividend yield"
+    }
+  ]
+}
+```
+
+**Cache:** 5 minutes (case-specific, low reuse)  
+**Model:** Haiku 4.5 (web search)
+
+---
+
+### 13. Cache Clear
 **GET** `/api/cache-clear?ticker=AAPL`
 
 Manually clear cache for a ticker (all endpoints).

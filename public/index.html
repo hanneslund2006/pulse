@@ -173,6 +173,32 @@
       letter-spacing: 0.14em;
     }
 
+    /* ─── HERO STATUS BAR ─── */
+    #hero-status-bar {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      font-family: 'Space Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      color: var(--text-muted);
+      border-top: 0.5px solid var(--border);
+      padding-top: 16px;
+      margin-top: 4px;
+      opacity: 0;
+      transition: opacity 400ms ease-out;
+      position: relative;
+      z-index: 2;
+    }
+    .hsb-sep { opacity: 0.35; }
+    .hsb-static { color: var(--text-muted); }
+    .hsb-live { display: inline-flex; align-items: center; gap: 5px; color: var(--teal); }
+    #hsb-sentiment { color: var(--text-muted); }
+    #hsb-score { font-weight: 700; color: var(--teal); }
+    .hsb-bull { color: var(--bullish); }
+    .hsb-bear { color: var(--bearish); }
+
     /* ─── MARKET PROMPT ─── */
     /* ─── MARKET STRIP ─── */
     .market-strip {
@@ -1475,6 +1501,17 @@
       <div class="hero-cta-wrap">
         <a href="market.html" class="morgen-btn"><span class="live-dot"></span>MORNING BRIEF →<span class="live-label">LIVE</span></a>
       </div>
+      <div id="hero-status-bar" aria-live="polite">
+        <span id="hsb-sentiment">SENTIMENT —</span>
+        <span class="hsb-sep">·</span>
+        <span class="hsb-static">SECTORS LIVE</span>
+        <span class="hsb-sep">·</span>
+        <span class="hsb-static">RADAR READY</span>
+        <span class="hsb-sep">·</span>
+        <span>NEXT UPDATE <span id="hsb-countdown">--:--:--</span></span>
+        <span class="hsb-sep">·</span>
+        <span class="hsb-live"><span class="live-dot" style="width:5px;height:5px"></span>LIVE</span>
+      </div>
     </div>
 
     <!-- MARKET STRIP -->
@@ -2158,6 +2195,47 @@
   }
 
   window.addEventListener('load', initHeroFadeIn);
+
+  /* ─── HERO STATUS BAR ─── */
+  function initHeroStatusBar() {
+    function updateCountdown() {
+      var now = new Date();
+      var next = new Date(Date.UTC(
+        now.getUTCFullYear(),
+        now.getUTCMonth(),
+        now.getUTCDate() + (now.getUTCHours() >= 6 ? 1 : 0),
+        6, 0, 0
+      ));
+      var diff = Math.max(0, next - now);
+      var h = Math.floor(diff / 3600000).toString().padStart(2, '0');
+      var m = Math.floor((diff % 3600000) / 60000).toString().padStart(2, '0');
+      var s = Math.floor((diff % 60000) / 1000).toString().padStart(2, '0');
+      var el = document.getElementById('hsb-countdown');
+      if (el) el.textContent = h + ':' + m + ':' + s;
+    }
+    updateCountdown();
+    setInterval(updateCountdown, 1000);
+
+    fetch('/api/sentiment', { method: 'POST' })
+      .then(function(r) { return r.ok ? r.json() : Promise.reject(r.status); })
+      .then(function(data) {
+        var score = data.score != null ? data.score : null;
+        var bar = document.getElementById('hero-status-bar');
+        if (score !== null) {
+          var isBull = score >= 50;
+          var label = isBull ? 'BULLISH' : 'BEARISH';
+          var cls   = isBull ? 'hsb-bull' : 'hsb-bear';
+          var el = document.getElementById('hsb-sentiment');
+          if (el) el.innerHTML = 'SENTIMENT <span id="hsb-score">' + score + '</span> <span class="' + cls + '">' + label + '</span>';
+        }
+        if (bar) bar.style.opacity = '1';
+      })
+      .catch(function() {
+        var bar = document.getElementById('hero-status-bar');
+        if (bar) bar.style.opacity = '1';
+      });
+  }
+  window.addEventListener('load', initHeroStatusBar);
 
   /* ─── HERO TICKER TAPE ─── */
   let tickerRetries = 0;
