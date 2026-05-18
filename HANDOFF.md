@@ -1,12 +1,31 @@
 # PULSE — Handoff
 
 ## Dato
-17. mai 2026
+18. mai 2026
 
 ## Gjeldende HEAD
+Siste commit: polish: a11y attributes, focus rings, 100dvh, mobile nav breakpoint (d96429a)
+
+## Siste sesjon (18. mai) — A11y + Responsive Polish, Deployed
+
+**Commit:** d96429a — pushed to main, Vercel auto-deploy triggered.
+
+**Fixes applied (multi-agent parallel):**
+- **A11y:** `aria-label="Keyboard shortcuts"` on all 10 `.nav-shortcut-hint` buttons. `role="dialog" aria-modal="true" aria-label="Keyboard shortcuts"` on all 10 `.shortcut-overlay` divs. `:focus-visible` rings on `.nav-shortcut-hint`, `.btn-primary`, `.btn`, `.btn-ghost` in style.css.
+- **Viewport:** `min-height: 100dvh` replacing `100vh` in style.css (iOS Safari viewport fix).
+- **Mobile nav:** `@media (max-width: 480px)` breakpoint in style.css — nav padding tightened, `.nav-page-name` hidden on small screens, footer padding reduced, `overflow-x: hidden`.
+
+**Pre-flight:** pulse-deploy-guard PASS. Non-blocking note: `earnings-play.js` TTL is 6h but CLAUDE.md documents 24h — update CLAUDE.md to reflect 6h (already correct in code from prior session fix).
+
+## Neste sesjon starter med
+All polish complete and deployed (two deploy waves). Consider: update CLAUDE.md earnings-play TTL doc from 24h to 6h, screener.js analytics counter parity, or next feature work.
+
+---
+
+## Forrige HEAD (17. mai)
 Siste commit: polish: animation timing, transform transitions, nav shortcut hint, cache TTL fix (ba9cb4c)
 
-## Siste sesjon (17. mai) — Impeccable Audit + Polish Pass
+## Sesjon 17. mai — Impeccable Audit + Polish Pass
 
 **Commit:** ba9cb4c — pushed to main, Vercel auto-deploy triggered.
 
