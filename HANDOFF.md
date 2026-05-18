@@ -4,9 +4,9 @@
 18. mai 2026
 
 ## Gjeldende HEAD
-Siste commit: polish: a11y attributes, focus rings, 100dvh, mobile nav breakpoint (d96429a)
+Siste commit: feat: add live hero status bar with sentiment, countdown, and live dot (4db9346)
 
-## Siste sesjon (18. mai) — A11y + Responsive Polish, Deployed
+## Siste sesjon (18. mai) — Live Hero Status Bar, Deployed
 
 **Commit:** d96429a — pushed to main, Vercel auto-deploy triggered.
 
@@ -17,8 +17,17 @@ Siste commit: polish: a11y attributes, focus rings, 100dvh, mobile nav breakpoin
 
 **Pre-flight:** pulse-deploy-guard PASS. Non-blocking note: `earnings-play.js` TTL is 6h but CLAUDE.md documents 24h — update CLAUDE.md to reflect 6h (already correct in code from prior session fix).
 
+## Siste sesjon (18. mai) — Live Hero Status Bar
+
+**Commit:** 4db9346 — pushed to main, Vercel auto-deploy triggered.
+
+**Changes:**
+- `public/index.html`: Added `#hero-status-bar` inside `.hero-centered` after CTA button. Shows SENTIMENT score + BULLISH/BEARISH, SECTORS LIVE, RADAR READY, NEXT UPDATE countdown (HH:MM:SS to 06:00 UTC), pulsing LIVE dot. Single POST fetch to `/api/sentiment` on load; bar fades in (opacity 0→1, 400ms) after data resolves. Countdown ticks via setInterval every second.
+- `API.md`: Corrected all TTL documentation to match CLAUDE.md spec (earnings 6h, earnings-play 6h, radar/sentiment until midnight UTC, gappers 4h, quotes no cache). Added missing screener endpoint entry.
+- **Pre-flight:** pulse-deploy-guard PASS (all 4 layers green after API.md fixes).
+
 ## Neste sesjon starter med
-All polish complete and deployed (two deploy waves). Consider: update CLAUDE.md earnings-play TTL doc from 24h to 6h, screener.js analytics counter parity, or next feature work.
+Status bar is live. Possible next: wire sentiment score to a visual indicator on market.html hero, or add click-through from status bar to market.html.
 
 ---
 
