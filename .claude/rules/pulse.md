@@ -11,7 +11,7 @@
 
 ## API endpoints
 - All new endpoints must follow the request flow: rate limit → cache → Claude call → parse → cache → return
-- Model is always claude-sonnet-4-5-20250514 — never change without explicit instruction
+- Model is always claude-sonnet-4-6 — never change without explicit instruction
 - max_tokens is always 4096 for AI endpoints
 - web_search_grounding_beta must be included in all AI endpoints unless explicitly excluded
 
@@ -27,3 +27,9 @@
 ## Environment
 - Any new env var must be added to .env.example immediately
 - Document new vars in CLAUDE.md under environment section
+
+## Performance
+Vercel serverless hard limit: 10s. Target < 8s for å bevare headroom.
+
+## Runtime
+Twilio webhook timeout: ikke aktuelt for PULSE.
