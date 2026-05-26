@@ -157,7 +157,7 @@ module.exports = async (req, res) => {
 - **Ticker analysis:** 24h (86400s) — Sonnet cost is amortized over a full day
 - **Earnings / earnings-play:** 6h (21600s) — relatively static during trading day
 - **Radar:** Until midnight (`nextMidnightTTL()`) — daily screening
-- **Gappers:** 4h (14400s)
+- **Gappers:** 30min (1800s) — pre-market data requires frequent refresh  # intentional — pre-market data freshness
 - **Historikk:** 24h (86400s)
 - **Insider:** 6h (21600s)
 - **Sektor (sector list):** 6h (21600s); per-ticker analysis 24h

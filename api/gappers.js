@@ -35,6 +35,19 @@ async function enrichWithSma(ticker) {
   } catch (_) { return null; }
 }
 
+async function fetchPreMarketQuote(ticker) {
+  try {
+    const quote = await yf.quote(ticker);
+    const gap = typeof quote.preMarketChangePercent === 'number'
+      ? parseFloat(quote.preMarketChangePercent.toFixed(2))
+      : null;
+    const price = typeof quote.preMarketPrice === 'number' ? quote.preMarketPrice : null;
+    return { gap, price };
+  } catch (_) {
+    return { gap: null, price: null };
+  }
+}
+
 const SYSTEM_PROMPT = `Search 5 largest pre-market gap movers (USA). Return JSON only:
 [{"ticker":"TSLA","company":"Tesla Inc","gap":5.2,"volume":"1.2M"}]
 
@@ -101,11 +114,20 @@ module.exports = async (req, res) => {
 
     const enriched = await Promise.all(
       parsed.map(async g => {
-        const above200sma = await enrichWithSma(g.ticker).catch(() => null);
-        return { ...g, above200sma };
+        const [above200sma, preMarket] = await Promise.all([
+          enrichWithSma(g.ticker).catch(() => null),
+          fetchPreMarketQuote(g.ticker),
+        ]);
+        return {
+          ...g,
+          above200sma,
+          gap: preMarket.gap,
+          preMarketPrice: preMarket.price,
+        };
       })
     );
-    cache.set('gappers_v1', enriched, 60 * 60 * 4);
+
+    cache.set('gappers_v1', enriched, 60 * 30);
     return res.status(200).json(enriched);
 
   } catch (error) {

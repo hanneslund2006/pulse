@@ -1,6 +1,8 @@
 const Anthropic = require('@anthropic-ai/sdk');
 const { check: rateCheck } = require('./_ratelimit');
 const cache = require('./_cache');
+const YahooFinance = require('yahoo-finance2').default;
+const yf = new YahooFinance({ suppressNotices: ['yahooSurvey'] });
 
 function getWeekRange() {
   const now = new Date();
@@ -20,6 +22,43 @@ function extractJSON(text) {
   const arr = text.match(/\[[\s\S]*\]/);
   if (arr) { try { return JSON.parse(arr[0]); } catch (_) {} }
   return null;
+}
+
+async function enrichEarnings(company) {
+  try {
+    const [summary, quote] = await Promise.all([
+      yf.quoteSummary(company.ticker, { modules: ['earningsTrend'] }).catch(() => null),
+      yf.quote(company.ticker).catch(() => null),
+    ]);
+
+    let epsEstimate = company.epsEstimate;
+    let date = company.date;
+    let epsFromYahoo = false;
+    let dateFromYahoo = false;
+
+    const avg = summary?.earningsTrend?.trend?.find(t => t.period === '0q')?.earningsEstimate?.avg;
+    if (typeof avg === 'number') {
+      epsEstimate = avg.toFixed(2);
+      epsFromYahoo = true;
+    }
+
+    if (quote?.earningsTimestamp) {
+      const d = new Date(quote.earningsTimestamp).toISOString().split('T')[0];
+      if (/^\d{4}-\d{2}-\d{2}$/.test(d)) {
+        date = d;
+        dateFromYahoo = true;
+      }
+    }
+
+    return {
+      ...company,
+      epsEstimate,
+      date,
+      source: (epsFromYahoo && dateFromYahoo) ? 'yahoo' : 'llm',
+    };
+  } catch (_) {
+    return { ...company, source: 'llm' };
+  }
 }
 
 module.exports = async (req, res) => {
@@ -112,8 +151,10 @@ Rules:
       return res.status(500).json({ error: 'Invalid format from AI.' });
     }
 
-    cache.set(cacheKey, parsed, 60 * 60 * 6);
-    return res.status(200).json(parsed);
+    const enriched = await Promise.all(parsed.map(enrichEarnings));
+
+    cache.set(cacheKey, enriched, 60 * 60 * 6);
+    return res.status(200).json(enriched);
 
   } catch (err) {
     console.error('Earnings API error:', err);

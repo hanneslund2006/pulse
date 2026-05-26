@@ -1,6 +1,8 @@
 const Anthropic = require('@anthropic-ai/sdk');
 const { check: rateCheck } = require('./_ratelimit');
 const cache = require('./_cache');
+const YahooFinance = require('yahoo-finance2').default;
+const yf = new YahooFinance({ suppressNotices: ['yahooSurvey'] });
 
 const SYSTEM_PROMPT = `Search US stocks meeting ALL criteria:
 1. High short interest (>15% short float)
@@ -12,6 +14,15 @@ Prioritize stocks above 200-day SMA. Return JSON only:
 
 Return 3-5 candidates. direction: exactly "Bullish" or "Bearish". reason: max 20 words, include specific catalyst + technical setup. Be analytical and specific. No markdown.`;
 
+async function enrichShortFloat(candidate) {
+  try {
+    const summary = await yf.quoteSummary(candidate.ticker, { modules: ['defaultKeyStatistics'] });
+    const val = summary?.defaultKeyStatistics?.shortPercentOfFloat;
+    return { ...candidate, shortFloat: typeof val === 'number' ? parseFloat(val.toFixed(4)) : null };
+  } catch (_) {
+    return { ...candidate, shortFloat: null };
+  }
+}
 
 module.exports = async (req, res) => {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
@@ -76,8 +87,10 @@ module.exports = async (req, res) => {
       return res.status(500).json({ error: 'AI returned no valid candidates.' });
     }
 
-    cache.set(CACHE_KEY, valid, cache.nextMidnightTTL());
-    return res.status(200).json(valid);
+    const enriched = await Promise.all(valid.map(enrichShortFloat));
+
+    cache.set(CACHE_KEY, enriched, cache.nextMidnightTTL());
+    return res.status(200).json(enriched);
 
   } catch (error) {
     console.error('[radar] API error:', error);
