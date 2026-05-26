@@ -74,7 +74,8 @@ module.exports = async (req, res) => {
   // Fetch news from Alpaca
   let articles = [];
   try {
-    const alpacaUrl = `https://data.alpaca.markets/v1beta1/news?symbols=${encodeURIComponent(ticker)}&start=${startISO}&limit=10&sort=desc`;
+    const limit = months > 3 ? 50 : 10;
+    const alpacaUrl = `https://data.alpaca.markets/v1beta1/news?symbols=${encodeURIComponent(ticker)}&start=${startISO}&limit=${limit}&sort=desc`;
     const alpacaRes = await fetchWithTimeout(alpacaUrl, {
       headers: {
         'APCA-API-KEY-ID': process.env.ALPACA_API_KEY,
@@ -113,9 +114,7 @@ module.exports = async (req, res) => {
     .map(a => {
       const date = (a.created_at || '').slice(0, 10);
       const headline = a.headline.split(' ').slice(0, 15).join(' ');
-      const summary = a.summary
-        ? a.summary.split(' ').slice(0, 20).join(' ')
-        : '';
+      const summary = a.summary || '';
       return `[${date}] ${headline}${summary ? ': ' + summary : ''}`;
     })
     .join('\n');
