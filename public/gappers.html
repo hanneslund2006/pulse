@@ -148,9 +148,11 @@
     function render(rows, fromCache) {
       const list = document.getElementById('gapper-list');
       list.innerHTML = rows.map((r, i) => {
-        const up   = r.gap >= 0;
-        const cls  = up ? 'up' : 'dn';
-        const sign = up ? '+' : '';
+        const gapVal = Number.isFinite(r.gap) ? r.gap : null;
+        const up   = gapVal !== null ? gapVal >= 0 : null;
+        const cls  = up === true ? 'up' : up === false ? 'dn' : 'neutral';
+        const sign = up === true ? '+' : '';
+        const gapDisplay = gapVal !== null ? `${sign}${gapVal.toFixed(1)}%` : '–';
         const smaBadge = r.above200sma === true
           ? '<div class="gapper-sma above">200SMA ↑</div>'
           : r.above200sma === false
@@ -159,7 +161,7 @@
         return `<div class="gapper-row" style="animation-delay:${i * 70}ms;">
           <div class="gapper-ticker ${cls}">${sanitizeText(r.ticker)}</div>
           <div class="gapper-company">${sanitizeText(r.company)}</div>
-          <div class="gapper-gap ${cls}">${sign}${parseFloat(r.gap).toFixed(1)}%</div>
+          <div class="gapper-gap ${cls}">${gapDisplay}</div>
           ${smaBadge}
           <div class="gapper-vol">${sanitizeText(r.volume || '')}</div>
         </div>`;

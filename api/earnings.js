@@ -43,11 +43,16 @@ async function enrichEarnings(company) {
     }
 
     if (quote?.earningsTimestamp) {
-      const d = new Date(quote.earningsTimestamp).toISOString().split('T')[0];
-      if (/^\d{4}-\d{2}-\d{2}$/.test(d)) {
-        date = d;
-        dateFromYahoo = true;
-      }
+      try {
+        const d = new Date(quote.earningsTimestamp);
+        if (!isNaN(d.getTime())) {
+          const normalized = d.toISOString().split('T')[0];
+          if (/^\d{4}-\d{2}-\d{2}$/.test(normalized)) {
+            date = normalized;
+            dateFromYahoo = true;
+          }
+        }
+      } catch (_) { /* keep LLM date */ }
     }
 
     return {
