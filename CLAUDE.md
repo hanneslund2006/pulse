@@ -239,13 +239,12 @@ Frontend shows error toasts via `showErrorToast(message)` function in each HTML 
 
 ## Current State (Last Updated)
 
-- **Date:** 2026-05-12
-- **HEAD:** 13418a4 (optimize: upgrade ticker+sentiment to Sonnet, optimize prompts)
+- **Date:** 2026-05-29
+- **HEAD:** ddc3066 (feat: wire Sektor and Screener as two-step morning workflow)
 - **Recent work:**
-  - LLM cost optimization: Upgraded ticker.js + sentiment.js to Sonnet 4.5 for quality
-  - Prompt engineering: Schema-first, directive instructions, removed filler across all endpoints
-  - max_tokens optimization: Reduced 3 Haiku endpoints (historikk 500→450, radar 600→500, gappers 300→280)
-  - Fixed sektor.js field name mismatch (analysis → analyse) for frontend compatibility
-  - Cost impact: +$0.30-0.50/month (16-33% increase) for synthesis quality improvement
+  - Sektor + Screener workflow UX: Co-located on landing page under "MORNING WORKFLOW" label as STEP 01/STEP 02
+  - sektor.html: expanded sector panels now include "SCREEN STOCKS IN [SECTOR] →" CTA linking to screener.html?sector=Name
+  - screener.html: reads ?sector= URL param on load and pre-fills textarea ("strong stocks in the [Sector] sector")
+  - No new API functions — still 12/12 Vercel Hobby limit
 - **Models:** Sonnet 4.5 (ticker, sentiment), Haiku 4.5 (all others)
 - **Deployment:** Live at pulse-theta-wheat.vercel.app
