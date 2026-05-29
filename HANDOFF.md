@@ -4,7 +4,40 @@
 29. mai 2026
 
 ## Gjeldende HEAD
-9ffc9b7 (docs: update CLAUDE.md current state for workflow integration)
+2c4dd6b
+
+## Session Work (2026-05-29) — Sektorer + Screener Unified Page
+
+### Changes
+- **`public/sektorer.html` (NEW)** — Merged sektor.html + screener.html into one unified page. Top section: 11 SPDR sector panels (expandable, AI analysis). Bottom section: screener with free-text thesis textarea. `handoffToScreener()` function wired to "SCREEN STOCKS IN [NAME] →" CTA in each sector panel — scrolls page to screener section and pre-fills textarea with sector name.
+- **`public/sektor.html`** — Replaced with meta-refresh redirect to sektorer.html. Keeps old bookmarks/links working.
+- **`public/screener.html`** — Deleted. No remaining references anywhere in the codebase.
+- **`public/index.html`** — Workflow pair (STEP 01 sektor + STEP 02 screener) replaced with single "Sectors + Screener" card linking to sektorer.html.
+- **All 7 other pages** — Keyboard shortcut C updated from screener.html to sektorer.html.
+
+### Naming conflicts resolved in sektorer.html
+- Fetch state: `sektorFetching` / `screenerFetching` (separate flags, no collision)
+- Button IDs: `sector-fetch-btn` / `screener-fetch-btn`
+- Output containers: `sector-output` / `screener-output`
+- Error toast scope: separate `showSectorError()` / `showScreenerError()` helpers
+
+### Commits (7 pushed)
+All pushed to origin/main. Vercel auto-deploy triggered. HEAD: 2c4dd6b.
+
+### Deploy
+Deploy guard passed all 5 layers. No new API functions — still 12/12 Vercel Hobby limit.
+
+### Verify
+1. Open sektorer.html — fetch sectors, click a sector panel, verify "SCREEN STOCKS IN [NAME] →" CTA scrolls to screener and pre-fills textarea
+2. Open sektor.html — should redirect to sektorer.html
+3. Press C on market.html — should navigate to sektorer.html
+
+## Neste sesjon starter med
+- Validate sektorer.html handoff flow end-to-end in browser (all 11 sectors)
+- Consider adding "STEP 03: LOG YOUR TRADE" CTA to complete the morning workflow loop (logg.html)
+- CLAUDE.md "Current State" block still references ddc3066 and old sektor/screener split — update if CLAUDE.md edit is in scope
+
+---
 
 ## Session Work (2026-05-29) — Sektor + Screener Workflow Integration
 
@@ -21,8 +54,8 @@
 - `9ffc9b7` docs: update CLAUDE.md current state for workflow integration
 
 ### Deploy
-- Deploy guard passed all 5 layers. Pushed to origin/main. Vercel auto-deploy triggered.
-- No new API functions — still 12/12 Vercel Hobby limit.
+Deploy guard passed all 5 layers. Pushed to origin/main. Vercel auto-deploy triggered.
+No new API functions — still 12/12 Vercel Hobby limit.
 
 ### Uncommitted .claude/ work (from prior sessions — not this session)
 The following are tracked as untracked/modified in git but intentionally left uncommitted (project-level tooling, not source code):
@@ -36,12 +69,6 @@ The following are tracked as untracked/modified in git but intentionally left un
 - `.claude/skills/new-endpoint/` (new)
 - `.mcp.json` (new)
 - `scripts/` (new)
-
-## Neste sesjon starter med
-Workflow integration live. Possible next:
-- Validate the sektor → screener flow end-to-end in browser (does pre-fill work correctly for all sector names?)
-- Consider adding a "STEP 03: LOG YOUR TRADE" CTA pointing to logg.html to complete the morning workflow loop
-- screener.js analytics counter parity (minor, non-blocking)
 
 ---
 
@@ -87,32 +114,6 @@ Alle low-funn er ECC 2.0 skill-metadata (observation hooks, versjon, rollback) f
 Rapporter lagret i `.claude/_system/plans/agentshield-pulse-rapport.md`.
 
 ---
-
-## Dato (forrige)
-18. mai 2026
-
-## Gjeldende HEAD
-Siste commit: feat: add live hero status bar with sentiment, countdown, and live dot (4db9346)
-
-## Siste sesjon (18. mai) — Live Hero Status Bar, Deployed
-
-**Commit:** d96429a — pushed to main, Vercel auto-deploy triggered.
-
-**Fixes applied (multi-agent parallel):**
-- **A11y:** `aria-label="Keyboard shortcuts"` on all 10 `.nav-shortcut-hint` buttons. `role="dialog" aria-modal="true" aria-label="Keyboard shortcuts"` on all 10 `.shortcut-overlay` divs. `:focus-visible` rings on `.nav-shortcut-hint`, `.btn-primary`, `.btn`, `.btn-ghost` in style.css.
-- **Viewport:** `min-height: 100dvh` replacing `100vh` in style.css (iOS Safari viewport fix).
-- **Mobile nav:** `@media (max-width: 480px)` breakpoint in style.css — nav padding tightened, `.nav-page-name` hidden on small screens, footer padding reduced, `overflow-x: hidden`.
-
-**Pre-flight:** pulse-deploy-guard PASS. Non-blocking note: `earnings-play.js` TTL is 6h but CLAUDE.md documents 24h — update CLAUDE.md to reflect 6h (already correct in code from prior session fix).
-
-## Siste sesjon (18. mai) — Live Hero Status Bar
-
-**Commit:** 4db9346 — pushed to main, Vercel auto-deploy triggered.
-
-**Changes:**
-- `public/index.html`: Added `#hero-status-bar` inside `.hero-centered` after CTA button. Shows SENTIMENT score + BULLISH/BEARISH, SECTORS LIVE, RADAR READY, NEXT UPDATE countdown (HH:MM:SS to 06:00 UTC), pulsing LIVE dot. Single POST fetch to `/api/sentiment` on load; bar fades in (opacity 0→1, 400ms) after data resolves. Countdown ticks via setInterval every second.
-- `API.md`: Corrected all TTL documentation to match CLAUDE.md spec (earnings 6h, earnings-play 6h, radar/sentiment until midnight UTC, gappers 4h, quotes no cache). Added missing screener endpoint entry.
-- **Pre-flight:** pulse-deploy-guard PASS (all 4 layers green after API.md fixes).
 
 ## Teknisk kontekst
 - Stack: Vanilla JS, Node.js serverless, Vercel, Upstash Redis
