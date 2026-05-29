@@ -368,20 +368,6 @@
     }
     .feature-cat:first-child { margin-top: 0; }
 
-    .workflow-pair { position: relative; }
-    .workflow-pair::before {
-      content: 'MORNING WORKFLOW';
-      display: block;
-      font-family: 'Space Mono', monospace;
-      font-size: 9px;
-      letter-spacing: 0.12em;
-      color: var(--text-muted);
-      opacity: 0.5;
-      padding-bottom: 8px;
-    }
-    .workflow-pair .feature-row + .feature-row {
-      border-top: 1px solid var(--border);
-    }
 
     .feature-row {
       display: grid;
@@ -1881,11 +1867,9 @@
       </div>
     </div>
 
-    <div class="workflow-pair">
-
-    <!-- Feature 2: Sektorer (STEP 01) -->
+    <!-- Feature 2: Sectors & Screener -->
     <div class="feature-row">
-      <a class="feature-card" href="sektor.html" aria-label="Go to Sectors for weekly overview of which sectors are leading and lagging">
+      <a class="feature-card" href="sektorer.html" aria-label="Go to Sectors and Screener for weekly sector overview and stock screening">
         <div class="card-viz" aria-hidden="true">
           <svg width="100%" height="100%" viewBox="0 0 200 80" preserveAspectRatio="none">
             <!-- Baseline -->
@@ -1908,53 +1892,17 @@
           </svg>
         </div>
         <div class="card-body">
-          <div class="card-tag">STEP 01 · WEEKLY OVERVIEW</div>
-          <div class="card-chip">SPDR ETF DATA</div>
-          <div class="card-title">Sectors</div>
-          <div class="card-desc">Weekly strength per sector — see which sectors are leading and which are lagging.</div>
-          <div class="card-cta">VIEW SECTORS →</div>
+          <div class="card-tag">MORNING WORKFLOW</div>
+          <div class="card-chip">SPDR ETF DATA · AI · WEB SEARCH</div>
+          <div class="card-title">Sectors + Screener</div>
+          <div class="card-desc">See which sectors are leading, click one, and the screener pre-fills to find matching stocks — two steps in one page.</div>
+          <div class="card-cta">START ANALYSIS →</div>
         </div>
       </a>
       <div class="feature-explain">
         <div class="fe-num">02</div>
-        <div class="fe-body">See which of the eleven <abbr title="SPDR = Standard & Poor's Depositary Receipts — sector ETFs tracking different industry sectors">SPDR sectors</abbr> are leading and which are losing this week. <strong>Choose the right sector side and avoid headwind</strong> — then continue to the Screener to find stocks within it.</div>
+        <div class="fe-body">Step 1: see which of the 11 <abbr title="SPDR = Standard & Poor's Depositary Receipts — sector ETFs tracking different industry sectors">SPDR sectors</abbr> are leading this week. Step 2: click a sector and the screener pre-fills with a thesis — AI returns 3–7 matching stocks with rationale. <strong>No page switches, everything on one page.</strong></div>
       </div>
-    </div>
-
-    <!-- Feature 8: Screener (STEP 02) -->
-    <div class="feature-row">
-      <a class="feature-card" href="screener.html" aria-label="Go to Screener to find stocks matching a free-text investment case using AI search">
-        <div class="card-viz" aria-hidden="true">
-          <div class="vr-item" style="top:11px; animation:rowSlide 4s ease-out 0ms infinite">
-            <span class="vr-sym">JNJ</span>
-            <span class="vr-muted">DEFENSIVE</span>
-            <span class="vr-auto vr-pos">BULLISH</span>
-          </div>
-          <div class="vr-item" style="top:35px; animation:rowSlide 4s ease-out 160ms infinite">
-            <span class="vr-sym">PG</span>
-            <span class="vr-muted">STAPLES</span>
-            <span class="vr-auto vr-pos">BULLISH</span>
-          </div>
-          <div class="vr-item" style="top:58px; animation:rowSlide 4s ease-out 320ms infinite">
-            <span class="vr-sym">KO</span>
-            <span class="vr-muted">DIVIDEND</span>
-            <span class="vr-auto vr-amb">NEUTRAL</span>
-          </div>
-        </div>
-        <div class="card-body">
-          <div class="card-tag">STEP 02 · AI SCREENER</div>
-          <div class="card-chip">AI · WEB SEARCH</div>
-          <div class="card-title">Screener</div>
-          <div class="card-desc">Follow up on a leading sector — describe your thesis and get 3–7 matching stocks with rationale.</div>
-          <div class="card-cta">SEARCH STOCKS →</div>
-        </div>
-      </a>
-      <div class="feature-explain">
-        <div class="fe-num">08</div>
-        <div class="fe-body">After identifying a leading sector, type your thesis — <strong>"strong stocks in the Technology sector"</strong> — and AI searches live to return matching US stocks with rationale. No filter menus, no manual screening.</div>
-      </div>
-    </div>
-
     </div>
 
     <!-- INDIVIDUAL STOCKS -->
@@ -2415,7 +2363,7 @@
     const key = e.key.toLowerCase();
     if (key === '?') { e.preventDefault(); openShortcuts(); return; }
     if (key === 'escape') { closeShortcuts(); return; }
-    const nav = { m: 'market.html', s: 'sektor.html', t: 'ticker.html', e: 'earnings-play.html', h: 'historikk.html', r: 'radar.html', l: 'logg.html', c: 'screener.html' };
+    const nav = { m: 'market.html', s: 'sektorer.html', t: 'ticker.html', e: 'earnings-play.html', h: 'historikk.html', r: 'radar.html', l: 'logg.html', c: 'sektorer.html' };
     if (nav[key]) window.location.href = nav[key];
   });
 
@@ -2587,13 +2535,13 @@
     </div>
     <div class="shortcut-list">
       <div class="shortcut-row"><kbd>M</kbd><span>Market report</span></div>
-      <div class="shortcut-row"><kbd>S</kbd><span>Sectors</span></div>
+      <div class="shortcut-row"><kbd>S</kbd><span>Sectors &amp; Screener</span></div>
       <div class="shortcut-row"><kbd>T</kbd><span>Ticker analysis</span></div>
       <div class="shortcut-row"><kbd>E</kbd><span>Earnings play</span></div>
       <div class="shortcut-row"><kbd>H</kbd><span>History</span></div>
       <div class="shortcut-row"><kbd>R</kbd><span>Radar</span></div>
       <div class="shortcut-row"><kbd>L</kbd><span>Trade log</span></div>
-      <div class="shortcut-row"><kbd>C</kbd><span>Screener</span></div>
+
       <div class="shortcut-row"><kbd>?</kbd><span>This overlay</span></div>
     </div>
   </div>
