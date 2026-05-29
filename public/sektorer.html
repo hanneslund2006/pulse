@@ -222,7 +222,304 @@
     </div>
   </div>
 
-  <!-- JS added in Task 2 -->
+  <script>
+    // ── Shared ──────────────────────────────────────────
+    const TODAY = new Date().toISOString().slice(0, 10);
+
+    // ── Sector ──────────────────────────────────────────
+    const SECTOR_CACHE_KEY = 'pulse_sektor_' + TODAY;
+    let sektorFetching = false;
+    let activePanel = null;
+
+    function fetchWithTimeout(url, options = {}, ms = 30000) {
+      const controller = new AbortController();
+      const id = setTimeout(() => controller.abort(), ms);
+      return fetch(url, { ...options, signal: controller.signal })
+        .finally(() => clearTimeout(id));
+    }
+
+    function sektorCacheKey(symbol) {
+      const hr = new Date().toISOString().slice(0, 13).replace('T', '-');
+      return `sektor:${symbol}:${hr}`;
+    }
+
+    function renderSectors(data) {
+      const list = document.getElementById('sector-list');
+      const maxAbs = Math.max(...data.map(s => Math.abs(s.weeklyChange)), 0.01);
+
+      list.innerHTML = data.map((s, i) => {
+        const up   = s.weeklyChange >= 0;
+        const cls  = up ? 'up' : 'dn';
+        const sign = up ? '+' : '';
+        const barW = Math.min(Math.abs(s.weeklyChange) / maxAbs * 100, 100);
+        const TINT_CLASSES = { 'bull': 'row-bull', 'bear': 'row-bear' };
+        const tintClass = TINT_CLASSES[up ? 'bull' : 'bear'];
+
+        return `<div class="sector-row ${tintClass}" id="row-${sanitizeText(s.symbol)}"
+          onclick="togglePanel('${sanitizeText(s.symbol)}','${sanitizeText(s.name)}')"
+          style="animation-delay:${i * 50}ms;">
+          <div class="sector-rank">${i + 1}</div>
+          <div class="sector-name">${sanitizeText(s.name)}</div>
+          <div class="sector-symbol">${sanitizeText(s.symbol)}</div>
+          <div class="sector-bar-wrap">
+            <div class="sector-bar ${cls}" style="width:${barW}%"></div>
+          </div>
+          <div class="sector-chg key-metric ${cls}">${sign}${s.weeklyChange.toFixed(2)}%</div>
+        </div>
+        <div class="sector-panel" id="panel-${sanitizeText(s.symbol)}"></div>`;
+      }).join('');
+
+      document.getElementById('sector-list').classList.add('visible');
+      document.getElementById('sector-empty-state').style.display = 'none';
+      document.getElementById('sector-load-wrap').classList.remove('visible');
+      const rw = document.getElementById('refresh-wrap');
+      if (rw) rw.style.display = 'block';
+    }
+
+    function fetchSectors() {
+      if (sektorFetching) return;
+      const btn = document.getElementById('sector-fetch-btn');
+      if (btn) btn.disabled = true;
+      sektorFetching = true;
+      document.getElementById('sector-empty-state').style.display = 'none';
+      document.getElementById('sector-load-wrap').classList.add('visible');
+      document.getElementById('sector-error-msg').innerHTML = '';
+
+      fetchWithTimeout('/api/sektor')
+        .then(r => r.json())
+        .then(d => {
+          if (d.error) throw new Error(d.error);
+          renderSectors(d);
+          try { localStorage.setItem(SECTOR_CACHE_KEY, JSON.stringify(d)); } catch (_) {}
+        })
+        .catch(e => {
+          document.getElementById('sector-load-wrap').classList.remove('visible');
+          document.getElementById('sector-empty-state').style.display = 'block';
+          document.getElementById('sector-error-msg').innerHTML = sanitizeText(e.message || 'Failed to fetch sector data.');
+          if (btn) btn.disabled = false;
+        })
+        .finally(() => { sektorFetching = false; });
+    }
+
+    function clearAndRefetch() {
+      try { localStorage.removeItem(SECTOR_CACHE_KEY); } catch (_) {}
+      document.getElementById('sector-list').innerHTML = '';
+      document.getElementById('sector-list').classList.remove('visible');
+      const rw = document.getElementById('refresh-wrap');
+      if (rw) rw.style.display = 'none';
+      fetchSectors();
+    }
+
+    function togglePanel(symbol, name) {
+      const panel = document.getElementById('panel-' + symbol);
+      const row   = document.getElementById('row-'   + symbol);
+      if (!panel || !row) return;
+
+      if (activePanel === symbol) {
+        panel.classList.remove('visible');
+        row.classList.remove('active');
+        activePanel = null;
+        return;
+      }
+
+      if (activePanel) {
+        const prevPanel = document.getElementById('panel-' + activePanel);
+        const prevRow   = document.getElementById('row-'   + activePanel);
+        if (prevPanel) prevPanel.classList.remove('visible');
+        if (prevRow)   prevRow.classList.remove('active');
+      }
+
+      activePanel = symbol;
+      row.classList.add('active');
+      panel.classList.add('visible');
+
+      const key = sektorCacheKey(symbol);
+      try {
+        const hit = localStorage.getItem(key);
+        if (hit) {
+          const cached = JSON.parse(hit);
+          if (cached.analyse) {
+            panel.innerHTML = `<div class="panel-ticker">${sanitizeText(symbol)} — ${sanitizeText(name)}</div><div>${sanitizeWithCitations(cached.analyse)}</div><button type="button" class="sector-screener-cta" data-sector="${sanitizeText(name)}" onclick="handoffToScreener(this.dataset.sector)">SCREEN STOCKS IN ${sanitizeText(name).toUpperCase()} →</button>`;
+            return;
+          }
+        }
+      } catch (_) {}
+
+      panel.innerHTML = `<div class="panel-loading"><div class="ls-dot"></div>ANALYZING ${sanitizeText(symbol)}…</div>`;
+
+      fetchWithTimeout(`/api/sektor?ticker=${encodeURIComponent(symbol)}&navn=${encodeURIComponent(name)}`)
+        .then(r => r.json())
+        .then(d => {
+          if (d.error) throw new Error(d.error);
+          panel.innerHTML = `<div class="panel-ticker">${sanitizeText(symbol)} — ${sanitizeText(name)}</div><div>${sanitizeWithCitations(d.analyse)}</div><button type="button" class="sector-screener-cta" data-sector="${sanitizeText(name)}" onclick="handoffToScreener(this.dataset.sector)">SCREEN STOCKS IN ${sanitizeText(name).toUpperCase()} →</button>`;
+          try { localStorage.setItem(key, JSON.stringify({ analyse: d.analyse })); } catch (_) {}
+        })
+        .catch(e => {
+          const msg = e.name === 'AbortError' ? 'Request took too long.' : (e.message || 'Failed to fetch analysis.');
+          panel.innerHTML = `<div class="panel-error">${sanitizeText(msg)}</div>`;
+        });
+    }
+
+    function handoffToScreener(sectorName) {
+      const input   = document.getElementById('case-input');
+      const section = document.getElementById('screener-section');
+      if (!input || !section) return;
+      input.value = 'strong stocks in the ' + sectorName + ' sector';
+      updateCharCount();
+      section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    // ── Screener ────────────────────────────────────────
+    const SENT_COLOR = { 'Bullish': '#1D9E75', 'Bearish': '#E24B4A', 'Neutral': '#BA7517' };
+    const SENT_BG    = { 'Bullish': 'rgba(29,158,117,0.1)', 'Bearish': 'rgba(226,75,74,0.1)', 'Neutral': 'rgba(186,117,23,0.1)' };
+    const SENT_TINT  = { 'Bullish': 'row-bull', 'Bearish': 'row-bear', 'Neutral': 'row-neutral' };
+    const LOAD_LABELS = ['SEARCHING FOR MATCHES', 'EVALUATING CANDIDATES', 'ANALYZING YOUR CASE', 'BUILDING RESULTS'];
+    let labelIdx = 0, labelTimer = null;
+    let screenerFetching = false;
+
+    function updateCharCount() {
+      const val = document.getElementById('case-input').value.length;
+      document.getElementById('char-count').textContent = val + ' / 200';
+    }
+
+    function handleKey(e) {
+      if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+        e.preventDefault();
+        fetchScreener();
+      }
+    }
+
+    function showError(msg) {
+      const el = document.getElementById('screener-error-msg');
+      el.innerHTML = sanitizeText(msg);
+      el.classList.add('visible');
+    }
+    function clearError() {
+      document.getElementById('screener-error-msg').classList.remove('visible');
+    }
+
+    function startLoadLabels() {
+      labelIdx = 0;
+      document.getElementById('load-label').textContent = LOAD_LABELS[0];
+      labelTimer = setInterval(() => {
+        labelIdx = (labelIdx + 1) % LOAD_LABELS.length;
+        document.getElementById('load-label').textContent = LOAD_LABELS[labelIdx];
+      }, 5000);
+      requestAnimationFrame(() => { document.getElementById('load-bar').style.transform = 'scaleX(0.88)'; });
+    }
+
+    function stopLoadLabels() {
+      clearInterval(labelTimer);
+      const bar = document.getElementById('load-bar');
+      bar.style.transition = 'none';
+      bar.style.transform = 'scaleX(0)';
+    }
+
+    function renderResults(data) {
+      const list    = document.getElementById('screener-list');
+      const summary = document.getElementById('case-summary');
+      summary.textContent = 'MATCHING: ' + sanitizeText(data.case_summary || '');
+      list.innerHTML = data.stocks.map((s, i) => {
+        const sent  = s.sentiment || 'Neutral';
+        const color = SENT_COLOR[sent] || SENT_COLOR['Neutral'];
+        const bg    = SENT_BG[sent]    || SENT_BG['Neutral'];
+        const tint  = SENT_TINT[sent]  || SENT_TINT['Neutral'];
+        return `<div class="radar-card ${tint}" style="animation-delay:${i * 80}ms; border-color:${color}33; background:${bg};">
+          <div class="screener-company" style="color:${color}">${sanitizeText(s.ticker)} — ${sanitizeText(s.name)}</div>
+          <div class="screener-desc">${sanitizeText(s.rationale)}</div>
+          <div class="screener-fit-label">FIT</div>
+          <div class="screener-fit">${sanitizeText(s.fit)}</div>
+        </div>`;
+      }).join('');
+      list.classList.add('visible');
+      document.getElementById('screener-empty').style.display = data.stocks.length === 0 ? 'block' : 'none';
+      document.getElementById('results-wrap').style.display = 'block';
+      document.getElementById('input-state').style.display = 'none';
+    }
+
+    function fetchScreener() {
+      if (screenerFetching) return;
+      const caseText = document.getElementById('case-input').value.trim();
+      if (!caseText) return;
+      clearError();
+      const btn = document.getElementById('screener-fetch-btn');
+      if (btn) btn.disabled = true;
+      screenerFetching = true;
+      document.getElementById('input-state').style.display = 'none';
+      document.getElementById('screener-load-wrap').classList.add('visible');
+      startLoadLabels();
+      requestAnimationFrame(() => { document.getElementById('load-bar').style.transform = 'scaleX(0.05)'; });
+
+      const ctrl = new AbortController();
+      const abortTimer = setTimeout(() => ctrl.abort(), 45000);
+
+      fetch('/api/screener?case=' + encodeURIComponent(caseText), { signal: ctrl.signal })
+        .then(async res => {
+          clearTimeout(abortTimer);
+          stopLoadLabels();
+          document.getElementById('screener-load-wrap').classList.remove('visible');
+          if (res.status === 429) {
+            const d = await res.json().catch(() => ({}));
+            throw new Error(d.error || 'Rate limit reached. Try again in a moment.');
+          }
+          if (!res.ok) throw new Error('Server error. Try again.');
+          const data = await res.json();
+          if (data.error) throw new Error(data.error);
+          renderResults(data);
+        })
+        .catch(e => {
+          clearTimeout(abortTimer);
+          stopLoadLabels();
+          document.getElementById('screener-load-wrap').classList.remove('visible');
+          document.getElementById('input-state').style.display = 'block';
+          if (btn) btn.disabled = false;
+          showError(e.name === 'AbortError' ? 'Request timed out. Try again.' : (e.message || 'Unknown error. Try again.'));
+        })
+        .finally(() => { screenerFetching = false; });
+    }
+
+    function resetScreener() {
+      document.getElementById('screener-list').classList.remove('visible');
+      document.getElementById('results-wrap').style.display = 'none';
+      document.getElementById('input-state').style.display = 'block';
+      document.getElementById('case-input').value = '';
+      document.getElementById('char-count').textContent = '0 / 200';
+    }
+
+    // ── Shared nav + shortcuts ───────────────────────────
+    function setMarketStatus() {
+      const now = new Date();
+      const day = now.getUTCDay(), hour = now.getUTCHours(), min = now.getUTCMinutes();
+      const isOpen = day >= 1 && day <= 5 && (hour > 13 || (hour === 13 && min >= 30)) && hour < 20;
+      const dot  = document.querySelector('.nav-status-dot');
+      const text = document.querySelector('.nav-status-text');
+      if (dot)  dot.style.background  = isOpen ? 'var(--green)' : 'var(--text-muted)';
+      if (text) text.textContent       = isOpen ? 'MARKET OPEN'  : 'MARKET CLOSED';
+    }
+
+    function openShortcuts()  { document.getElementById('shortcut-overlay').classList.add('visible'); }
+    function closeShortcuts() { document.getElementById('shortcut-overlay').classList.remove('visible'); }
+
+    // ── Init ─────────────────────────────────────────────
+    try {
+      const cached = JSON.parse(localStorage.getItem(SECTOR_CACHE_KEY) || 'null');
+      if (cached && Array.isArray(cached)) renderSectors(cached);
+    } catch (_) {}
+
+    initCitationHandlers();
+    setMarketStatus();
+
+    document.addEventListener('keydown', function(e) {
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+      const key = e.key.toLowerCase();
+      if (key === '?') { e.preventDefault(); openShortcuts(); return; }
+      if (key === 'escape') { closeShortcuts(); return; }
+      if (key === 's') { document.getElementById('sector-section').scrollIntoView({ behavior: 'smooth' }); return; }
+      if (key === 'c') { document.getElementById('screener-section').scrollIntoView({ behavior: 'smooth' }); return; }
+      const nav = { m:'market.html', t:'ticker.html', e:'earnings-play.html', h:'historikk.html', r:'radar.html', l:'logg.html' };
+      if (nav[key]) window.location.href = nav[key];
+    });
+  </script>
 
   <script src="bg.js"></script>
   <script src="live.js"></script>
