@@ -368,6 +368,21 @@
     }
     .feature-cat:first-child { margin-top: 0; }
 
+    .workflow-pair { position: relative; }
+    .workflow-pair::before {
+      content: 'MORNING WORKFLOW';
+      display: block;
+      font-family: 'Space Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 0.12em;
+      color: var(--text-muted);
+      opacity: 0.5;
+      padding-bottom: 8px;
+    }
+    .workflow-pair .feature-row + .feature-row {
+      border-top: 1px solid var(--border);
+    }
+
     .feature-row {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -1866,7 +1881,9 @@
       </div>
     </div>
 
-    <!-- Feature 2: Sektorer -->
+    <div class="workflow-pair">
+
+    <!-- Feature 2: Sektorer (STEP 01) -->
     <div class="feature-row">
       <a class="feature-card" href="sektor.html" aria-label="Go to Sectors for weekly overview of which sectors are leading and lagging">
         <div class="card-viz" aria-hidden="true">
@@ -1891,7 +1908,7 @@
           </svg>
         </div>
         <div class="card-body">
-          <div class="card-tag">WEEKLY OVERVIEW</div>
+          <div class="card-tag">STEP 01 · WEEKLY OVERVIEW</div>
           <div class="card-chip">SPDR ETF DATA</div>
           <div class="card-title">Sectors</div>
           <div class="card-desc">Weekly strength per sector — see which sectors are leading and which are lagging.</div>
@@ -1900,8 +1917,44 @@
       </a>
       <div class="feature-explain">
         <div class="fe-num">02</div>
-        <div class="fe-body">See which of the eleven <abbr title="SPDR = Standard & Poor's Depositary Receipts — sector ETFs tracking different industry sectors">SPDR sectors</abbr> are leading and which are losing this week. <strong>Choose the right sector side and avoid headwind</strong> — a simple overview of the rotation.</div>
+        <div class="fe-body">See which of the eleven <abbr title="SPDR = Standard & Poor's Depositary Receipts — sector ETFs tracking different industry sectors">SPDR sectors</abbr> are leading and which are losing this week. <strong>Choose the right sector side and avoid headwind</strong> — then continue to the Screener to find stocks within it.</div>
       </div>
+    </div>
+
+    <!-- Feature 8: Screener (STEP 02) -->
+    <div class="feature-row">
+      <a class="feature-card" href="screener.html" aria-label="Go to Screener to find stocks matching a free-text investment case using AI search">
+        <div class="card-viz" aria-hidden="true">
+          <div class="vr-item" style="top:11px; animation:rowSlide 4s ease-out 0ms infinite">
+            <span class="vr-sym">JNJ</span>
+            <span class="vr-muted">DEFENSIVE</span>
+            <span class="vr-auto vr-pos">BULLISH</span>
+          </div>
+          <div class="vr-item" style="top:35px; animation:rowSlide 4s ease-out 160ms infinite">
+            <span class="vr-sym">PG</span>
+            <span class="vr-muted">STAPLES</span>
+            <span class="vr-auto vr-pos">BULLISH</span>
+          </div>
+          <div class="vr-item" style="top:58px; animation:rowSlide 4s ease-out 320ms infinite">
+            <span class="vr-sym">KO</span>
+            <span class="vr-muted">DIVIDEND</span>
+            <span class="vr-auto vr-amb">NEUTRAL</span>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="card-tag">STEP 02 · AI SCREENER</div>
+          <div class="card-chip">AI · WEB SEARCH</div>
+          <div class="card-title">Screener</div>
+          <div class="card-desc">Follow up on a leading sector — describe your thesis and get 3–7 matching stocks with rationale.</div>
+          <div class="card-cta">SEARCH STOCKS →</div>
+        </div>
+      </a>
+      <div class="feature-explain">
+        <div class="fe-num">08</div>
+        <div class="fe-body">After identifying a leading sector, type your thesis — <strong>"strong stocks in the Technology sector"</strong> — and AI searches live to return matching US stocks with rationale. No filter menus, no manual screening.</div>
+      </div>
+    </div>
+
     </div>
 
     <!-- INDIVIDUAL STOCKS -->
@@ -2107,40 +2160,6 @@
       <div class="feature-explain">
         <div class="fe-num">07</div>
         <div class="fe-body">Log entry, exit, setup type and result. Track P&L and winrate over time. <strong>Everything stored locally</strong> in the browser — no account, no server.</div>
-      </div>
-    </div>
-
-    <!-- Feature 8: Screener -->
-    <div class="feature-row">
-      <a class="feature-card" href="screener.html" aria-label="Go to Screener to find stocks matching a free-text investment case using AI search">
-        <div class="card-viz" aria-hidden="true">
-          <div class="vr-item" style="top:11px; animation:rowSlide 4s ease-out 0ms infinite">
-            <span class="vr-sym">JNJ</span>
-            <span class="vr-muted">DEFENSIVE</span>
-            <span class="vr-auto vr-pos">BULLISH</span>
-          </div>
-          <div class="vr-item" style="top:35px; animation:rowSlide 4s ease-out 160ms infinite">
-            <span class="vr-sym">PG</span>
-            <span class="vr-muted">STAPLES</span>
-            <span class="vr-auto vr-pos">BULLISH</span>
-          </div>
-          <div class="vr-item" style="top:58px; animation:rowSlide 4s ease-out 320ms infinite">
-            <span class="vr-sym">KO</span>
-            <span class="vr-muted">DIVIDEND</span>
-            <span class="vr-auto vr-amb">NEUTRAL</span>
-          </div>
-        </div>
-        <div class="card-body">
-          <div class="card-tag">AI SCREENER</div>
-          <div class="card-chip">AI · WEB SEARCH</div>
-          <div class="card-title">Screener</div>
-          <div class="card-desc">Describe your investment case in plain English — get 3–7 matching stocks with rationale.</div>
-          <div class="card-cta">SEARCH STOCKS →</div>
-        </div>
-      </a>
-      <div class="feature-explain">
-        <div class="fe-num">08</div>
-        <div class="fe-body">Type your thesis: <strong>"safe stocks in uncertain times"</strong> or <strong>"high-growth tech momentum."</strong> AI searches live and returns matching US stocks with rationale — no filter menus, no manual screening.</div>
       </div>
     </div>
 

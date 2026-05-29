@@ -289,6 +289,16 @@
       document.getElementById('case-input').value = '';
       document.getElementById('char-count').textContent = '0 / 200';
     }
+
+    (function prefillFromSector() {
+      const params = new URLSearchParams(window.location.search);
+      const sector = params.get('sector');
+      if (!sector) return;
+      const input = document.getElementById('case-input');
+      if (!input) return;
+      input.value = 'strong stocks in the ' + sector + ' sector';
+      if (typeof updateCharCount === 'function') updateCharCount();
+    })();
   </script>
   <div class="shortcut-overlay" id="shortcut-overlay" role="dialog" aria-modal="true" aria-label="Keyboard shortcuts">
     <div class="shortcut-modal">

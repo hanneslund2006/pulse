@@ -72,6 +72,20 @@
       color: var(--green); letter-spacing: 0.12em; margin-bottom: 7px;
     }
     .panel-error { color: var(--red); font-size: 11px; }
+    .sector-screener-cta {
+      display: inline-block;
+      margin-top: 14px;
+      font-family: 'Space Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      color: var(--green);
+      text-decoration: none;
+      border-top: 1px solid var(--border);
+      padding-top: 10px;
+      width: 100%;
+      transition: opacity 0.2s ease;
+    }
+    .sector-screener-cta:hover { opacity: 0.7; }
 
     /* Citation styling */
     .citation {
@@ -256,7 +270,7 @@
         if (hit) {
           const cached = JSON.parse(hit);
           if (cached.analyse) {
-            const html = `<div class="panel-ticker">${sanitizeText(symbol)} — ${sanitizeText(name)}</div><div>${sanitizeWithCitations(cached.analyse)}</div>`;
+            const html = `<div class="panel-ticker">${sanitizeText(symbol)} — ${sanitizeText(name)}</div><div>${sanitizeWithCitations(cached.analyse)}</div><a href="screener.html?sector=${encodeURIComponent(name)}" class="sector-screener-cta">SCREEN STOCKS IN ${sanitizeText(name).toUpperCase()} →</a>`;
             panel.innerHTML = html;
             return;
           }
@@ -269,7 +283,7 @@
         .then(r => r.json())
         .then(d => {
           if (d.error) throw new Error(d.error);
-          const html = `<div class="panel-ticker">${sanitizeText(symbol)} — ${sanitizeText(name)}</div><div>${sanitizeWithCitations(d.analyse)}</div>`;
+          const html = `<div class="panel-ticker">${sanitizeText(symbol)} — ${sanitizeText(name)}</div><div>${sanitizeWithCitations(d.analyse)}</div><a href="screener.html?sector=${encodeURIComponent(name)}" class="sector-screener-cta">SCREEN STOCKS IN ${sanitizeText(name).toUpperCase()} →</a>`;
           panel.innerHTML = html;
           try { localStorage.setItem(key, JSON.stringify({ analyse: d.analyse })); } catch (_) {}
         })
