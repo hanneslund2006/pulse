@@ -220,8 +220,8 @@ Pre-market gap analysis with trade setups.
 }
 ```
 
-**Cache:** 4 hours  
-**Model:** Sonnet 4.5
+**Cache:** 30 minutes (intentional — pre-market data freshness)
+**Model:** Haiku 4.5
 
 ---
 
