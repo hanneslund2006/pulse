@@ -211,7 +211,7 @@
         <div class="shortcut-row"><kbd>H</kbd><span>History</span></div>
         <div class="shortcut-row"><kbd>R</kbd><span>Radar</span></div>
         <div class="shortcut-row"><kbd>L</kbd><span>Trade log</span></div>
-        <div class="shortcut-row"><kbd>C</kbd><span>Screener</span></div>
+        <div class="shortcut-row"><kbd>C</kbd><span>Sectors &amp; Screener</span></div>
         <div class="shortcut-row"><kbd>?</kbd><span>This overlay</span></div>
       </div>
     </div>
@@ -389,7 +389,7 @@
       const key = e.key.toLowerCase();
       if (key === '?') { e.preventDefault(); openShortcuts(); return; }
       if (key === 'escape') { closeShortcuts(); return; }
-      const nav = { m: 'market.html', s: 'sektor.html', t: 'ticker.html', e: 'earnings-play.html', h: 'historikk.html', r: 'radar.html', l: 'logg.html', c: 'screener.html' };
+      const nav = { m: 'market.html', s: 'sektorer.html', t: 'ticker.html', e: 'earnings-play.html', h: 'historikk.html', r: 'radar.html', l: 'logg.html', c: 'sektorer.html' };
       if (nav[key]) window.location.href = nav[key];
     });
 
