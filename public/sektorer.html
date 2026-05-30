@@ -12,13 +12,7 @@
     body { padding: 32px 20px 64px; }
     .container { max-width: 600px; margin: 0 auto; }
 
-    /* ── Section divider ─────────────────────────────── */
-    .section-divider {
-      max-width: 600px; margin: 48px auto 0;
-      border-top: 1px solid var(--border);
-    }
-
-    /* ── Loading dot (shared) ────────────────────────── */
+    /* ── Loading dot ─────────────────────────────────── */
     @keyframes ls-pulse { 0%,100%{opacity:1;} 50%{opacity:0.15;} }
     .ls-dot {
       width: 4px; height: 4px; border-radius: 50%;
@@ -26,48 +20,102 @@
       animation: ls-pulse 1.2s ease-in-out infinite;
     }
 
-    /* ── Sector list ──────────────────────────────────── */
-    .sector-list { display: none; flex-direction: column; gap: 8px; }
-    .sector-list.visible { display: flex; }
-
+    /* ── Sector grid ─────────────────────────────────── */
     @keyframes fadeUp2 { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
-    .sector-row {
-      background: var(--surface); border: 1px solid var(--border);
-      border-radius: var(--radius-lg);
-      padding: 14px 18px; display: flex; align-items: center; gap: 14px;
-      cursor: pointer; transition: border-color 180ms ease;
-      animation: fadeUp2 0.35s ease-out both;
+
+    .ms-sector-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-top: 24px;
     }
-    .sector-row:hover { border-color: rgba(255,255,255,0.12); }
-    .sector-rank { font-family: 'Space Mono',monospace; font-size: 10px; color: var(--text-muted); width: 16px; flex-shrink: 0; }
-    .sector-name { font-size: 13px; color: var(--text-primary); flex: 1; font-weight: 500; }
-    .sector-symbol { font-family: 'Space Mono',monospace; font-size: 9px; color: var(--text-muted); }
-    .sector-bar-wrap { width: 80px; height: 4px; background: rgba(255,255,255,0.06); border-radius: 2px; overflow: hidden; flex-shrink: 0; }
-    .sector-bar { height: 100%; border-radius: 2px; transition: width 0.4s ease; }
-    .sector-bar.up { background: var(--green); }
-    .sector-bar.dn { background: var(--red); }
-    .sector-chg { font-family: 'Space Mono',monospace; font-size: 11px; font-weight: 700; width: 56px; text-align: right; flex-shrink: 0; }
-    .sector-chg.up { color: var(--green); }
-    .sector-chg.dn { color: var(--red); }
-    .sector-row.active { border-color: rgba(255,255,255,0.15); }
+    @media (max-width: 480px) {
+      .ms-sector-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .ms-sector-tile { animation: none; opacity: 1; transform: none; }
+    }
+
+    .ms-sector-tile {
+      padding: 12px 14px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      background: var(--surface);
+      cursor: pointer;
+      transition: border-color 180ms ease, background 180ms ease;
+      animation: fadeUp2 0.35s ease-out both;
+      user-select: none;
+    }
+    .ms-sector-tile:hover { border-color: rgba(255,255,255,0.14); }
+    .ms-sector-tile.ms-tile-selected {
+      border-color: var(--green);
+      background: rgba(16,185,129,0.07);
+    }
+    .ms-tile-name {
+      font-size: 11px;
+      color: var(--text-secondary);
+      margin-bottom: 6px;
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .ms-tile-chg {
+      font-family: 'Space Mono', monospace;
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .ms-tile-chg.up { color: var(--green); }
+    .ms-tile-chg.dn { color: var(--red); }
+    .ms-tile-analyze {
+      display: block;
+      margin-top: 8px;
+      font-family: 'Space Mono', monospace;
+      font-size: 8px;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+      background: none;
+      border: none;
+      padding: 0;
+      cursor: pointer;
+      transition: color 150ms ease;
+    }
+    .ms-tile-analyze:hover { color: var(--green); }
     .row-bull { background: rgba(16,185,129,0.04); }
     .row-bear { background: rgba(229,75,74,0.04); }
 
-    .sector-panel {
-      display: none; background: var(--surface);
-      border: 1px solid var(--border);
-      border-top: none; border-radius: 0 0 10px 10px;
-      padding: 14px 18px 14px 32px;
-      margin-top: -4px; font-size: 13px;
-      color: var(--text-secondary); line-height: 1.65;
+    /* ── Sector loading / error ──────────────────────── */
+    .ms-sector-loading {
+      grid-column: 1 / -1;
+      padding: 12px 0;
+      display: flex;
+      align-items: center;
     }
-    .sector-panel.visible { display: block; }
+    .ms-sector-error {
+      grid-column: 1 / -1;
+      font-size: 11px;
+      color: var(--red);
+      padding: 8px 0;
+    }
+
+    /* ── Panel zone (below grid) ─────────────────────── */
+    .ms-panel-zone {
+      margin-top: 16px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 14px 18px;
+      background: var(--surface);
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.65;
+    }
+    .ms-panel-zone.hidden { display: none; }
     .panel-loading { display: flex; align-items: center; gap: 8px; font-family: var(--font-body); font-size: 10px; color: var(--text-muted); letter-spacing: 0.04em; }
-    .panel-ticker { font-family: 'Space Mono',monospace; font-size: 9px; color: var(--green); letter-spacing: 0.12em; margin-bottom: 7px; }
+    .panel-ticker { font-family: 'Space Mono', monospace; font-size: 9px; color: var(--green); letter-spacing: 0.12em; margin-bottom: 7px; }
     .panel-error { color: var(--red); font-size: 11px; }
     .sector-screener-cta {
       display: inline-block; margin-top: 14px;
-      font-family: 'Space Mono',monospace; font-size: 10px; letter-spacing: 0.1em;
+      font-family: 'Space Mono', monospace; font-size: 10px; letter-spacing: 0.1em;
       color: var(--green); background: none; border: none;
       border-top: 1px solid var(--border); padding-top: 10px;
       width: 100%; text-align: left; cursor: pointer;
@@ -78,6 +126,23 @@
     /* ── Citations ───────────────────────────────────── */
     .citation { cursor: pointer; color: var(--green, #1DB87E); text-decoration: none; border-bottom: 1px dotted currentColor; transition: background 0.2s linear; padding: 0 2px; border-radius: 2px; }
     .citation:hover { background: rgba(29,184,126,0.1); }
+
+    /* ── Thesis zone ─────────────────────────────────── */
+    .ms-thesis-zone { margin-top: 24px; }
+    .ms-thesis-label {
+      font-family: 'Space Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 0.12em;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+    }
+    .ms-thesis-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 10px;
+      gap: 12px;
+    }
 
     /* ── Screener inputs ─────────────────────────────── */
     .load-bar {
@@ -95,15 +160,15 @@
     }
     .case-input::placeholder { color: var(--text-muted); opacity: 0.7; }
     .case-input:focus { border-color: rgba(255,255,255,0.18); }
-    .char-count { font-family: 'Space Mono',monospace; font-size: 9px; color: var(--text-muted); text-align: right; margin-top: 6px; }
+    .char-count { font-family: 'Space Mono', monospace; font-size: 9px; color: var(--text-muted); white-space: nowrap; }
 
     /* ── Screener results ────────────────────────────── */
     .screener-list { display: flex; flex-direction: column; gap: 10px; }
-    .screener-company { font-family: 'Space Mono',monospace; font-size: 10px; letter-spacing: 0.08em; margin-bottom: 6px; }
+    .screener-company { font-family: 'Space Mono', monospace; font-size: 10px; letter-spacing: 0.08em; margin-bottom: 6px; }
     .screener-desc { font-size: 13px; color: var(--text-secondary); line-height: 1.6; }
-    .screener-fit-label { font-family: 'Space Mono',monospace; font-size: 8px; letter-spacing: 0.1em; color: var(--text-muted); margin-top: 8px; }
+    .screener-fit-label { font-family: 'Space Mono', monospace; font-size: 8px; letter-spacing: 0.1em; color: var(--text-muted); margin-top: 8px; }
     .screener-fit { font-size: 12px; color: var(--text-secondary); margin-top: 3px; line-height: 1.5; }
-    .case-summary { font-family: 'Space Mono',monospace; font-size: 9px; color: var(--text-muted); letter-spacing: 0.08em; margin-bottom: 16px; }
+    .case-summary { font-family: 'Space Mono', monospace; font-size: 9px; color: var(--text-muted); letter-spacing: 0.08em; margin-bottom: 16px; }
   </style>
 </head>
 <body>
