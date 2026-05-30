@@ -174,7 +174,7 @@
 <body>
   <nav class="pulse-nav">
     <a href="index.html" class="nav-logo">PULSE</a>
-    <span class="nav-page-name">SECTORS & SCREENER</span>
+    <span class="nav-page-name">MARKET SCREENER</span>
     <div class="nav-market-status">
       <span class="nav-status-dot"></span>
       <span class="nav-status-text">MARKET CLOSED</span>
@@ -182,54 +182,41 @@
     </div>
   </nav>
 
-  <!-- ── SECTOR SECTION ──────────────────────────────── -->
-  <div class="container" id="sector-section">
-    <div class="page-title anim" style="animation-delay:40ms;">SECTORS</div>
-    <div class="page-subtitle anim" style="animation-delay:80ms;">Weekly strength per sector — strongest to weakest.</div>
+  <div class="container">
 
-    <div id="sector-empty-state" class="anim" style="animation-delay:120ms;">
-      <div class="cta-card">
-        <div class="cta-label">SECTOR ANALYSIS</div>
-        <div class="cta-title">Which sector is leading this week?</div>
-        <div class="cta-desc">Fetches weekly % change for all 11 SPDR sectors via Yahoo Finance. Cached until next day.</div>
-        <button class="btn-ghost" id="sector-fetch-btn" onclick="fetchSectors()">FETCH SECTOR DATA →</button>
+    <div class="page-title anim" style="animation-delay:40ms;">MARKET SCREENER</div>
+    <div class="page-subtitle anim" style="animation-delay:80ms;">Select a sector, then find matching stocks.</div>
+
+    <!-- Sector grid -->
+    <div class="ms-sector-grid" id="sector-grid">
+      <div class="ms-sector-loading" id="sector-loading">
+        <div class="load-step">
+          <div class="ls-dot"></div>
+          <span>LOADING SECTORS</span>
+        </div>
       </div>
+      <div class="ms-sector-error error-msg" id="sector-error-msg"></div>
     </div>
 
-    <div class="load-wrap" id="sector-load-wrap">
-      <div class="load-step">
-        <div class="ls-dot"></div>
-        <span>LOADING SECTOR DATA</span>
-      </div>
-    </div>
-
-    <div class="error-msg" id="sector-error-msg"></div>
-    <div class="sector-list" id="sector-list"></div>
-
-    <div id="refresh-wrap" style="display:none; margin-top:14px;">
+    <div id="refresh-wrap" style="display:none; margin-top:10px;">
       <button class="btn" onclick="clearAndRefetch()">REFRESH DATA</button>
     </div>
-  </div>
 
-  <!-- ── SECTION DIVIDER ────────────────────────────── -->
-  <div class="section-divider"></div>
+    <!-- Panel zone — AI analysis when ANALYZE → clicked -->
+    <div class="ms-panel-zone hidden" id="ms-panel-zone">
+      <div id="ms-panel-content"></div>
+    </div>
 
-  <!-- ── SCREENER SECTION ───────────────────────────── -->
-  <div class="container" id="screener-section" style="margin-top:48px;">
-    <div class="page-title anim" style="animation-delay:40ms;">SCREENER</div>
-    <div class="page-subtitle anim" style="animation-delay:80ms;">Describe your investment case in plain English.</div>
-
-    <div id="input-state" class="anim" style="animation-delay:120ms;">
-      <div class="cta-card">
-        <div class="cta-label">INVESTMENT CASE</div>
-        <div class="cta-title">What are you looking for?</div>
-        <div class="cta-desc">Write your thesis in plain English. AI searches live market data and returns 3–7 matching US stocks with rationale.</div>
-        <textarea id="case-input" class="case-input"
-          placeholder="e.g. safe stocks in uncertain times"
-          maxlength="200"
-          oninput="updateCharCount()"
-          onkeydown="handleKey(event)"></textarea>
-        <div class="char-count" id="char-count">0 / 200</div>
+    <!-- Thesis zone — always visible -->
+    <div class="ms-thesis-zone" id="input-state">
+      <div class="ms-thesis-label">MARKET THESIS</div>
+      <textarea id="case-input" class="case-input"
+        placeholder="e.g. safe stocks in uncertain times"
+        maxlength="200"
+        oninput="updateCharCount()"
+        onkeydown="handleKey(event)"></textarea>
+      <div class="ms-thesis-footer">
+        <span class="char-count" id="char-count">0 / 200</span>
         <button class="btn-ghost" id="screener-fetch-btn" onclick="fetchScreener()">SEARCH STOCKS →</button>
       </div>
     </div>
@@ -246,7 +233,7 @@
       </div>
     </div>
 
-    <div id="results-wrap" style="display:none;">
+    <div id="results-wrap" style="display:none; margin-top:24px;">
       <div class="case-summary" id="case-summary"></div>
       <div class="section-title">MATCHING STOCKS</div>
       <div class="screener-list" id="screener-list">
@@ -260,6 +247,7 @@
         <button class="btn" onclick="resetScreener()">NEW SEARCH</button>
       </div>
     </div>
+
   </div>
 
   <footer class="pulse-footer">
@@ -275,8 +263,8 @@
       </div>
       <div class="shortcut-list">
         <div class="shortcut-row"><kbd>M</kbd><span>Market report</span></div>
-        <div class="shortcut-row"><kbd>S</kbd><span>Sectors (scroll to top)</span></div>
-        <div class="shortcut-row"><kbd>C</kbd><span>Screener (scroll down)</span></div>
+        <div class="shortcut-row"><kbd>S</kbd><span>Sector grid</span></div>
+        <div class="shortcut-row"><kbd>C</kbd><span>Thesis input</span></div>
         <div class="shortcut-row"><kbd>T</kbd><span>Ticker analysis</span></div>
         <div class="shortcut-row"><kbd>E</kbd><span>Earnings play</span></div>
         <div class="shortcut-row"><kbd>H</kbd><span>History</span></div>
