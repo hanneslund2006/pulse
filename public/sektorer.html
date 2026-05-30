@@ -283,6 +283,7 @@
     const SECTOR_CACHE_KEY = 'pulse_sektor_' + TODAY;
     let sektorFetching = false;
     let activePanel = null;
+    let selectedSector = null;
 
     function fetchWithTimeout(url, options = {}, ms = 30000) {
       const controller = new AbortController();
@@ -351,28 +352,29 @@
       fetchSectors();
     }
 
+    function selectSector(el) {
+      if (selectedSector) selectedSector.classList.remove('ms-tile-selected');
+      selectedSector = el;
+      el.classList.add('ms-tile-selected');
+      const name = el.dataset.name;
+      const input = document.getElementById('case-input');
+      input.value = 'strong stocks in the ' + name + ' sector';
+      updateCharCount();
+    }
+
     function togglePanel(symbol, name) {
-      const panel = document.getElementById('panel-' + symbol);
-      const row   = document.getElementById('row-'   + symbol);
-      if (!panel || !row) return;
+      const zone    = document.getElementById('ms-panel-zone');
+      const content = document.getElementById('ms-panel-content');
+      if (!zone || !content) return;
 
       if (activePanel === symbol) {
-        panel.classList.remove('visible');
-        row.classList.remove('active');
+        zone.classList.add('hidden');
         activePanel = null;
         return;
       }
 
-      if (activePanel) {
-        const prevPanel = document.getElementById('panel-' + activePanel);
-        const prevRow   = document.getElementById('row-'   + activePanel);
-        if (prevPanel) prevPanel.classList.remove('visible');
-        if (prevRow)   prevRow.classList.remove('active');
-      }
-
       activePanel = symbol;
-      row.classList.add('active');
-      panel.classList.add('visible');
+      zone.classList.remove('hidden');
 
       const key = sektorCacheKey(symbol);
       try {
@@ -380,34 +382,36 @@
         if (hit) {
           const cached = JSON.parse(hit);
           if (cached.analyse) {
-            panel.innerHTML = `<div class="panel-ticker">${sanitizeText(symbol)} — ${sanitizeText(name)}</div><div>${sanitizeWithCitations(cached.analyse)}</div><button type="button" class="sector-screener-cta" data-sector="${sanitizeText(name)}" onclick="handoffToScreener(this.dataset.sector)">SCREEN STOCKS IN ${sanitizeText(name).toUpperCase()} →</button>`;
+            content.innerHTML = `<div class="panel-ticker">${sanitizeText(symbol)} — ${sanitizeText(name)}</div><div>${sanitizeWithCitations(cached.analyse)}</div><button type="button" class="sector-screener-cta" data-sector="${sanitizeText(name)}" onclick="handoffToScreener(this.dataset.sector)">SCREEN STOCKS IN ${sanitizeText(name).toUpperCase()} →</button>`;
+            zone.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
             return;
           }
         }
       } catch (_) {}
 
-      panel.innerHTML = `<div class="panel-loading"><div class="ls-dot"></div>ANALYZING ${sanitizeText(symbol)}…</div>`;
+      content.innerHTML = `<div class="panel-loading"><div class="ls-dot"></div>ANALYZING ${sanitizeText(symbol)}…</div>`;
+      zone.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 
       fetchWithTimeout(`/api/sektor?ticker=${encodeURIComponent(symbol)}&navn=${encodeURIComponent(name)}`)
         .then(r => r.json())
         .then(d => {
           if (d.error) throw new Error(d.error);
-          panel.innerHTML = `<div class="panel-ticker">${sanitizeText(symbol)} — ${sanitizeText(name)}</div><div>${sanitizeWithCitations(d.analyse)}</div><button type="button" class="sector-screener-cta" data-sector="${sanitizeText(name)}" onclick="handoffToScreener(this.dataset.sector)">SCREEN STOCKS IN ${sanitizeText(name).toUpperCase()} →</button>`;
+          content.innerHTML = `<div class="panel-ticker">${sanitizeText(symbol)} — ${sanitizeText(name)}</div><div>${sanitizeWithCitations(d.analyse)}</div><button type="button" class="sector-screener-cta" data-sector="${sanitizeText(name)}" onclick="handoffToScreener(this.dataset.sector)">SCREEN STOCKS IN ${sanitizeText(name).toUpperCase()} →</button>`;
           try { localStorage.setItem(key, JSON.stringify({ analyse: d.analyse })); } catch (_) {}
         })
         .catch(e => {
           const msg = e.name === 'AbortError' ? 'Request took too long.' : (e.message || 'Failed to fetch analysis.');
-          panel.innerHTML = `<div class="panel-error">${sanitizeText(msg)}</div>`;
+          content.innerHTML = `<div class="panel-error">${sanitizeText(msg)}</div>`;
         });
     }
 
     function handoffToScreener(sectorName) {
-      const input   = document.getElementById('case-input');
-      const section = document.getElementById('screener-section');
-      if (!input || !section) return;
+      const input = document.getElementById('case-input');
+      const zone  = document.getElementById('input-state');
+      if (!input) return;
       input.value = 'strong stocks in the ' + sectorName + ' sector';
       updateCharCount();
-      section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      if (zone) zone.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
 
     // ── Screener ────────────────────────────────────────
