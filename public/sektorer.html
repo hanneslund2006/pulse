@@ -236,12 +236,11 @@
     <div id="results-wrap" style="display:none; margin-top:24px;">
       <div class="case-summary" id="case-summary"></div>
       <div class="section-title">MATCHING STOCKS</div>
-      <div class="screener-list" id="screener-list">
-        <div class="empty-state" id="screener-empty" style="display:none;">
-          <div class="empty-icon">—</div>
-          <p class="empty-title">No results</p>
-          <p class="empty-desc">No stocks match this thesis. Try a different case.</p>
-        </div>
+      <div class="screener-list" id="screener-list"></div>
+      <div class="empty-state" id="screener-empty" style="display:none;">
+        <div class="empty-icon">—</div>
+        <p class="empty-title">No results</p>
+        <p class="empty-desc">No stocks match this thesis. Try a different case.</p>
       </div>
       <div style="margin-top:14px;">
         <button class="btn" onclick="resetScreener()">NEW SEARCH</button>
@@ -322,7 +321,8 @@
     function fetchSectors() {
       if (sektorFetching) return;
       sektorFetching = true;
-      document.getElementById('sector-loading').style.display = 'flex';
+      const loadingEl = document.getElementById('sector-loading');
+      if (loadingEl) loadingEl.style.display = 'flex';
       document.getElementById('sector-error-msg').innerHTML = '';
 
       fetchWithTimeout('/api/sektor')
@@ -333,7 +333,8 @@
           try { localStorage.setItem(SECTOR_CACHE_KEY, JSON.stringify(d)); } catch (_) {}
         })
         .catch(e => {
-          document.getElementById('sector-loading').style.display = 'none';
+          const loadEl = document.getElementById('sector-loading');
+          if (loadEl) loadEl.style.display = 'none';
           document.getElementById('sector-error-msg').innerHTML = sanitizeText(e.message || 'Failed to fetch sector data.');
         })
         .finally(() => { sektorFetching = false; });
