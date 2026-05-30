@@ -529,6 +529,10 @@
       document.getElementById('input-state').style.display = 'block';
       document.getElementById('case-input').value = '';
       document.getElementById('char-count').textContent = '0 / 200';
+      if (selectedSector) {
+        selectedSector.classList.remove('ms-tile-selected');
+        selectedSector = null;
+      }
     }
 
     // ── Shared nav + shortcuts ───────────────────────────
@@ -548,8 +552,14 @@
     // ── Init ─────────────────────────────────────────────
     try {
       const cached = JSON.parse(localStorage.getItem(SECTOR_CACHE_KEY) || 'null');
-      if (cached && Array.isArray(cached)) renderSectors(cached);
-    } catch (_) {}
+      if (cached && Array.isArray(cached)) {
+        renderSectors(cached);
+      } else {
+        fetchSectors();
+      }
+    } catch (_) {
+      fetchSectors();
+    }
 
     initCitationHandlers();
     setMarketStatus();
@@ -559,8 +569,8 @@
       const key = e.key.toLowerCase();
       if (key === '?') { e.preventDefault(); openShortcuts(); return; }
       if (key === 'escape') { closeShortcuts(); return; }
-      if (key === 's') { document.getElementById('sector-section').scrollIntoView({ behavior: 'smooth' }); return; }
-      if (key === 'c') { document.getElementById('screener-section').scrollIntoView({ behavior: 'smooth' }); return; }
+      if (key === 's') { document.getElementById('sector-grid').scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
+      if (key === 'c') { document.getElementById('input-state').scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
       const nav = { m:'market.html', t:'ticker.html', e:'earnings-play.html', h:'historikk.html', r:'radar.html', l:'logg.html' };
       if (nav[key]) window.location.href = nav[key];
     });
