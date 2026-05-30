@@ -470,10 +470,10 @@
         const bg    = SENT_BG[sent]    || SENT_BG['Neutral'];
         const tint  = SENT_TINT[sent]  || SENT_TINT['Neutral'];
         return `<div class="radar-card ${tint}" style="animation-delay:${i * 80}ms; border-color:${color}33; background:${bg};">
-          <div class="screener-company" style="color:${color}">${sanitizeText(s.ticker)} — ${sanitizeText(s.name)}</div>
-          <div class="screener-desc">${sanitizeText(s.rationale)}</div>
+          <div class="screener-company" style="color:${color}">${sanitizeText(s.ticker)} — ${sanitizeText(s.company)}</div>
+          <div class="screener-desc">${sanitizeText(s.description)}</div>
           <div class="screener-fit-label">FIT</div>
-          <div class="screener-fit">${sanitizeText(s.fit)}</div>
+          <div class="screener-fit">${sanitizeText(s.why_it_fits)}</div>
         </div>`;
       }).join('');
       list.classList.add('visible');
