@@ -297,45 +297,32 @@
     }
 
     function renderSectors(data) {
-      const list = document.getElementById('sector-list');
-      const maxAbs = Math.max(...data.map(s => Math.abs(s.weeklyChange)), 0.01);
+      const grid = document.getElementById('sector-grid');
 
-      list.innerHTML = data.map((s, i) => {
-        const up   = s.weeklyChange >= 0;
-        const cls  = up ? 'up' : 'dn';
-        const sign = up ? '+' : '';
-        const barW = Math.min(Math.abs(s.weeklyChange) / maxAbs * 100, 100);
-        const TINT_CLASSES = { 'bull': 'row-bull', 'bear': 'row-bear' };
-        const tintClass = TINT_CLASSES[up ? 'bull' : 'bear'];
-
-        return `<div class="sector-row ${tintClass}" id="row-${sanitizeText(s.symbol)}"
-          onclick="togglePanel('${sanitizeText(s.symbol)}','${sanitizeText(s.name)}')"
-          style="animation-delay:${i * 50}ms;">
-          <div class="sector-rank">${i + 1}</div>
-          <div class="sector-name">${sanitizeText(s.name)}</div>
-          <div class="sector-symbol">${sanitizeText(s.symbol)}</div>
-          <div class="sector-bar-wrap">
-            <div class="sector-bar ${cls}" style="width:${barW}%"></div>
-          </div>
-          <div class="sector-chg key-metric ${cls}">${sign}${s.weeklyChange.toFixed(2)}%</div>
-        </div>
-        <div class="sector-panel" id="panel-${sanitizeText(s.symbol)}"></div>`;
+      const tiles = data.map((s, i) => {
+        const up        = s.weeklyChange >= 0;
+        const cls       = up ? 'up' : 'dn';
+        const sign      = up ? '+' : '';
+        const tintClass = up ? 'row-bull' : 'row-bear';
+        return `<div class="ms-sector-tile ${tintClass}" data-symbol="${sanitizeText(s.symbol)}" data-name="${sanitizeText(s.name)}"
+          onclick="selectSector(this)"
+          style="animation-delay:${i * 40}ms;">
+          <div class="ms-tile-name">${sanitizeText(s.name)}</div>
+          <div class="ms-tile-chg ${cls}">${sign}${s.weeklyChange.toFixed(2)}%</div>
+          <button class="ms-tile-analyze" onclick="event.stopPropagation(); togglePanel(this.closest('[data-symbol]').dataset.symbol, this.closest('[data-name]').dataset.name)">ANALYZE →</button>
+        </div>`;
       }).join('');
 
-      document.getElementById('sector-list').classList.add('visible');
-      document.getElementById('sector-empty-state').style.display = 'none';
-      document.getElementById('sector-load-wrap').classList.remove('visible');
+      grid.innerHTML = tiles;
+      document.getElementById('sector-loading').style.display = 'none';
       const rw = document.getElementById('refresh-wrap');
       if (rw) rw.style.display = 'block';
     }
 
     function fetchSectors() {
       if (sektorFetching) return;
-      const btn = document.getElementById('sector-fetch-btn');
-      if (btn) btn.disabled = true;
       sektorFetching = true;
-      document.getElementById('sector-empty-state').style.display = 'none';
-      document.getElementById('sector-load-wrap').classList.add('visible');
+      document.getElementById('sector-loading').style.display = 'flex';
       document.getElementById('sector-error-msg').innerHTML = '';
 
       fetchWithTimeout('/api/sektor')
@@ -346,20 +333,21 @@
           try { localStorage.setItem(SECTOR_CACHE_KEY, JSON.stringify(d)); } catch (_) {}
         })
         .catch(e => {
-          document.getElementById('sector-load-wrap').classList.remove('visible');
-          document.getElementById('sector-empty-state').style.display = 'block';
+          document.getElementById('sector-loading').style.display = 'none';
           document.getElementById('sector-error-msg').innerHTML = sanitizeText(e.message || 'Failed to fetch sector data.');
-          if (btn) btn.disabled = false;
         })
         .finally(() => { sektorFetching = false; });
     }
 
     function clearAndRefetch() {
       try { localStorage.removeItem(SECTOR_CACHE_KEY); } catch (_) {}
-      document.getElementById('sector-list').innerHTML = '';
-      document.getElementById('sector-list').classList.remove('visible');
+      const grid = document.getElementById('sector-grid');
+      grid.innerHTML = '<div class="ms-sector-loading" id="sector-loading"><div class="load-step"><div class="ls-dot"></div><span>LOADING SECTORS</span></div></div><div class="ms-sector-error error-msg" id="sector-error-msg"></div>';
       const rw = document.getElementById('refresh-wrap');
       if (rw) rw.style.display = 'none';
+      const pz = document.getElementById('ms-panel-zone');
+      if (pz) pz.classList.add('hidden');
+      if (selectedSector) { selectedSector.classList.remove('ms-tile-selected'); selectedSector = null; }
       fetchSectors();
     }
 
