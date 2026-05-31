@@ -47,4 +47,26 @@ function nextMidnightTTL() {
   return Math.max(60, Math.floor((midnight - Date.now()) / 1000));
 }
 
-module.exports = { get, set, nextMidnightTTL };
+// Last-good copy outlives the normal TTL so endpoints can serve stale data
+// when a fresh upstream fetch fails, instead of returning a blank 500.
+const STALE_PREFIX = 'lastgood:';
+const STALE_TTL = 7 * 24 * 3600;
+
+// Writes the normal TTL'd entry AND a long-lived last-good copy.
+function setWithStale(key, data, ttlSeconds) {
+  set(key, data, ttlSeconds);
+  set(STALE_PREFIX + key, data, STALE_TTL);
+}
+
+// Writes ONLY the last-good copy, no normal cache entry. For endpoints that must
+// stay uncached on the happy path (quotes) but still need a failure fallback.
+function setStaleOnly(key, data, ttlSeconds = STALE_TTL) {
+  set(STALE_PREFIX + key, data, ttlSeconds);
+}
+
+// Reads only the long-lived last-good copy (null if none within 7 days).
+function getStale(key) {
+  return get(STALE_PREFIX + key);
+}
+
+module.exports = { get, set, nextMidnightTTL, setWithStale, setStaleOnly, getStale };

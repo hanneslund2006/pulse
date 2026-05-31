@@ -1,7 +1,7 @@
 const Anthropic = require('@anthropic-ai/sdk');
 const { check: rateCheck } = require('./_ratelimit');
 const { validateTicker } = require('./_validate');
-const { fetchWithTimeout } = require('./_fetch');
+const { fetchWithRetry, callClaudeWithRetry } = require('./_fetch');
 const cache = require('./_cache');
 
 function extractJSON(text) {
@@ -76,12 +76,12 @@ module.exports = async (req, res) => {
   try {
     const limit = months > 3 ? 50 : 10;
     const alpacaUrl = `https://data.alpaca.markets/v1beta1/news?symbols=${encodeURIComponent(ticker)}&start=${startISO}&limit=${limit}&sort=desc`;
-    const alpacaRes = await fetchWithTimeout(alpacaUrl, {
+    const alpacaRes = await fetchWithRetry(alpacaUrl, {
       headers: {
         'APCA-API-KEY-ID': process.env.ALPACA_API_KEY,
         'APCA-API-SECRET-KEY': process.env.ALPACA_API_SECRET,
       }
-    }, 30000);
+    }, 15000, 1);
 
     if (!alpacaRes.ok) {
       const errText = await alpacaRes.text();
@@ -136,7 +136,7 @@ Be analytical and specific. No markdown, no preamble.`;
   const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
   try {
-    const response = await anthropic.messages.create({
+    const response = await callClaudeWithRetry(() => anthropic.messages.create({
       model: 'claude-haiku-4-5-20251001',
       max_tokens: 450,
       system: systemPrompt,
@@ -146,7 +146,7 @@ Be analytical and specific. No markdown, no preamble.`;
           content: `Here are ${articles.length} news articles for ${ticker} from the last ${months} months:\n\n${articleText}\n\nIdentify the 5 most important catalysts.`
         }
       ]
-    });
+    }));
 
     const finalText = response.content
       .filter(b => b.type === 'text')
@@ -173,12 +173,14 @@ Be analytical and specific. No markdown, no preamble.`;
       return res.status(500).json({ error: 'AI returned invalid format. Try again.' });
     }
 
-    cache.set(`historikk_${ticker}_${months}`, parsed, 24 * 3600);
+    cache.setWithStale(`historikk_${ticker}_${months}`, parsed, 24 * 3600);
     console.log('[historikk] Complete');
     return res.status(200).json(parsed);
 
   } catch (error) {
     console.error('Historikk API error:', error);
+    const stale = await cache.getStale(`historikk_${ticker}_${months}`);
+    if (stale) return res.status(200).json({ ...stale, stale: true });
     const message = error.status === 401
       ? 'Invalid Anthropic API key.'
       : error.status === 429

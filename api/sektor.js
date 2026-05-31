@@ -1,7 +1,7 @@
 const Anthropic = require('@anthropic-ai/sdk');
 const { check: rateCheck } = require('./_ratelimit');
 const { validateTicker } = require('./_validate');
-const { fetchWithTimeout } = require('./_fetch');
+const { fetchWithRetry, callClaudeWithRetry } = require('./_fetch');
 const cache = require('./_cache');
 
 const SECTORS = [
@@ -20,9 +20,10 @@ const SECTORS = [
 
 async function fetchWeeklyChange(symbol) {
   const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=5d`;
-  const res = await fetchWithTimeout(url, {
+  // 15s timeout stays under the 20s function maxDuration (11 parallel fetches).
+  const res = await fetchWithRetry(url, {
     headers: { 'User-Agent': 'Mozilla/5.0 (compatible; PULSE/1.0)' },
-  }, 30000);
+  }, 15000, 1);
   if (!res.ok) return null;
   const json = await res.json();
   const result = json?.chart?.result?.[0];
@@ -81,7 +82,7 @@ module.exports = async (req, res) => {
 
     const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
     try {
-      const response = await anthropic.messages.create({
+      const response = await callClaudeWithRetry(() => anthropic.messages.create({
         model: 'claude-haiku-4-5-20251001',
         max_tokens: 350,
         system: 'You are a concise trading-oriented analyst. Always answer in English. Max 4 short sentences. No markdown, no bullet points.',
@@ -89,13 +90,15 @@ module.exports = async (req, res) => {
           role: 'user',
           content: `Analyze ${ticker} (${navn}) SPDR sector right now: 1) What drives the sector, 2) Most important catalyst for and against, 3) 1-2 specific stocks to follow. Example style: "XLK driven by AI growth. Catalyst: Fed pivot and strong big tech. Risk: high P/E. Follow: NVDA, MSFT."`
         }]
-      });
+      }));
       const text = response.content.filter(b => b.type === 'text').map(b => b.text).join('').trim();
       const result = { analyse: text };
-      cache.set(cacheKey, result, 24 * 3600);
+      cache.setWithStale(cacheKey, result, 24 * 3600);
       return res.status(200).json(result);
     } catch (e) {
       console.error('[sektor] Haiku error:', e.message);
+      const stale = await cache.getStale(cacheKey);
+      if (stale) return res.status(200).json({ ...stale, stale: true });
       return res.status(500).json({ error: 'Failed to fetch analysis. Try again.' });
     }
   }
@@ -122,10 +125,20 @@ module.exports = async (req, res) => {
       .filter(Boolean)
       .sort((a, b) => b.weeklyChange - a.weeklyChange);
 
-    cache.set(SECTOR_LIST_KEY, sectors, 6 * 3600);
-    return res.status(200).json(sectors);
+    // Only cache a healthy result. Caching a partial/empty list (Yahoo throttled)
+    // would otherwise blank the sector page for the full 6h TTL.
+    if (sectors.length >= 8) {
+      cache.setWithStale(SECTOR_LIST_KEY, sectors, 6 * 3600);
+      return res.status(200).json(sectors);
+    }
+
+    const stale = await cache.getStale(SECTOR_LIST_KEY);
+    if (stale) return res.status(200).json(stale.map(s => ({ ...s, stale: true })));
+    return res.status(200).json(sectors); // no last-good yet; return as-is without caching
   } catch (error) {
     console.error('Sektor API error:', error);
+    const stale = await cache.getStale(SECTOR_LIST_KEY);
+    if (stale) return res.status(200).json(stale.map(s => ({ ...s, stale: true })));
     return res.status(500).json({ error: 'Failed to fetch sector data.' });
   }
 };

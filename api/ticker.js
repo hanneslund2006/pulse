@@ -1,6 +1,7 @@
 const Anthropic = require('@anthropic-ai/sdk');
 const { check: rateCheck } = require('./_ratelimit');
 const { validateTicker } = require('./_validate');
+const { callClaudeWithRetry } = require('./_fetch');
 const cache = require('./_cache');
 const YahooFinance = require('yahoo-finance2').default;
 const yf = new YahooFinance({ suppressNotices: ['yahooSurvey'] });
@@ -120,13 +121,13 @@ module.exports = async (req, res) => {
     ];
 
     const [response, technical] = await Promise.all([
-      anthropic.messages.create({
+      callClaudeWithRetry(() => anthropic.messages.create({
         model: 'claude-sonnet-4-5-20250929',
         max_tokens: 600,
         system: SYSTEM_PROMPT,
         tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: 3 }],
         messages,
-      }),
+      })),
       fetchTechnicals(ticker),
     ]);
 
@@ -156,11 +157,13 @@ module.exports = async (req, res) => {
     }
 
     if (technical) parsed.technical = technical;
-    cache.set(`ticker_${ticker}`, parsed, 60 * 60 * 24);
+    cache.setWithStale(`ticker_${ticker}`, parsed, 60 * 60 * 24);
     return res.status(200).json(parsed);
 
   } catch (error) {
     console.error('Ticker API error:', error);
+    const stale = await cache.getStale(`ticker_${ticker}`);
+    if (stale) return res.status(200).json({ ...stale, stale: true });
     const message = error.status === 401
       ? 'Invalid API key.'
       : error.status === 429

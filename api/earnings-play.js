@@ -142,6 +142,12 @@ async function claudeInterpret(ticker, mapped) {
   }
 }
 
+// Total Yahoo failure produces an all-null shell — must not be cached (would lock
+// in a blank earnings panel for 6h) and should fall back to last-good data.
+function isEmptyShell(r) {
+  return r && r.currentPrice === null && Array.isArray(r.epsHistory) && r.epsHistory.length === 0;
+}
+
 async function fetchAndCache(ticker, cacheKey) {
   const raw = await fetchYahoo(ticker);
   const mapped = mapYahooData(ticker, raw);
@@ -154,17 +160,31 @@ async function fetchAndCache(ticker, cacheKey) {
     impliedMove: ai.impliedMove != null ? { percent: ai.impliedMove } : null,
   };
 
+  if (isEmptyShell(safe)) {
+    console.warn('[earnings-play] Skipping cache: empty Yahoo shell');
+    return safe;
+  }
+
   const shouldCache = safe.estimates.earningsDate === null ||
                      (typeof safe.estimates.earningsDate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(safe.estimates.earningsDate));
 
   if (shouldCache) {
-    cache.set(cacheKey, safe, 60 * 60 * 6);
+    cache.setWithStale(cacheKey, safe, 60 * 60 * 6);
     console.log(`[earnings-play] Cached: ${cacheKey} (earningsDate: ${safe.estimates.earningsDate || 'none'})`);
   } else {
     console.warn(`[earnings-play] Skipping cache: invalid earningsDate format`);
   }
 
   return safe;
+}
+
+// Serves last-good data with a stale flag when the fresh result is an empty shell.
+async function respondWithFallback(res, result, cacheKey) {
+  if (isEmptyShell(result)) {
+    const stale = await cache.getStale(cacheKey);
+    if (stale) return res.status(200).json({ ...stale, stale: true });
+  }
+  return res.status(200).json(result);
 }
 
 module.exports = async (req, res) => {
@@ -226,7 +246,7 @@ module.exports = async (req, res) => {
 
       try {
         const result = await fetchAndCache(ticker, CACHE_KEY);
-        return res.status(200).json(result);
+        return await respondWithFallback(res, result, CACHE_KEY);
       } finally {
         if (redis && lockAcquired) {
           redis.del(lockKey).catch(() => {});
@@ -241,9 +261,11 @@ module.exports = async (req, res) => {
 
   try {
     const result = await fetchAndCache(ticker, CACHE_KEY);
-    return res.status(200).json(result);
+    return await respondWithFallback(res, result, CACHE_KEY);
   } catch (error) {
     console.error('[earnings-play] API error:', error.status, error.message, error);
+    const stale = await cache.getStale(CACHE_KEY);
+    if (stale) return res.status(200).json({ ...stale, stale: true });
     const message = error.status === 401
       ? 'Invalid API key.'
       : error.status === 429

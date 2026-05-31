@@ -1,5 +1,6 @@
 const Anthropic = require('@anthropic-ai/sdk');
 const { check: rateCheck } = require('./_ratelimit');
+const { callClaudeWithRetry } = require('./_fetch');
 const cache = require('./_cache');
 const YahooFinance = require('yahoo-finance2').default;
 const yf = new YahooFinance({ suppressNotices: ['yahooSurvey'] });
@@ -51,13 +52,13 @@ module.exports = async (req, res) => {
   const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
   try {
-    const response = await anthropic.messages.create({
+    const response = await callClaudeWithRetry(() => anthropic.messages.create({
       model: 'claude-haiku-4-5-20251001',
       max_tokens: 500,
       system: SYSTEM_PROMPT,
       tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: 2 }],
       messages: [{ role: 'user', content: 'Find the best swing trading candidates right now based on high short float, positive momentum and catalyst. Return JSON array.' }],
-    });
+    }));
 
     const finalText = response.content.filter(b => b.type === 'text').map(b => b.text).join('\n').trim();
     if (!finalText) return res.status(500).json({ error: 'No response from AI.' });
@@ -89,11 +90,13 @@ module.exports = async (req, res) => {
 
     const enriched = await Promise.all(valid.map(enrichShortFloat));
 
-    cache.set(CACHE_KEY, enriched, cache.nextMidnightTTL());
+    cache.setWithStale(CACHE_KEY, enriched, cache.nextMidnightTTL());
     return res.status(200).json(enriched);
 
   } catch (error) {
     console.error('[radar] API error:', error);
+    const stale = await cache.getStale(CACHE_KEY);
+    if (stale) return res.status(200).json(stale.map(c => ({ ...c, stale: true })));
     const msg = error.status === 429 ? 'Too many requests. Wait a bit.' : 'Failed to run radar.';
     return res.status(500).json({ error: msg });
   }

@@ -1,5 +1,6 @@
 const Anthropic = require('@anthropic-ai/sdk');
 const { check: rateCheck } = require('./_ratelimit');
+const { callClaudeWithRetry } = require('./_fetch');
 const cache = require('./_cache');
 const YahooFinance = require('yahoo-finance2').default;
 const yf = new YahooFinance({ suppressNotices: ['yahooSurvey'] });
@@ -82,13 +83,13 @@ module.exports = async (req, res) => {
   try {
     const messages = [{ role: 'user', content: 'Find the 5 largest pre-market gap movers on US exchanges today. Return JSON array.' }];
 
-    const response = await anthropic.messages.create({
+    const response = await callClaudeWithRetry(() => anthropic.messages.create({
       model: 'claude-haiku-4-5-20251001',
       max_tokens: 280,
       system: SYSTEM_PROMPT,
       tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: 2 }],
       messages,
-    });
+    }));
 
     const finalText = response.content.filter(b => b.type === 'text').map(b => b.text).join('\n').trim();
     if (!finalText) return res.status(500).json({ error: 'No response from AI.' });
@@ -121,17 +122,19 @@ module.exports = async (req, res) => {
         return {
           ...g,
           above200sma,
-          gap: preMarket.gap,
+          gap: preMarket.gap ?? g.gap, // keep Claude's gap when Yahoo premarket is unavailable
           preMarketPrice: preMarket.price,
         };
       })
     );
 
-    cache.set('gappers_v1', enriched, 60 * 30);
+    cache.setWithStale('gappers_v1', enriched, 60 * 30);
     return res.status(200).json(enriched);
 
   } catch (error) {
     console.error('[gappers] API error:', error);
+    const stale = await cache.getStale('gappers_v1');
+    if (stale) return res.status(200).json(stale.map(g => ({ ...g, stale: true })));
     const msg = error.status === 429 ? 'Too many requests. Wait a bit.' : 'Failed to fetch gappers.';
     return res.status(500).json({ error: msg });
   }

@@ -6,8 +6,10 @@ const { XMLParser } = require('fast-xml-parser');
 
 // CHANGE 1: User-Agent from env (never hardcode email in source)
 const SEC_USER_AGENT = process.env.SEC_USER_AGENT || 'PULSE/1.0 contact@example.com';
-const SEC_TIMEOUT = 30000; // 30s
-const PARSE_TIMEOUT = 8000; // 8s max for XML parsing (Vercel Hobby function timeout is 10s)
+// 7s per fetch: up to 3 sequential SEC fetches (CIK, submissions, Form4 XML) fit the
+// 30s function maxDuration with headroom. A 30s timeout left zero buffer → platform kills.
+const SEC_TIMEOUT = 7000;
+const PARSE_TIMEOUT = 8000; // 8s cap for the XML parse loop
 
 module.exports = async (req, res) => {
   // 1. Method validation
@@ -97,11 +99,15 @@ module.exports = async (req, res) => {
       summary: generateSummary(validated, sentiment)
     };
 
-    cache.set(cacheKey, result, 6 * 3600);
+    cache.setWithStale(cacheKey, result, 6 * 3600);
     return res.status(200).json(result);
 
   } catch (error) {
     console.error('[insider] Error:', error.message);
+
+    // Serve last-good insider data rather than blanking the panel when SEC is slow/down.
+    const stale = await cache.getStale(cacheKey);
+    if (stale) return res.status(200).json({ ...stale, stale: true });
 
     // Generic error messages only
     const message = error.message.includes('timeout')

@@ -1,5 +1,6 @@
 const Anthropic = require('@anthropic-ai/sdk');
 const { check: rateCheck } = require('./_ratelimit');
+const { callClaudeWithRetry } = require('./_fetch');
 const cache = require('./_cache');
 
 const SYSTEM_PROMPT = `Return JSON only:
@@ -40,13 +41,13 @@ module.exports = async (req, res) => {
   const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
   try {
-    const response = await anthropic.messages.create({
+    const response = await callClaudeWithRetry(() => anthropic.messages.create({
       model: 'claude-haiku-4-5-20251001',
       max_tokens: 700,
       system: SYSTEM_PROMPT,
       tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: 3 }],
       messages: [{ role: 'user', content: `Find US stocks matching this investment case: ${raw}` }],
-    });
+    }));
 
     const finalText = response.content
       .filter(b => b.type === 'text')

@@ -1,5 +1,6 @@
 const Anthropic = require('@anthropic-ai/sdk');
 const { check: rateCheck } = require('./_ratelimit');
+const { callClaudeWithRetry } = require('./_fetch');
 const cache = require('./_cache');
 
 const SYSTEM_PROMPT = `Return JSON only:
@@ -57,13 +58,13 @@ module.exports = async (req, res) => {
       }
     ];
 
-    const response = await anthropic.messages.create({
+    const response = await callClaudeWithRetry(() => anthropic.messages.create({
       model: 'claude-sonnet-4-5-20250929',
       max_tokens: 900,
       system: SYSTEM_PROMPT,
       tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: 3 }],
       messages
-    });
+    }));
 
     const finalText = response.content
       .filter(b => b.type === 'text')
@@ -95,11 +96,15 @@ module.exports = async (req, res) => {
       return res.status(500).json({ error: 'AI returned incomplete report. Try again.' });
     }
 
-    cache.set(CACHE_KEY, parsed, cache.nextMidnightTTL());
+    cache.setWithStale(CACHE_KEY, parsed, cache.nextMidnightTTL());
     return res.status(200).json(parsed);
 
   } catch (error) {
     console.error('Anthropic API error:', error);
+
+    // Serve last-good report rather than blanking the core market page when Claude is down.
+    const stale = await cache.getStale(CACHE_KEY);
+    if (stale) return res.status(200).json({ ...stale, stale: true });
 
     const message = error.status === 401
       ? 'Invalid API key.'

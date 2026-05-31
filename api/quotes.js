@@ -1,7 +1,7 @@
 // Yahoo Finance proxy — no API key required
 // Always use query1 (not query2) and set User-Agent
 
-const { fetchWithTimeout } = require('./_fetch');
+const { fetchWithRetry } = require('./_fetch');
 const cache = require('./_cache');
 
 const DISPLAY_MAP = {
@@ -31,9 +31,11 @@ const NAME_MAP = {
 
 async function fetchQuote(symbol) {
   const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=1d&range=1d`;
-  const res = await fetchWithTimeout(url, {
+  // 8s timeout stays under the 10s function maxDuration so the handler returns
+  // a structured response before the platform kills the function.
+  const res = await fetchWithRetry(url, {
     headers: { 'User-Agent': 'Mozilla/5.0 (compatible; PULSE/1.0)' },
-  }, 30000);
+  }, 8000, 1);
   if (!res.ok) return null;
   const json = await res.json();
   const meta = json?.chart?.result?.[0]?.meta;
@@ -82,7 +84,16 @@ module.exports = async (req, res) => {
 
   try {
     const results = await Promise.all(
-      symbols.map(sym => fetchQuote(sym).catch(() => null))
+      symbols.map(async sym => {
+        const fresh = await fetchQuote(sym).catch(() => null);
+        if (fresh) {
+          cache.setStaleOnly('quote:' + sym, fresh); // refresh last-good (no happy-path cache read)
+          return fresh;
+        }
+        // Live fetch failed: serve last-good snapshot so the rail degrades instead of blanking.
+        const stale = await cache.getStale('quote:' + sym);
+        return stale ? { ...stale, stale: true } : null;
+      })
     );
     const data = results.filter(Boolean);
     return res.status(200).json(data);

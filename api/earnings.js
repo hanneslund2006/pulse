@@ -1,5 +1,6 @@
 const Anthropic = require('@anthropic-ai/sdk');
 const { check: rateCheck } = require('./_ratelimit');
+const { callClaudeWithRetry } = require('./_fetch');
 const cache = require('./_cache');
 const YahooFinance = require('yahoo-finance2').default;
 const yf = new YahooFinance({ suppressNotices: ['yahooSurvey'] });
@@ -133,13 +134,13 @@ Rules:
       }
     ];
 
-    const response = await anthropic.messages.create({
+    const response = await callClaudeWithRetry(() => anthropic.messages.create({
       model: 'claude-haiku-4-5-20251001',
       max_tokens: 600,
       system: SYSTEM,
       tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: 3 }],
       messages,
-    });
+    }));
 
     const finalText = response.content
       .filter(b => b.type === 'text')
@@ -158,11 +159,13 @@ Rules:
 
     const enriched = await Promise.all(parsed.map(enrichEarnings));
 
-    cache.set(cacheKey, enriched, 60 * 60 * 6);
+    cache.setWithStale(cacheKey, enriched, 60 * 60 * 6);
     return res.status(200).json(enriched);
 
   } catch (err) {
     console.error('Earnings API error:', err);
+    const stale = await cache.getStale(cacheKey);
+    if (stale) return res.status(200).json(stale.map(e => ({ ...e, stale: true })));
     const msg = err.status === 401 ? 'Invalid API key.'
       : err.status === 429 ? 'Too many requests. Wait a bit.'
       : 'Failed to fetch earnings data.';
