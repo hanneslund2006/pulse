@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NEWS SCREENER — PULSE</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=DM+Sans:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <script src="sanitize.js"></script>
+  <style>
+    body { padding: 32px 20px 64px; }
+    .container { max-width: 860px; margin: 0 auto; }
+
+    @keyframes ls-pulse { 0%,100%{opacity:1;} 50%{opacity:0.15;} }
+    .ls-dot {
+      width: 4px; height: 4px; border-radius: 50%;
+      background: var(--green); flex-shrink: 0;
+      animation: ls-pulse 1.2s ease-in-out infinite;
+    }
+    .load-bar { height: 100%; background: var(--green); width: 100%; transform-origin: left center; transform: scaleX(0); transition: transform 30s linear; }
+
+    /* Theme pills */
+    .theme-rail {
+      display: flex; flex-wrap: wrap; gap: 8px;
+      margin-bottom: 28px;
+    }
+    .theme-pill {
+      font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.12em;
+      padding: 4px 10px; border-radius: 20px;
+      background: var(--teal-dim); color: var(--teal);
+      border: 1px solid var(--border-accent);
+      white-space: nowrap;
+    }
+
+    /* Two-column grid */
+    .screener-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+    @media (max-width: 640px) {
+      .screener-grid { grid-template-columns: 1fr; }
+    }
+
+    .screener-col {}
+    .col-header {
+      display: flex; align-items: center; gap: 10px;
+      margin-bottom: 12px;
+    }
+    .col-label {
+      font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.18em;
+      color: var(--text-muted);
+    }
+    .col-badge {
+      font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.1em;
+      padding: 3px 8px; border-radius: var(--radius-sm);
+    }
+    .col-badge.momentum { color: var(--green); background: var(--bullish-bg); }
+    .col-badge.undervalued { color: var(--amber); background: var(--neutral-bg); }
+
+    /* Stock cards */
+    .stock-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius-lg); padding: 16px 18px;
+      margin-bottom: 8px;
+      opacity: 0; animation: fadeUp 0.3s var(--ease-out-expo) forwards;
+      transition: border-color 75ms linear, box-shadow 75ms linear;
+    }
+    .stock-card.momentum:hover {
+      border-color: rgba(63,185,80,0.28);
+      box-shadow: 0 0 0 1px rgba(63,185,80,0.10), 0 0 20px rgba(63,185,80,0.06);
+    }
+    .stock-card.undervalued:hover {
+      border-color: rgba(210,153,34,0.28);
+      box-shadow: 0 0 0 1px rgba(210,153,34,0.10), 0 0 20px rgba(210,153,34,0.06);
+    }
+    .card-top {
+      display: flex; align-items: center; gap: 10px; margin-bottom: 8px;
+    }
+    .card-rank {
+      font-family: var(--font-mono); font-size: 9px;
+      color: var(--text-muted); min-width: 14px;
+    }
+    .card-ticker {
+      font-family: var(--font-mono); font-weight: 700;
+      font-size: 13px; color: var(--text-data); letter-spacing: 0.08em;
+    }
+    .card-sector {
+      font-family: var(--font-mono); font-size: 8px; letter-spacing: 0.1em;
+      padding: 2px 6px; border-radius: var(--radius-sm);
+      background: var(--surface-2); color: var(--text-secondary);
+      margin-left: auto;
+    }
+    .card-company {
+      font-family: var(--font-body); font-size: 11px;
+      color: var(--text-secondary); margin-bottom: 6px;
+    }
+    .card-theme {
+      font-family: var(--font-mono); font-size: 8px; letter-spacing: 0.1em;
+      padding: 2px 7px; border-radius: 20px;
+      background: var(--teal-dim); color: var(--teal);
+      display: inline-block; margin-bottom: 7px;
+    }
+    .card-reason {
+      font-family: var(--font-body); font-size: 12px;
+      color: var(--text-secondary); line-height: 1.5;
+    }
+
+    /* Stale banner */
+    .stale-banner {
+      font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.12em;
+      color: var(--amber); padding: 6px 12px;
+      background: var(--neutral-bg); border: 1px solid var(--amber-border);
+      border-radius: var(--radius-sm); margin-bottom: 20px;
+      display: none;
+    }
+    .stale-banner.visible { display: block; }
+
+    /* Updated line */
+    .updated-line {
+      font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.1em;
+      color: var(--text-muted); text-align: right; margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <nav class="pulse-nav">
+    <a href="index.html" class="nav-logo">PULSE</a>
+    <span class="nav-page-name">NEWS SCREENER</span>
+    <div class="nav-market-status">
+      <span class="nav-status-dot"></span>
+      <span class="nav-status-text">MARKET CLOSED</span>
+      <button class="nav-shortcut-hint" onclick="openShortcuts()" aria-label="Keyboard shortcuts">?</button>
+    </div>
+  </nav>
+
+  <div class="container">
+
+    <div class="page-title anim" style="animation-delay:40ms;">NEWS SCREENER</div>
+    <div class="page-subtitle anim" style="animation-delay:80ms;">Reads today's macro picture, extracts themes, surfaces mid/small cap stocks ($300M–$10B) with real exposure.</div>
+
+    <div id="empty-state" class="anim" style="animation-delay:120ms;">
+      <div class="cta-card">
+        <div class="cta-label">NEWS-DRIVEN SCREENER</div>
+        <div class="cta-title">Find today's opportunities</div>
+        <div class="cta-desc">Fetches Reuters, BBC, Reddit and Alpaca news in parallel, extracts 4–6 macro themes, then finds mid/small caps with momentum tailwind or undervalued exposure. Cached 1 hour.</div>
+        <button class="btn-ghost" id="fetch-btn" onclick="fetchScreener()">ANALYSER NYHETER →</button>
+      </div>
+    </div>
+
+    <div class="error-msg" id="error-msg"></div>
+
+    <div class="load-wrap" id="load-wrap">
+      <div class="load-step">
+        <div class="ls-dot"></div>
+        <span id="load-label">HENTER NYHETER</span>
+      </div>
+      <div class="load-bar-wrap"><div class="load-bar" id="load-bar"></div></div>
+    </div>
+
+    <div id="results-wrap" style="display:none;">
+      <div class="stale-banner" id="stale-banner">CACHED DATA — live sources unavailable</div>
+
+      <div class="section-title" style="margin-bottom:14px;">THEMES</div>
+      <div class="theme-rail" id="theme-rail"></div>
+
+      <div class="screener-grid">
+        <div class="screener-col">
+          <div class="col-header">
+            <div class="col-label">LIST 01</div>
+            <div class="col-badge momentum">MOMENTUM</div>
+          </div>
+          <div id="momentum-list"></div>
+        </div>
+        <div class="screener-col">
+          <div class="col-header">
+            <div class="col-label">LIST 02</div>
+            <div class="col-badge undervalued">UNDERVALUED</div>
+          </div>
+          <div id="undervalued-list"></div>
+        </div>
+      </div>
+
+      <div class="updated-line" id="updated-line"></div>
+
+      <div style="margin-top:20px;">
+        <button class="btn" onclick="clearAndRefetch()">KJØR NY ANALYSE</button>
+      </div>
+    </div>
+
+  </div>
+
+  <footer class="pulse-footer">
+    <span>NOT FINANCIAL ADVICE</span>
+    <span>PULSE © 2026</span>
+  </footer>
+
+  <div class="shortcut-overlay" id="shortcut-overlay" role="dialog" aria-modal="true" aria-label="Keyboard shortcuts">
+    <div class="shortcut-modal">
+      <div class="shortcut-header">
+        <span class="data-label">Keyboard shortcuts</span>
+        <button class="shortcut-close" onclick="closeShortcuts()">ESC</button>
+      </div>
+      <div class="shortcut-list">
+        <div class="shortcut-row"><kbd>M</kbd><span>Market report</span></div>
+        <div class="shortcut-row"><kbd>S</kbd><span>Sectors</span></div>
+        <div class="shortcut-row"><kbd>T</kbd><span>Ticker analysis</span></div>
+        <div class="shortcut-row"><kbd>E</kbd><span>Earnings play</span></div>
+        <div class="shortcut-row"><kbd>H</kbd><span>History</span></div>
+        <div class="shortcut-row"><kbd>R</kbd><span>Radar</span></div>
+        <div class="shortcut-row"><kbd>L</kbd><span>Trade log</span></div>
+        <div class="shortcut-row"><kbd>N</kbd><span>News Screener</span></div>
+        <div class="shortcut-row"><kbd>?</kbd><span>This overlay</span></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const LOAD_LABELS = [
+      'HENTER NYHETER',
+      'ANALYSERER REUTERS + BBC',
+      'TREKKER UT TEMAER',
+      'SØKER ETTER AKSJER',
+    ];
+    let labelIdx = 0, labelTimer = null;
+
+    function showError(msg) {
+      const el = document.getElementById('error-msg');
+      el.innerHTML = sanitizeText(msg);
+      el.classList.add('visible');
+    }
+    function clearError() {
+      document.getElementById('error-msg').classList.remove('visible');
+    }
+
+    function startLoadLabels() {
+      labelIdx = 0;
+      document.getElementById('load-label').textContent = LOAD_LABELS[0];
+      labelTimer = setInterval(() => {
+        labelIdx = (labelIdx + 1) % LOAD_LABELS.length;
+        document.getElementById('load-label').textContent = LOAD_LABELS[labelIdx];
+      }, 8000);
+      const bar = document.getElementById('load-bar');
+      requestAnimationFrame(() => { bar.style.transform = 'scaleX(0.88)'; });
+    }
+
+    function stopLoadLabels() {
+      clearInterval(labelTimer);
+      const bar = document.getElementById('load-bar');
+      bar.style.transition = 'none';
+      bar.style.transform = 'scaleX(0)';
+    }
+
+    function renderThemes(themes) {
+      const rail = document.getElementById('theme-rail');
+      rail.innerHTML = themes.map(t =>
+        `<div class="theme-pill" title="${sanitizeText(t.description)}">${sanitizeText(t.name.toUpperCase())}</div>`
+      ).join('');
+    }
+
+    function renderStockCard(stock, type, delay) {
+      const ticker = sanitizeText(stock.ticker || '');
+      const company = sanitizeText(stock.company || '');
+      const sector = sanitizeText(stock.sector || '');
+      const theme = sanitizeText(stock.primary_theme || '');
+      const reason = sanitizeText(stock.reason || '');
+      const rank = stock.rank || '';
+      return `<div class="stock-card ${type}" style="animation-delay:${delay}ms;">
+        <div class="card-top">
+          <div class="card-rank">${rank}</div>
+          <div class="card-ticker">${ticker}</div>
+          <div class="card-sector">${sector}</div>
+        </div>
+        <div class="card-company">${company}</div>
+        <div class="card-theme">${theme}</div>
+        <div class="card-reason">${reason}</div>
+      </div>`;
+    }
+
+    function renderResults(data) {
+      renderThemes(data.themes || []);
+
+      const momentumList = document.getElementById('momentum-list');
+      momentumList.innerHTML = (data.momentum || [])
+        .map((s, i) => renderStockCard(s, 'momentum', i * 60))
+        .join('');
+
+      const undervaluedList = document.getElementById('undervalued-list');
+      undervaluedList.innerHTML = (data.undervalued || [])
+        .map((s, i) => renderStockCard(s, 'undervalued', i * 60))
+        .join('');
+
+      if (data.stale) document.getElementById('stale-banner').classList.add('visible');
+
+      if (data.generated_at) {
+        const d = new Date(data.generated_at);
+        const formatted = d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Oslo' });
+        document.getElementById('updated-line').textContent = `UPDATED ${formatted} OSLO`;
+      }
+
+      document.getElementById('empty-state').style.display = 'none';
+      document.getElementById('load-wrap').classList.remove('visible');
+      document.getElementById('results-wrap').style.display = 'block';
+      stopLoadLabels();
+    }
+
+    const CACHE_KEY = `pulse_news_screener_${new Date().toISOString().slice(0, 13)}`;
+    let fetching = false;
+
+    async function fetchScreener() {
+      if (fetching) return;
+      fetching = true;
+      clearError();
+      const btn = document.getElementById('fetch-btn');
+      if (btn) btn.disabled = true;
+      document.getElementById('empty-state').style.display = 'none';
+      document.getElementById('load-wrap').classList.add('visible');
+      startLoadLabels();
+
+      const ctrl = new AbortController();
+      const abortTimer = setTimeout(() => ctrl.abort(), 60000);
+
+      try {
+        const res = await fetch('/api/news-screener', { signal: ctrl.signal });
+        clearTimeout(abortTimer);
+        if (res.status === 429) {
+          const d = await res.json().catch(() => ({}));
+          throw new Error(d.error || 'Too many requests. Try again later.');
+        }
+        if (!res.ok) throw new Error('Analysis failed. Try again.');
+        const data = await res.json();
+        if (data.error) throw new Error(data.error);
+        localStorage.setItem(CACHE_KEY, JSON.stringify(data));
+        renderResults(data);
+      } catch (e) {
+        clearTimeout(abortTimer);
+        stopLoadLabels();
+        document.getElementById('load-wrap').classList.remove('visible');
+        document.getElementById('empty-state').style.display = 'block';
+        if (btn) btn.disabled = false;
+        showError(e.name === 'AbortError' ? 'Request timed out. Try again.' : (e.message || 'Unknown error.'));
+      } finally {
+        fetching = false;
+      }
+    }
+
+    function clearAndRefetch() {
+      localStorage.removeItem(CACHE_KEY);
+      document.getElementById('results-wrap').style.display = 'none';
+      document.getElementById('stale-banner').classList.remove('visible');
+      fetchScreener();
+    }
+
+    // Load cached result on init
+    try {
+      const cached = JSON.parse(localStorage.getItem(CACHE_KEY) || 'null');
+      if (cached && cached.momentum) renderResults(cached);
+    } catch (_) {}
+
+    function setMarketStatus() {
+      const now = new Date();
+      const day = now.getUTCDay();
+      const hour = now.getUTCHours();
+      const min = now.getUTCMinutes();
+      const isWeekday = day >= 1 && day <= 5;
+      const afterOpen = hour > 13 || (hour === 13 && min >= 30);
+      const beforeClose = hour < 20;
+      const isOpen = isWeekday && afterOpen && beforeClose;
+      const dot = document.querySelector('.nav-status-dot');
+      const text = document.querySelector('.nav-status-text');
+      if (dot && text) {
+        dot.classList.toggle('open', isOpen);
+        text.textContent = isOpen ? 'MARKET OPEN' : 'MARKET CLOSED';
+        text.style.color = isOpen ? 'var(--green)' : 'var(--text-muted)';
+      }
+    }
+
+    function openShortcuts() { document.getElementById('shortcut-overlay').classList.add('active'); }
+    function closeShortcuts() { document.getElementById('shortcut-overlay').classList.remove('active'); }
+
+    document.addEventListener('keydown', function(e) {
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+      const key = e.key.toLowerCase();
+      if (key === '?') { e.preventDefault(); openShortcuts(); return; }
+      if (key === 'escape') { closeShortcuts(); return; }
+      const nav = {
+        m: 'market.html', s: 'sektorer.html', t: 'ticker.html',
+        e: 'earnings-play.html', h: 'historikk.html', r: 'radar.html',
+        l: 'logg.html', n: 'news-screener.html',
+      };
+      if (nav[key]) window.location.href = nav[key];
+    });
+
+    setMarketStatus();
+  </script>
+  <script src="bg.js"></script>
+  <script src="live.js"></script>
+  <script defer src="/_vercel/insights/script.js"></script>
+</body>
+</html>

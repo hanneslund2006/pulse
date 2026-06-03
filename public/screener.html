@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SCREENER — PULSE</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=DM+Sans:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <script src="sanitize.js"></script>
+  <style>
+    body { padding: 32px 20px 64px; }
+    .container { max-width: 600px; margin: 0 auto; }
+
+    @keyframes ls-pulse { 0%,100%{opacity:1;} 50%{opacity:0.15;} }
+    .ls-dot {
+      width: 4px; height: 4px; border-radius: 50%;
+      background: var(--teal); flex-shrink: 0;
+      animation: ls-pulse 1.2s ease-in-out infinite;
+    }
+    .load-bar { height: 100%; background: var(--teal); width: 100%; transform-origin: left center; transform: scaleX(0); transition: transform 20s linear; }
+
+    /* Input area */
+    .input-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius-lg); padding: 20px 24px; margin-bottom: 16px;
+    }
+    .input-label {
+      font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.16em;
+      color: var(--text-muted); margin-bottom: 10px;
+    }
+    .case-input {
+      width: 100%; box-sizing: border-box;
+      background: var(--surface-2); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); padding: 10px 12px;
+      font-family: var(--font-body); font-size: 13px; color: var(--text-primary);
+      resize: vertical; min-height: 64px; max-height: 160px;
+      outline: none; transition: border-color 120ms;
+    }
+    .case-input::placeholder { color: var(--text-muted); }
+    .case-input:focus { border-color: var(--border-accent); }
+    .input-footer {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-top: 10px;
+    }
+    .char-count {
+      font-family: var(--font-mono); font-size: 9px; color: var(--text-muted);
+    }
+    .char-count.warn { color: var(--amber); }
+
+    /* Stock cards */
+    .stock-list { display: flex; flex-direction: column; gap: 10px; }
+    .stock-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius-lg); padding: 16px 20px;
+      opacity: 0; animation: fadeUp 0.3s var(--ease-out-expo) forwards;
+      transition: border-color 75ms linear, box-shadow 75ms linear;
+    }
+    .stock-card:hover {
+      border-color: var(--border-accent);
+      box-shadow: 0 0 0 1px var(--teal-dim), 0 0 20px rgba(20,184,166,0.06);
+    }
+    .card-top { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+    .card-ticker {
+      font-family: var(--font-mono); font-weight: 700;
+      font-size: 14px; color: var(--text-data); letter-spacing: 0.08em;
+    }
+    .card-sentiment {
+      font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.1em;
+      padding: 3px 7px; border-radius: var(--radius-sm);
+    }
+    .card-sentiment.Bullish  { color: var(--bullish);  background: var(--bullish-bg); }
+    .card-sentiment.Bearish  { color: var(--bearish);  background: var(--bearish-bg); }
+    .card-sentiment.Neutral  { color: var(--neutral);  background: var(--neutral-bg); }
+    .card-company { font-family: var(--font-body); font-size: 11px; color: var(--text-muted); margin-bottom: 6px; }
+    .card-desc { font-family: var(--font-body); font-size: 12px; color: var(--text-secondary); margin-bottom: 5px; line-height: 1.5; }
+    .card-fit { font-family: var(--font-body); font-size: 12px; color: var(--teal); line-height: 1.5; }
+
+    /* Summary pill */
+    .case-summary {
+      font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.12em;
+      color: var(--teal); padding: 4px 10px; border-radius: 20px;
+      background: var(--teal-dim); border: 1px solid var(--border-accent);
+      display: inline-block; margin-bottom: 16px;
+    }
+  </style>
+</head>
+<body>
+  <nav class="pulse-nav">
+    <a href="index.html" class="nav-logo">PULSE</a>
+    <span class="nav-page-name">SCREENER</span>
+    <div class="nav-market-status">
+      <span class="nav-status-dot"></span>
+      <span class="nav-status-text">MARKET CLOSED</span>
+      <button class="nav-shortcut-hint" onclick="openShortcuts()" aria-label="Keyboard shortcuts">?</button>
+    </div>
+  </nav>
+
+  <div class="container">
+
+    <div class="page-title anim" style="animation-delay:40ms;">SCREENER</div>
+    <div class="page-subtitle anim" style="animation-delay:80ms;">Describe an investment thesis and get 3–7 matching US stocks with AI analysis.</div>
+
+    <div class="input-card anim" style="animation-delay:120ms;">
+      <div class="input-label">INVESTMENT CASE</div>
+      <textarea
+        class="case-input"
+        id="case-input"
+        placeholder="e.g. strong stocks in the Energy sector, AI infrastructure buildout, defense contractors benefiting from NATO spending..."
+        maxlength="200"
+        rows="3"
+      ></textarea>
+      <div class="input-footer">
+        <span class="char-count" id="char-count">0 / 200</span>
+        <button class="btn-ghost" id="screen-btn" onclick="runScreener()">SCREEN →</button>
+      </div>
+    </div>
+
+    <div class="error-msg" id="error-msg"></div>
+
+    <div class="load-wrap" id="load-wrap">
+      <div class="load-step">
+        <div class="ls-dot"></div>
+        <span id="load-label">SCANNING MARKET</span>
+      </div>
+      <div class="load-bar-wrap"><div class="load-bar" id="load-bar"></div></div>
+    </div>
+
+    <div id="results-wrap" style="display:none;">
+      <div class="case-summary" id="case-summary"></div>
+      <div class="section-title" style="margin-bottom:12px;">CANDIDATES</div>
+      <div class="stock-list" id="stock-list"></div>
+      <div style="margin-top:16px;">
+        <button class="btn" onclick="clearResults()">NEW SEARCH</button>
+      </div>
+    </div>
+
+  </div>
+
+  <footer class="pulse-footer">
+    <span>NOT FINANCIAL ADVICE</span>
+    <span>PULSE © 2026</span>
+  </footer>
+
+  <div class="shortcut-overlay" id="shortcut-overlay" role="dialog" aria-modal="true" aria-label="Keyboard shortcuts">
+    <div class="shortcut-modal">
+      <div class="shortcut-header">
+        <span class="data-label">Keyboard shortcuts</span>
+        <button class="shortcut-close" onclick="closeShortcuts()">ESC</button>
+      </div>
+      <div class="shortcut-list">
+        <div class="shortcut-row"><kbd>M</kbd><span>Market report</span></div>
+        <div class="shortcut-row"><kbd>S</kbd><span>Sectors</span></div>
+        <div class="shortcut-row"><kbd>T</kbd><span>Ticker analysis</span></div>
+        <div class="shortcut-row"><kbd>E</kbd><span>Earnings play</span></div>
+        <div class="shortcut-row"><kbd>H</kbd><span>History</span></div>
+        <div class="shortcut-row"><kbd>R</kbd><span>Radar</span></div>
+        <div class="shortcut-row"><kbd>L</kbd><span>Trade log</span></div>
+        <div class="shortcut-row"><kbd>N</kbd><span>News Screener</span></div>
+        <div class="shortcut-row"><kbd>?</kbd><span>This overlay</span></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const LOAD_LABELS = ['SCANNING MARKET', 'SEARCHING FOR STOCKS', 'EVALUATING THESIS'];
+    let labelIdx = 0, labelTimer = null;
+
+    function showError(msg) {
+      const el = document.getElementById('error-msg');
+      el.innerHTML = sanitizeText(msg);
+      el.classList.add('visible');
+    }
+    function clearError() { document.getElementById('error-msg').classList.remove('visible'); }
+
+    function startLoadLabels() {
+      labelIdx = 0;
+      document.getElementById('load-label').textContent = LOAD_LABELS[0];
+      labelTimer = setInterval(() => {
+        labelIdx = (labelIdx + 1) % LOAD_LABELS.length;
+        document.getElementById('load-label').textContent = LOAD_LABELS[labelIdx];
+      }, 5000);
+      const bar = document.getElementById('load-bar');
+      requestAnimationFrame(() => { bar.style.transform = 'scaleX(0.88)'; });
+    }
+
+    function stopLoadLabels() {
+      clearInterval(labelTimer);
+      const bar = document.getElementById('load-bar');
+      bar.style.transition = 'none';
+      bar.style.transform = 'scaleX(0)';
+    }
+
+    const input = document.getElementById('case-input');
+    const charCount = document.getElementById('char-count');
+
+    input.addEventListener('input', () => {
+      const len = input.value.length;
+      charCount.textContent = `${len} / 200`;
+      charCount.classList.toggle('warn', len > 160);
+    });
+
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); runScreener(); }
+    });
+
+    // Pre-fill from ?sector= URL param
+    const sectorParam = new URLSearchParams(window.location.search).get('sector');
+    if (sectorParam) {
+      const prefill = `strong stocks in the ${sectorParam} sector`;
+      input.value = prefill;
+      charCount.textContent = `${prefill.length} / 200`;
+    }
+
+    let fetching = false;
+
+    async function runScreener() {
+      const raw = input.value.trim();
+      if (!raw) { showError('Enter an investment case first.'); return; }
+      if (raw.length > 200) { showError('Investment case must be 200 characters or fewer.'); return; }
+      if (fetching) return;
+      fetching = true;
+      clearError();
+
+      const btn = document.getElementById('screen-btn');
+      btn.disabled = true;
+      document.getElementById('results-wrap').style.display = 'none';
+      document.getElementById('load-wrap').classList.add('visible');
+      startLoadLabels();
+
+      const ctrl = new AbortController();
+      const abortTimer = setTimeout(() => ctrl.abort(), 30000);
+
+      try {
+        const res = await fetch(`/api/screener?case=${encodeURIComponent(raw)}`, { signal: ctrl.signal });
+        clearTimeout(abortTimer);
+        if (res.status === 429) {
+          const d = await res.json().catch(() => ({}));
+          throw new Error(d.error || 'Too many requests. Try again later.');
+        }
+        if (!res.ok) throw new Error('Screener failed. Try again.');
+        const data = await res.json();
+        if (data.error) throw new Error(data.error);
+        renderResults(data);
+      } catch (e) {
+        clearTimeout(abortTimer);
+        showError(e.name === 'AbortError' ? 'Request timed out. Try again.' : (e.message || 'Unknown error.'));
+      } finally {
+        stopLoadLabels();
+        document.getElementById('load-wrap').classList.remove('visible');
+        btn.disabled = false;
+        fetching = false;
+      }
+    }
+
+    function renderResults(data) {
+      document.getElementById('case-summary').textContent = sanitizeText(data.case_summary || '');
+      const list = document.getElementById('stock-list');
+      list.innerHTML = (data.stocks || []).map((s, i) => {
+        const ticker   = sanitizeText(s.ticker || '');
+        const company  = sanitizeText(s.company || '');
+        const desc     = sanitizeText(s.description || '');
+        const fit      = sanitizeText(s.why_it_fits || '');
+        const sent     = ['Bullish','Bearish','Neutral'].includes(s.sentiment) ? s.sentiment : 'Neutral';
+        return `<div class="stock-card" style="animation-delay:${i * 70}ms;">
+          <div class="card-top">
+            <div class="card-ticker">${ticker}</div>
+            <div class="card-sentiment ${sent}">${sent.toUpperCase()}</div>
+          </div>
+          <div class="card-company">${company}</div>
+          <div class="card-desc">${desc}</div>
+          <div class="card-fit">${fit}</div>
+        </div>`;
+      }).join('');
+      document.getElementById('results-wrap').style.display = 'block';
+    }
+
+    function clearResults() {
+      document.getElementById('results-wrap').style.display = 'none';
+      input.focus();
+    }
+
+    function setMarketStatus() {
+      const now = new Date();
+      const day = now.getUTCDay();
+      const hour = now.getUTCHours();
+      const min = now.getUTCMinutes();
+      const isWeekday = day >= 1 && day <= 5;
+      const afterOpen = hour > 13 || (hour === 13 && min >= 30);
+      const beforeClose = hour < 20;
+      const isOpen = isWeekday && afterOpen && beforeClose;
+      const dot = document.querySelector('.nav-status-dot');
+      const text = document.querySelector('.nav-status-text');
+      if (dot && text) {
+        dot.classList.toggle('open', isOpen);
+        text.textContent = isOpen ? 'MARKET OPEN' : 'MARKET CLOSED';
+        text.style.color = isOpen ? 'var(--green)' : 'var(--text-muted)';
+      }
+    }
+
+    function openShortcuts() { document.getElementById('shortcut-overlay').classList.add('active'); }
+    function closeShortcuts() { document.getElementById('shortcut-overlay').classList.remove('active'); }
+
+    document.addEventListener('keydown', function(e) {
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+      const key = e.key.toLowerCase();
+      if (key === '?') { e.preventDefault(); openShortcuts(); return; }
+      if (key === 'escape') { closeShortcuts(); return; }
+      const nav = {
+        m: 'market.html', s: 'sektorer.html', t: 'ticker.html',
+        e: 'earnings-play.html', h: 'historikk.html', r: 'radar.html',
+        l: 'logg.html', n: 'news-screener.html',
+      };
+      if (nav[key]) window.location.href = nav[key];
+    });
+
+    setMarketStatus();
+  </script>
+  <script src="bg.js"></script>
+  <script src="live.js"></script>
+  <script defer src="/_vercel/insights/script.js"></script>
+</body>
+</html>
