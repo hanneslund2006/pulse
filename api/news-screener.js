@@ -215,7 +215,7 @@ module.exports = async (req, res) => {
       model: 'claude-haiku-4-5-20251001',
       max_tokens: 1500,
       system: STOCK_SYSTEM,
-      tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: 3 }],
+      tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: 1 }],
       messages: [{ role: 'user', content: `Current market themes:\n${themeBlock}\n\nFind US mid/small cap stocks ($300M-$10B market cap) with exposure to these themes.` }],
     }));
     const stockText = stockResp.content.filter(b => b.type === 'text').map(b => b.text).join('\n');
