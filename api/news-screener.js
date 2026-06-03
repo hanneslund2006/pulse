@@ -190,7 +190,7 @@ module.exports = async (req, res) => {
   try {
     const themeResp = await callClaudeWithRetry(() => anthropic.messages.create({
       model: 'claude-haiku-4-5-20251001',
-      max_tokens: 350,
+      max_tokens: 600,
       system: THEME_SYSTEM,
       messages: [{ role: 'user', content: `Headlines from the past 6 hours:\n\n${headlineList}` }],
     }));
