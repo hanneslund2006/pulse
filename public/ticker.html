@@ -233,16 +233,6 @@
       </div>
       <div id="technical-card" style="display:none;"></div>
       <div id="layers-container"></div>
-      <!-- Multi-model section -->
-      <div id="multi-model-section" style="display:none; margin-bottom:10px;">
-        <div class="layer-card" style="border-color:#7F77DD40;background:#7F77DD08;">
-          <div class="layer-header">
-            <div class="layer-name">OTHER MODELS</div>
-            <div id="multi-model-status" style="font-family:'DM Sans',sans-serif;font-size:10px;color:var(--text-muted);">LOADING...</div>
-          </div>
-          <div id="multi-model-content"></div>
-        </div>
-      </div>
 
       <div class="rr-card" id="rr-calc" style="display:none;">
         <div class="rr-title">R/R CALCULATOR</div>
@@ -608,10 +598,6 @@
       ticker = ticker.trim().toUpperCase();
       if (!ticker) return;
 
-      // Reset multi-model section from previous search
-      const mmSection = document.getElementById('multi-model-section');
-      if (mmSection) mmSection.style.display = 'none';
-
       input.value = ticker;
       setError(null);
       setResult(false);
@@ -643,7 +629,6 @@
         if (!data.found) { setError(`Could not find ticker "${ticker}". Check the symbol and try again.`); return; }
 
         renderTicker(data);
-        if (data.layers && data.layers.length > 0) fetchMultiModel(data.ticker, data.layers);
       } catch (e) {
         clearTimeout(abortTimer);
         stopLoading();
@@ -652,52 +637,6 @@
         } else {
           setError(e.message || 'Failed to fetch data. Try again.');
         }
-      }
-    }
-
-    // ── Multi-model second opinion ────────────────────────────
-    async function fetchMultiModel(ticker, layers) {
-      const section = document.getElementById('multi-model-section');
-      const content = document.getElementById('multi-model-content');
-      const status  = document.getElementById('multi-model-status');
-      if (!section || !content || !status) return;
-
-      section.style.display = 'block';
-
-      try {
-        const res = await fetchWithTimeout('/api/ticker-multimodel', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ticker, layers }),
-        });
-
-        if (res.status === 503) { section.style.display = 'none'; return; }
-        if (!res.ok) { section.style.display = 'none'; return; }
-
-        const data = await res.json();
-        if (data.error || !data.opinions) { section.style.display = 'none'; return; }
-
-        const COLORS = { 'Bullish': '#1DB87E', 'Bearish': '#E54B4A', 'Nøytral': '#4A5166' };
-        const valid = (data.opinions || []).filter(o => o.verdict);
-
-        if (!valid.length) { section.style.display = 'none'; return; }
-
-        status.textContent = 'COMPLETE';
-        content.innerHTML = valid.map(o => {
-          const color = COLORS[o.verdict] || '#4A5166';
-          return `<div style="display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-top:1px solid var(--border);">
-            <div style="font-family:'DM Sans',sans-serif;font-size:10px;color:var(--text-muted);min-width:96px;flex-shrink:0;">${sanitizeText(o.model)}</div>
-            <div style="flex:1;">
-              <span style="font-family:'Space Mono',monospace;font-size:9px;color:${color};background:${color}18;padding:2px 6px;border-radius:3px;margin-right:8px;">${sanitizeText(o.verdict.toUpperCase())}</span>
-              <span style="font-size:12px;color:var(--text-secondary);">${sanitizeWithCitations(o.reason || '')}</span>
-            </div>
-          </div>`;
-        }).join('');
-      } catch (e) {
-        if (e.name === 'AbortError') {
-          console.warn('[timeout] /api/ticker-multimodel');
-        }
-        section.style.display = 'none';
       }
     }
 
