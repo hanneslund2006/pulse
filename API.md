@@ -115,17 +115,15 @@ Top 8 upcoming earnings with AI analysis.
 
 **Response:**
 ```json
-{
-  "earnings": [
-    {
-      "ticker": "NVDA",
-      "date": "2026-05-20",
-      "estimate": "$5.20",
-      "surprise": "Likely beat",
-      "rationale": "..."
-    }
-  ]
-}
+[
+  {
+    "ticker": "NVDA",
+    "date": "2026-05-20",
+    "estimate": "$5.20",
+    "surprise": "Likely beat",
+    "rationale": "..."
+  }
+]
 ```
 
 **Cache:** 6 hours (global, not per-ticker)  
@@ -191,18 +189,16 @@ Swing trade opportunities (5-15 day setups).
 
 **Response:**
 ```json
-{
-  "opportunities": [
-    {
-      "ticker": "TSLA",
-      "setup": "BREAKOUT",
-      "entry": "$245-250",
-      "target": "$280",
-      "stop": "$235",
-      "rationale": "..."
-    }
-  ]
-}
+[
+  {
+    "ticker": "TSLA",
+    "setup": "BREAKOUT",
+    "entry": "$245-250",
+    "target": "$280",
+    "stop": "$235",
+    "rationale": "..."
+  }
+]
 ```
 
 **Cache:** Until midnight UTC (nextMidnightTTL)  
@@ -217,16 +213,14 @@ Pre-market gap analysis with trade setups.
 
 **Response:**
 ```json
-{
-  "gappers": [
-    {
-      "ticker": "AAPL",
-      "gap": "+3.2%",
-      "catalyst": "Earnings beat",
-      "play": "Wait for pullback to $280"
-    }
-  ]
-}
+[
+  {
+    "ticker": "AAPL",
+    "gap": "+3.2%",
+    "catalyst": "Earnings beat",
+    "play": "Wait for pullback to $280"
+  }
+]
 ```
 
 **Cache:** 30 minutes (intentional — pre-market data freshness)
