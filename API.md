@@ -9,22 +9,29 @@ PULSE provides 12 serverless API endpoints for market sentiment analysis, inside
 
 **Caching:** Redis-backed with in-memory fallback
 
+**Response format:** Each endpoint returns its own raw JSON object (shapes below). Failures return `{ "error": "message" }` with the relevant status code. PULSE does not use the `{ data, error, cached }` envelope.
+
 ---
 
 ## Endpoints
 
 ### 1. Market Sentiment
-**GET** `/api/sentiment`
+**POST** `/api/sentiment`
 
 Returns daily market overview with sentiment analysis across 4 categories.
 
 **Response:**
 ```json
 {
-  "makro": { "signal": "BULLISH", "summary": "..." },
-  "tech": { "signal": "BEARISH", "summary": "..." },
-  "energi": { "signal": "NEUTRAL", "summary": "..." },
-  "enkeltaksjer": { "signal": "BULLISH", "summary": "..." }
+  "verdict": "string (max 15 words)",
+  "score": 0,
+  "keydata": [{ "label": "S&P 500", "value": "..." }],
+  "categories": [
+    { "name": "MACRO", "sentiment": "Bullish", "summary": "..." },
+    { "name": "ENERGY", "sentiment": "Bearish", "summary": "..." },
+    { "name": "FINANCIALS", "sentiment": "Mixed", "summary": "..." },
+    { "name": "TECH", "sentiment": "Neutral", "summary": "..." }
+  ]
 }
 ```
 
@@ -34,24 +41,26 @@ Returns daily market overview with sentiment analysis across 4 categories.
 ---
 
 ### 2. Ticker Analysis
-**GET** `/api/ticker?ticker=AAPL`
+**POST** `/api/ticker`
 
 5-layer sentiment analysis for individual stock.
 
-**Parameters:**
+**Body (JSON):**
 - `ticker` (required): Stock symbol (1-6 chars, uppercase)
 
 **Response:**
 ```json
 {
   "ticker": "AAPL",
-  "layers": {
-    "trend": { "verdict": "BULLISH", "rationale": "..." },
-    "fundamentals": { "verdict": "NEUTRAL", "rationale": "..." },
-    "news": { "verdict": "BEARISH", "rationale": "..." },
-    "technicals": { "verdict": "BULLISH", "rationale": "..." },
-    "options": { "verdict": "NEUTRAL", "rationale": "..." }
-  }
+  "company": "Apple Inc.",
+  "found": true,
+  "layers": [
+    { "name": "News", "sentiment": "Bullish", "summary": "..." },
+    { "name": "Earnings", "sentiment": "Neutral", "summary": "..." },
+    { "name": "Insider", "sentiment": "Bearish", "summary": "..." },
+    { "name": "Short Float", "sentiment": "Neutral", "summary": "..." },
+    { "name": "Sentiment", "sentiment": "Bullish", "summary": "..." }
+  ]
 }
 ```
 
@@ -95,7 +104,7 @@ SEC EDGAR Form 4 insider trading analysis.
 **Transaction types:** P (BUY), S (SELL) only  
 **Max transactions:** 10 (most recent)
 
-**Required env var:** `SEC_USER_AGENT` (SEC blocks requests without User-Agent)
+**Optional env var:** `SEC_USER_AGENT` — SEC EDGAR User-Agent. Falls back to a hard-coded default (`PULSE/1.0 contact@example.com`) when unset.
 
 ---
 
@@ -149,13 +158,13 @@ Pre-earnings trade setup analysis.
 ---
 
 ### 6. Sector Analysis
-**GET** `/api/sektor?sektor=tech` or `/api/sektor?ticker=AAPL`
+**GET** `/api/sektor` or `/api/sektor?ticker=AAPL`
 
-Sector sentiment or ticker's sector context.
+Sector list (no params) or a single ticker's sector context.
 
 **Parameters:**
-- `sektor` (optional): "TECH", "ENERGI", "FINANS", "HELSE"
-- `ticker` (optional): Stock symbol
+- `ticker` (optional): Stock symbol — returns that ticker's sector context
+- `navn` (optional): Display name override for the ticker (max 40 chars)
 
 **Response:**
 ```json
@@ -171,12 +180,12 @@ Sector sentiment or ticker's sector context.
 - Sector-only: 6 hours
 - Ticker-param: 24 hours
 
-**Model:** Sonnet 4.5
+**Model:** Haiku 4.5 (`claude-haiku-4-5-20251001`)
 
 ---
 
 ### 7. Radar
-**GET** `/api/radar`
+**POST** `/api/radar`
 
 Swing trade opportunities (5-15 day setups).
 
@@ -197,7 +206,7 @@ Swing trade opportunities (5-15 day setups).
 ```
 
 **Cache:** Until midnight UTC (nextMidnightTTL)  
-**Model:** Sonnet 4.5
+**Model:** Haiku 4.5 (`claude-haiku-4-5-20251001`)
 
 ---
 
@@ -221,18 +230,18 @@ Pre-market gap analysis with trade setups.
 ```
 
 **Cache:** 30 minutes (intentional — pre-market data freshness)
-**Model:** Haiku 4.5
+**Model:** Haiku 4.5 (`claude-haiku-4-5-20251001`)
 
 ---
 
 ### 9. Historical Analysis
-**GET** `/api/historikk?ticker=AAPL&months=1`
+**GET** `/api/historikk?ticker=AAPL&months=3`
 
 AI-generated timeline of price catalysts.
 
 **Parameters:**
 - `ticker` (required): Stock symbol
-- `months` (optional): 1 or 3 (default: 1)
+- `months` (optional): 1, 3, 6, or 12 (default: 3)
 
 **Response:**
 ```json
@@ -254,25 +263,25 @@ AI-generated timeline of price catalysts.
 ```
 
 **Cache:** 24 hours  
-**Model:** Sonnet 4.5  
+**Model:** Haiku 4.5 (`claude-haiku-4-5-20251001`)
 **Pre-filtering:** 15 keywords (earnings, analyst, revenue, etc.)  
 **Token optimization:** 60% reduction via article filtering
 
 ---
 
 ### 10. Quotes
-**GET** `/api/quotes`
+**GET** `/api/quotes?symbols=SPX,NDX,DXY,BTC,10Y`
 
-Real-time index quotes (SPX, NDX, DXY, BTC, 10Y).
+Real-time quotes for the requested symbols (Yahoo Finance proxy).
+
+**Parameters:**
+- `symbols` (required): Comma-separated symbol list (1-20). Returns 400 if absent or empty.
 
 **Response:**
 ```json
 {
   "SPX": { "price": 5234.56, "change": "+1.2%" },
-  "NDX": { "price": 18234.12, "change": "+0.8%" },
-  "DXY": { "price": 101.23, "change": "-0.3%" },
-  "BTC": { "price": 63421.00, "change": "+2.1%" },
-  "10Y": { "yield": 4.32, "change": "+0.05" }
+  "NDX": { "price": 18234.12, "change": "+0.8%" }
 }
 ```
 
@@ -282,29 +291,7 @@ Real-time index quotes (SPX, NDX, DXY, BTC, 10Y).
 
 ---
 
-### 11. Analytics Dashboard
-**GET** `/api/analytics-dashboard`
-
-Internal analytics (requires auth).
-
-**Headers:**
-- `x-analytics-key`: Must match `ANALYTICS_SECRET` env var
-
-**Response:**
-```json
-{
-  "sentiment": { "2026-05-11": 42 },
-  "ticker": { "2026-05-11": 156 },
-  "insider": { "2026-05-11": 23 }
-}
-```
-
-**Cache:** None (real-time)  
-**Security:** 401 if auth header missing/wrong
-
----
-
-### 12. Screener
+### 11. Screener
 **GET** `/api/screener?case=safe+stocks+in+uncertain+times`
 
 Free-text investment case screener. Returns 3-7 matching US stocks with rationale.
@@ -330,30 +317,29 @@ Free-text investment case screener. Returns 3-7 matching US stocks with rational
 
 ---
 
-### 13. Cache Clear
-**GET** `/api/cache-clear?ticker=AAPL`
+### 12. News Screener
+**GET** `/api/news-screener`
 
-Manually clear cache for a ticker (all endpoints).
+Surfaces tradeable stock ideas from current market headlines (3-phase: headline ingest → theme extraction → web-search discovery).
 
-**Parameters:**
-- `ticker` (required): Stock symbol
+**Parameters:** None.
 
 **Response:**
 ```json
 {
-  "ok": true,
-  "deleted": [
-    "earnings:AAPL:2026-05-11",
-    "insider_AAPL",
-    "sec_cik_AAPL"
+  "generated_at": "2026-06-09T06:00:00.000Z",
+  "themes": ["AI capex", "..."],
+  "momentum": [
+    { "ticker": "NVDA", "sentiment": "Bullish", "rationale": "..." }
+  ],
+  "undervalued": [
+    { "ticker": "...", "sentiment": "Bullish", "rationale": "..." }
   ]
 }
 ```
 
-**Keys cleared:**
-- `earnings:${ticker}:${today}`
-- `insider_${ticker}`
-- `sec_cik_${ticker}`
+**Cache:** 1 hour (hourly key, serves stale on failure)
+**Model:** Haiku 4.5 (`claude-haiku-4-5-20251001`, web search)
 
 ---
 
@@ -361,14 +347,13 @@ Manually clear cache for a ticker (all endpoints).
 
 ### Required
 - `ANTHROPIC_API_KEY` — Claude API key (all AI endpoints)
-- `SEC_USER_AGENT` — SEC EDGAR User-Agent (insider endpoint)
 
 ### Optional
+- `SEC_USER_AGENT` — SEC EDGAR User-Agent (insider endpoint). Falls back to a hard-coded default when unset.
 - `KV_REST_API_URL` — Upstash Redis URL (falls back to in-memory)
 - `KV_REST_API_TOKEN` — Upstash Redis token
 - `ALPACA_API_KEY` — Alpaca API (historikk endpoint)
 - `ALPACA_API_SECRET` — Alpaca secret
-- `ANALYTICS_SECRET` — Auth key for analytics dashboard
 
 ---
 
@@ -452,16 +437,18 @@ Manually clear cache for a ticker (all endpoints).
 
 | Endpoint | Model | Rationale |
 |----------|-------|-----------|
-| sentiment | Sonnet 4.5 | Multi-category synthesis |
-| ticker | Sonnet 4.5 | 5-layer analysis |
+| sentiment | Sonnet 4.5 (`claude-sonnet-4-5-20250929`) | Multi-category synthesis |
+| ticker | Sonnet 4.5 (`claude-sonnet-4-5-20250929`) | 5-layer analysis |
 | insider | None | XML parsing only |
-| earnings | Haiku 4.5 | Simple formatting |
-| earnings-play | Haiku 4.5 | JSON transformation |
-| sektor | Sonnet 4.5 | Sector synthesis |
-| radar | Sonnet 4.5 | Trade setup analysis |
-| gappers | Sonnet 4.5 | Gap analysis |
-| historikk | Sonnet 4.5 | Timeline generation |
+| earnings | Haiku 4.5 (`claude-haiku-4-5-20251001`) | Simple formatting |
+| earnings-play | Haiku 4.5 (`claude-haiku-4-5-20251001`) | JSON transformation |
+| sektor | Haiku 4.5 (`claude-haiku-4-5-20251001`) | Sector synthesis |
+| radar | Haiku 4.5 (`claude-haiku-4-5-20251001`) | Trade setup analysis |
+| gappers | Haiku 4.5 (`claude-haiku-4-5-20251001`) | Gap analysis |
+| historikk | Haiku 4.5 (`claude-haiku-4-5-20251001`) | Timeline generation |
 | quotes | None | Direct API |
+| screener | Haiku 4.5 (`claude-haiku-4-5-20251001`) | Free-text case + web search |
+| news-screener | Haiku 4.5 (`claude-haiku-4-5-20251001`) | Headline-driven discovery |
 
 ---
 
